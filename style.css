@@ -12,7 +12,7 @@
 }
 body {
   background-color:#000;
-/*   background-image:radial-gradient(#81BCFF, #303391); */
+  background-image:radial-gradient(#303391, #000);
   background-size:100%;
   background-repeat:no-repeat;
   background-attachment:fixed; 
@@ -53,22 +53,9 @@ body {
     3% { opacity: 1;  transform: translateX(0);filter:blur(0px);transform:scale(.9)}
     12% { opacity: 1; transform: translateX(0);filter:blur(0px);transform:scale(1)}
     16% { opacity: 0; transform: translateX(0);filter:blur(10px);transform:scale(1.2)}
-    80% { opacity: 0}
-    100% { opacity: 0}
+    76% { opacity: 1; transform: translateX(0);filter:blur(10px);transform:scale(1.2)}
+    80% { opacity: 1}
+    100% { opacity: 1}
 }
 
 #rotate-words div:nth-child(2) { animation-delay: 4s}
-#rotate-words div:nth-child(3) { animation-delay: 8s}
-#rotate-words div:nth-child(4) { animation-delay: 12s}
-#rotate-words div:nth-child(5) { animation-delay: 16s}
-#rotate-words div:nth-child(6) { animation-delay: 20s}
-#rotate-words div:nth-child(7) { animation-delay: 24s}
-#rotate-words div:nth-child(8) { animation-delay: 28s}
-
-@keyframes author {
-    0% { opacity: 0;  transform: translateY(100px);filter:blur(10px);transform: scaleY(2)}
-    20% { opacity:0; transform: translateY(200px);filter:blur(10px); transform: scaleY(2)}
-    30% { opacity:1; transform: translateY(0);filter:blur(0px);transform: scaleY(1)}
-    90% { opacity:1; transform: translateY(0);filter:blur(0px);transform: scaleY(.9)}
-    100% { opacity:0; transform: translateY(0);filter:blur(10px);transform: scale(2)}
-}
