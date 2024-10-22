@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
-    距36<div id="countdown"></div>
+    <div id="countdown"></div>
     <div id="rotate-words">
       <div>
         我且问尔。忽然临命终时，尔将何抵敌生死。<br />
@@ -35,7 +35,7 @@
       var seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
 
       // 更新页面上的倒计时显示
-      document.getElementById("countdown").innerHTML = days + "天 " + hours + "小时 " + minutes + "分钟 " + seconds + "秒";
+      document.getElementById("countdown").innerHTML = "距36:剩余"+days + "天 " + hours + "小时 " + minutes + "分钟 " + seconds + "秒";
       // 每秒钟更新一次倒计时
       setTimeout(updateCountdown, 1000);
     }
