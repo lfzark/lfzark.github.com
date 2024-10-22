@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
+    <div id="countdown"></div>
     <div id="rotate-words">
       <div>
         我且问尔。忽然临命终时，尔将何抵敌生死。<br />
@@ -18,5 +19,28 @@
       <!--         <div>知息长短<br /> <span>ark1ee</span></div>
         <div>无碍于意<br /> <span>ark1ee</span></div> -->
     </div>
+    <script>
+    // 目标日期
+    var targetDate = new Date("2027-01-08T00:00:00");
+
+    // 更新倒计时
+    function updateCountdown() {
+      var now = new Date();
+      var timeLeft = targetDate - now;
+
+      // 计算剩余的天、小时、分钟和秒
+      var days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+      var hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      var minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+      var seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+      // 更新页面上的倒计时显示
+      document.getElementById("countdown").innerHTML = days + "天 " + hours + "小时 " + minutes + "分钟 " + seconds + "秒";
+      // 每秒钟更新一次倒计时
+      setTimeout(updateCountdown, 1000);
+    }
+    // 启动倒计时
+    updateCountdown();
+  </script>
   </body>
 </html>
