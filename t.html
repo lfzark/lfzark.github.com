@@ -5,9 +5,14 @@
     <i class="fas fa-ellipsis-v uil uil-ellipsis-v dot-menu-btn" style="color:#fff" id="active-menu"></i>
     <ul class="dot-menu" id="active-menu">
         <li class="menu-item" id="active-menu">
-            <span class="clock-format-text" id="active-menu">24-Hour Format</span>
+            <span class="clock-format-text" id="active-menu">24小时格式</span>
             <div class="format-switch-btn" id="active-menu" date-format="12"></div>
         </li>
+        <br>
+        <li class="menu-item" id="active-menu">
+          <span class="clock-format-text" id="active-menu">隐藏秒</span>
+          <div class="seconds-switch-btn" id="active-menu" date-format="1"></div>
+      </li>
     </ul>
     <div class="time">
         <span class="hours">00</span>
@@ -249,6 +254,39 @@
         box-shadow: 0 5px 25px #0bff8d;
         transform: translateX(10px);
     }
+
+
+    .seconds-switch-btn {
+        width: 35px;
+        height: 15px;
+        background: #485470;
+        border-radius: 75px;
+        box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.1),
+            inset -2px -2px 4px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .seconds-switch-btn:before {
+        content: '';
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        background: #ff5e9a;
+        border-radius: 50%;
+        box-shadow: 0 5px 25px #ff5e9a;
+        transform: translateX(-10px);
+        transition: 0.4s ease;
+        transition-property: background, transform;
+    }
+
+    .seconds-switch-btn.active:before {
+        background: #0bff8d;
+        box-shadow: 0 5px 25px #0bff8d;
+        transform: translateX(10px);
+    }
 </style>
 
 <script>
@@ -269,6 +307,20 @@
       }
     });
 
+    const secondsSwitchBtn = document.querySelector(".seconds-switch-btn");
+
+    secondsSwitchBtn.addEventListener("click", () => {
+      secondsSwitchBtn.classList.toggle("active");
+
+  var formatValue = secondsSwitchBtn.getAttribute("date-format");
+
+  if (formatValue == "1") {
+    secondsSwitchBtn.setAttribute("date-format", "0");
+  }
+  else {
+    secondsSwitchBtn.setAttribute("date-format", "1");
+  }
+});
 
     //Get Current Time In Javascript
     function clock() {
@@ -311,6 +363,10 @@
       document.querySelector(".hours").innerHTML = hours;
       document.querySelector(".minutes").innerHTML = minutes;
       document.querySelector(".period").innerHTML = period;
+      var isSecondShowValue = secondsSwitchBtn.getAttribute("date-format");
+      if(isSecondShowValue=="0"){
+        seconds=""
+      }
       document.querySelector(".seconds").innerHTML = seconds;
     }
     var updateClock = setInterval(clock, 1000);
@@ -318,11 +374,13 @@
     // get the date in js
 
     var today = new Date();
-    const dayNum = today.getDate();
+    var dayNum = today.getDate();
     const year = today.getFullYear();
     const dayName = today.toLocaleString("default", { weekday: "long" });
     const monthName = today.toLocaleString("default", { month: "short" });
-
+    if (dayNum<10){
+      dayNum="0"+dayNum
+    }
     document.querySelector(".month-name").innerHTML = monthName;
     document.querySelector(".day-name").innerHTML = dayName;
     document.querySelector(".day-num").innerHTML = dayNum;
