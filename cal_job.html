@@ -86,6 +86,14 @@
             background-color: #e6f0fa;
             color: #333;
         }
+        .qr-code {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .qr-code img {
+            width: 150px;
+            height: 150px;
+        }
     </style>
     <script>
         var _hmt = _hmt || [];
@@ -95,8 +103,7 @@
           var s = document.getElementsByTagName("script")[0]; 
           s.parentNode.insertBefore(hm, s);
         })();
-        </script>
-        
+    </script>
 </head>
 <body>
     <div class="container">
@@ -119,17 +126,17 @@
             </div>
             <div class="task-item">
                 <input type="checkbox" value="5" onchange="calculateScore()">
-                <label>同事事年龄不超40岁</label>
+                <label>同事年龄不超40岁</label>
                 <span>5分</span>
             </div>
             <div class="task-item">
                 <input type="checkbox" value="10" onchange="calculateScore()">
-                <label>几乎没有加心计用</label>
+                <label>几乎没有加班</label>
                 <span>10分</span>
             </div>
             <div class="task-item">
                 <input type="checkbox" value="10" onchange="calculateScore()">
-                <label>年休1小时以上</label>
+                <label>年休假1小时以上</label>
                 <span>10分</span>
             </div>
             <div class="task-item">
@@ -165,6 +172,9 @@
         </div>
         <div class="total-score" id="totalScore">总分：0</div>
         <div class="result" id="result">请勾选任务，查看你的工作评分！</div>
+        <div class="qr-code">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://arkpy.com/cal_job.html" alt="QR Code">
+        </div>
     </div>
 
     <script>
@@ -192,6 +202,5 @@
             }
         }
     </script>
-
 </body>
 </html>
