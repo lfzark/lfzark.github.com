@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Hello Kitty 塔防游戏</title>
+    <title>Sanrio 塔防游戏</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        canvas {
-            border: 2px solid #ff69b4;
-            background: #fff0f5;
-        }
         body {
             display: flex;
             justify-content: center;
@@ -15,50 +12,96 @@
             margin: 0;
             background: linear-gradient(to bottom, #ffb6c1, #ffe4e1);
             font-family: 'Comic Sans MS', Arial, sans-serif;
+            overflow: hidden;
         }
         #gameContainer {
             position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 800px;
+            max-height: 600px;
+        }
+        canvas {
+            border: 2px solid #ff69b4;
+            background: #fff0f5;
+            width: 100%;
+            height: 100%;
+            touch-action: none; /* 防止触摸放大或滚动 */
         }
         #ui {
             position: absolute;
-            top: 10px;
-            left: 10px;
+            top: 5px;
+            left: 5px;
             background: rgba(255, 240, 245, 0.9);
-            padding: 15px;
+            padding: 10px;
             border-radius: 10px;
             border: 2px dashed #ff1493;
             color: #ff69b4;
+            font-size: 14px;
         }
         button {
-            margin: 5px;
+            margin: 3px;
             background: #ff69b4;
             color: white;
             border: none;
-            padding: 5px 10px;
+            padding: 5px 8px;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 12px;
+            touch-action: manipulation; /* 优化触摸 */
         }
         button:hover {
             background: #ff1493;
+        }
+        #instructions {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 240, 245, 0.95);
+            padding: 15px;
+            border: 3px solid #ff69b4;
+            border-radius: 15px;
+            max-width: 90%;
+            color: #ff1493;
+            text-align: center;
+            font-size: 14px;
+            z-index: 10;
         }
     </style>
 </head>
 <body>
     <div id="gameContainer">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <canvas id="gameCanvas"></canvas>
         <div id="ui">
-            <div>Kitty 金钱: <span id="money">200</span></div>
-            <div>Kitty 生命: <span id="lives">20</span></div>
+            <div>Sanrio 金钱: <span id="money">200</span></div>
+            <div>Sanrio 生命: <span id="lives">20</span></div>
             <div>波次: <span id="wave">1</span></div>
-            <button onclick="addTower('kitty')">Kitty 快攻塔 ($50)</button>
-            <button onclick="addTower('melody')">Melody 范围塔 ($80)</button>
+            <button onclick="addTower('budinggou')">布丁狗 ($50)</button>
+            <button onclick="addTower('yuguigou')">玉桂狗 ($80)</button>
+            <button onclick="addTower('keluobi')">可洛比 ($60)</button>
             <button onclick="upgradeSelectedTower()">升级塔 ($100)</button>
+            <button onclick="showInstructions()">玩法说明</button>
+        </div>
+        <div id="instructions">
+            <h2>Sanrio 塔防游戏玩法</h2>
+            <p>欢迎来到 Sanrio 世界！用可爱的角色保卫你的家园吧！</p>
+            <p><b>布丁狗</b>: 快速发射布丁，单体高伤害（射速快，范围小）。</p>
+            <p><b>玉桂狗</b>: 释放云朵，范围攻击所有敌人（范围大，伤害中等）。</p>
+            <p><b>可洛比</b>: 减速敌人并增加金钱（辅助型，攻击弱）。</p>
+            <p>点击或触摸塔选择它，再点击“升级塔”提升能力。击败敌人赚取金钱，注意生命值哦！</p>
+            <button onclick="hideInstructions()">关闭</button>
         </div>
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        
+        // 动态设置画布大小
+        canvas.width = Math.min(window.innerWidth * 0.9, 800);
+        canvas.height = Math.min(window.innerHeight * 0.9, 600);
         
         let money = 200;
         let lives = 20;
@@ -69,14 +112,14 @@
         let projectiles = [];
         
         const path = [
-            {x: 0, y: 300},
-            {x: 200, y: 300},
-            {x: 200, y: 100},
-            {x: 400, y: 100},
-            {x: 400, y: 500},
-            {x: 600, y: 500},
-            {x: 600, y: 300},
-            {x: 800, y: 300}
+            {x: 0, y: canvas.height / 2},
+            {x: canvas.width * 0.25, y: canvas.height / 2},
+            {x: canvas.width * 0.25, y: canvas.height * 0.2},
+            {x: canvas.width * 0.5, y: canvas.height * 0.2},
+            {x: canvas.width * 0.5, y: canvas.height * 0.8},
+            {x: canvas.width * 0.75, y: canvas.height * 0.8},
+            {x: canvas.width * 0.75, y: canvas.height / 2},
+            {x: canvas.width, y: canvas.height / 2}
         ];
 
         // 敌人类
@@ -85,38 +128,40 @@
                 this.x = path[0].x;
                 this.y = path[0].y;
                 this.pathIndex = 0;
+                this.slowed = false;
                 if (type === 'fast') {
                     this.health = 50;
                     this.speed = 2;
-                    this.color = '#ffa500'; // 橙色小怪
+                    this.color = '#ffa500';
                     this.reward = 10;
                 } else if (type === 'strong') {
                     this.health = 200;
                     this.speed = 0.5;
-                    this.color = '#800080'; // 紫色大怪
+                    this.color = '#800080';
                     this.reward = 30;
                 } else {
                     this.health = 100;
                     this.speed = 1;
-                    this.color = '#ff4040'; // 红色普通怪
+                    this.color = '#ff4040';
                     this.reward = 20;
                 }
             }
 
             update() {
+                let speed = this.slowed ? this.speed * 0.5 : this.speed;
                 let target = path[this.pathIndex];
                 let dx = target.x - this.x;
                 let dy = target.y - this.y;
                 let distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < this.speed) {
+                if (distance < speed) {
                     this.pathIndex++;
                     if (this.pathIndex >= path.length) {
                         lives--;
                         return false;
                     }
                 } else {
-                    this.x += (dx / distance) * this.speed;
-                    this.y += (dy / distance) * this.speed;
+                    this.x += (dx / distance) * speed;
+                    this.y += (dy / distance) * speed;
                 }
                 return true;
             }
@@ -130,14 +175,14 @@
                 ctx.beginPath();
                 ctx.arc(this.x - 4, this.y - 4, 2, 0, Math.PI * 2);
                 ctx.arc(this.x + 4, this.y - 4, 2, 0, Math.PI * 2);
-                ctx.fill(); // 类似 Sanrio 的圆眼睛
-                ctx.fillStyle = '#32cd32';
+                ctx.fill();
+                ctx.fillStyle = this.slowed ? '#00b7eb' : '#32cd32';
                 ctx.fillRect(this.x - 15, this.y - 20, this.health / 5, 5);
             }
         }
 
-        // 爱心子弹（Kitty 快攻塔）
-        class HeartProjectile {
+        // 布丁子弹（布丁狗）
+        class PuddingProjectile {
             constructor(x, y, target) {
                 this.x = x;
                 this.y = y;
@@ -156,20 +201,15 @@
             }
 
             draw() {
-                ctx.fillStyle = '#ff1493';
+                ctx.fillStyle = '#ffd700';
                 ctx.beginPath();
-                ctx.moveTo(this.x, this.y + 3);
-                ctx.quadraticCurveTo(this.x - 3, this.y, this.x - 6, this.y - 3);
-                ctx.quadraticCurveTo(this.x - 9, this.y - 6, this.x - 6, this.y - 9);
-                ctx.quadraticCurveTo(this.x, this.y - 6, this.x + 6, this.y - 9);
-                ctx.quadraticCurveTo(this.x + 9, this.y - 6, this.x + 6, this.y - 3);
-                ctx.quadraticCurveTo(this.x + 3, this.y, this.x, this.y + 3);
+                ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
 
-        // 花瓣爆炸（Melody 范围塔）
-        class PetalExplosion {
+        // 云朵爆炸（玉桂狗）
+        class CloudExplosion {
             constructor(x, y) {
                 this.x = x;
                 this.y = y;
@@ -185,17 +225,10 @@
             }
 
             draw() {
-                ctx.fillStyle = `rgba(255, 20, 147, ${this.life / 20})`;
-                for (let i = 0; i < 5; i++) {
-                    let angle = (Math.PI * 2 / 5) * i;
-                    ctx.beginPath();
-                    ctx.arc(
-                        this.x + Math.cos(angle) * this.radius,
-                        this.y + Math.sin(angle) * this.radius,
-                        this.radius / 3, 0, Math.PI * 2
-                    );
-                    ctx.fill();
-                }
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.life / 20})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
 
@@ -205,19 +238,26 @@
                 this.x = x;
                 this.y = y;
                 this.level = 1;
-                if (type === 'kitty') {
+                if (type === 'budinggou') {
                     this.range = 80;
                     this.fireRate = 30;
                     this.damage = 20;
-                    this.color = '#ffffff'; // Hello Kitty 白色
+                    this.color = '#ffd700';
                     this.cost = 50;
-                } else if (type === 'melody') {
+                } else if (type === 'yuguigou') {
                     this.range = 120;
                     this.fireRate = 60;
                     this.damage = 15;
-                    this.color = '#ff69b4'; // My Melody 粉色
+                    this.color = '#87ceeb';
                     this.cost = 80;
                     this.isArea = true;
+                } else if (type === 'keluobi') {
+                    this.range = 100;
+                    this.fireRate = 90;
+                    this.damage = 5;
+                    this.color = '#00ff7f';
+                    this.cost = 60;
+                    this.isSupport = true;
                 }
                 this.fireCounter = 0;
             }
@@ -235,15 +275,25 @@
                             }
                         });
                         if (hit) {
-                            projectiles.push(new PetalExplosion(this.x, this.y));
+                            projectiles.push(new CloudExplosion(this.x, this.y));
                             this.fireCounter = 0;
                         }
+                    } else if (this.isSupport) {
+                        enemies.forEach(enemy => {
+                            let distance = Math.sqrt((enemy.x - this.x) ** 2 + (enemy.y - this.y) ** 2);
+                            if (distance < this.range) {
+                                enemy.slowed = true;
+                                enemy.health -= this.damage;
+                                money += 2;
+                            }
+                        });
+                        this.fireCounter = 0;
                     } else {
                         for (let enemy of enemies) {
                             let distance = Math.sqrt((enemy.x - this.x) ** 2 + (enemy.y - this.y) ** 2);
                             if (distance < this.range) {
                                 enemy.health -= this.damage;
-                                projectiles.push(new HeartProjectile(this.x, this.y, enemy));
+                                projectiles.push(new PuddingProjectile(this.x, this.y, enemy));
                                 this.fireCounter = 0;
                                 break;
                             }
@@ -257,16 +307,21 @@
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, 18, 0, Math.PI * 2);
                 ctx.fill();
-                // Hello Kitty 或 My Melody 特征
-                if (!this.isArea) {
-                    ctx.fillStyle = '#ff1493'; // Kitty 的红蝴蝶结
-                    ctx.fillRect(this.x - 10, this.y - 20, 10, 5);
-                } else {
-                    ctx.fillStyle = '#ffffff'; // Melody 的耳朵
+                if (this.isArea) {
+                    ctx.fillStyle = '#ffffff';
                     ctx.beginPath();
                     ctx.arc(this.x - 10, this.y - 15, 5, 0, Math.PI * 2);
                     ctx.arc(this.x + 10, this.y - 15, 5, 0, Math.PI * 2);
                     ctx.fill();
+                } else if (this.isSupport) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(this.x - 5, this.y - 5, 3, 0, Math.PI * 2);
+                    ctx.arc(this.x + 5, this.y - 5, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.fillStyle = '#8b4513';
+                    ctx.fillRect(this.x - 10, this.y - 20, 20, 5);
                 }
                 ctx.strokeStyle = selectedTower === this ? '#ffff00' : 'rgba(255,105,180,0.3)';
                 ctx.beginPath();
@@ -280,7 +335,7 @@
                 this.level++;
                 this.range += 10;
                 this.damage += 10;
-                if (!this.isArea) this.fireRate = Math.max(10, this.fireRate - 5);
+                if (!this.isArea && !this.isSupport) this.fireRate = Math.max(10, this.fireRate - 5);
             }
         }
 
@@ -296,7 +351,6 @@
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 绘制路径
             ctx.strokeStyle = '#ffb6c1';
             ctx.lineWidth = 20;
             ctx.beginPath();
@@ -306,7 +360,6 @@
             }
             ctx.stroke();
 
-            // 敌人生成
             spawnTimer++;
             if (enemiesToSpawn > 0 && spawnTimer > 60) {
                 const type = Math.random() < 0.3 ? 'fast' : Math.random() < 0.6 ? 'strong' : 'normal';
@@ -315,7 +368,6 @@
                 spawnTimer = 0;
             }
 
-            // 更新和绘制敌人
             enemies = enemies.filter(enemy => {
                 if (enemy.health <= 0) {
                     money += enemy.reward;
@@ -325,22 +377,18 @@
             });
             enemies.forEach(enemy => enemy.draw());
 
-            // 更新和绘制塔
             towers.forEach(tower => {
                 tower.update();
                 tower.draw();
             });
 
-            // 更新和绘制攻击动画
             projectiles = projectiles.filter(p => p.update());
             projectiles.forEach(p => p.draw());
 
-            // 更新UI
             document.getElementById('money').textContent = money;
             document.getElementById('lives').textContent = lives;
             document.getElementById('wave').textContent = wave;
 
-            // 检查波次结束
             if (enemies.length === 0 && enemiesToSpawn === 0) {
                 wave++;
                 startWave();
@@ -349,44 +397,67 @@
             if (lives > 0) {
                 requestAnimationFrame(gameLoop);
             } else {
-                alert('游戏结束！Kitty 需要你的帮助哦！');
+                alert('游戏结束！Sanrio 朋友们需要你的帮助！');
             }
         }
 
-        // 添加塔
+        // 添加塔（支持触摸）
+        let pendingTowerType = null;
         function addTower(type) {
-            const cost = type === 'kitty' ? 50 : 80;
+            const cost = type === 'budinggou' ? 50 : type === 'yuguigou' ? 80 : 60;
             if (money >= cost) {
-                canvas.addEventListener('click', function placeTower(e) {
-                    const rect = canvas.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    towers.push(new Tower(x, y, type));
-                    money -= cost;
-                    canvas.removeEventListener('click', placeTower);
-                }, { once: true });
+                pendingTowerType = type;
+                document.body.style.cursor = 'pointer';
             }
         }
 
-        // 选择和升级塔
-        canvas.addEventListener('click', (e) => {
+        function placeTower(x, y) {
+            if (pendingTowerType) {
+                const cost = pendingTowerType === 'budinggou' ? 50 : pendingTowerType === 'yuguigou' ? 80 : 60;
+                towers.push(new Tower(x, y, pendingTowerType));
+                money -= cost;
+                pendingTowerType = null;
+                document.body.style.cursor = 'default';
+            }
+        }
+
+        // 触摸和鼠标事件
+        function handleInteraction(e) {
+            e.preventDefault();
             const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            selectedTower = null;
-            for (let tower of towers) {
-                if (Math.sqrt((x - tower.x) ** 2 + (y - tower.y) ** 2) < 18) {
-                    selectedTower = tower;
-                    break;
+            const x = (e.type === 'touchstart' ? e.touches[0].clientX : e.clientX) - rect.left;
+            const y = (e.type === 'touchstart' ? e.touches[0].clientY : e.clientY) - rect.top;
+
+            if (pendingTowerType) {
+                placeTower(x, y);
+            } else {
+                selectedTower = null;
+                for (let tower of towers) {
+                    if (Math.sqrt((x - tower.x) ** 2 + (y - tower.y) ** 2) < 18) {
+                        selectedTower = tower;
+                        break;
+                    }
                 }
             }
-        });
+        }
+
+        canvas.addEventListener('click', handleInteraction);
+        canvas.addEventListener('touchstart', handleInteraction);
 
         function upgradeSelectedTower() {
             if (selectedTower && money >= 100) {
                 selectedTower.upgrade();
                 money -= 100;
             }
+        }
+
+        // 玩法说明功能
+        function showInstructions() {
+            document.getElementById('instructions').style.display = 'block';
+        }
+
+        function hideInstructions() {
+            document.getElementById('instructions').style.display = 'none';
         }
 
         // 开始游戏
