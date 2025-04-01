@@ -182,7 +182,7 @@
             };
             
             recognition.onend = () => {
-                if (isListening) {
+                if (!isListening) {
                     // 如果意外结束，尝试重新启动
                     recognition.start();
                     addLogEntry("语音识别已自动重新连接");
