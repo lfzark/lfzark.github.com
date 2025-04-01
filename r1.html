@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>极速念佛计数器</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        #counter { 
+            font-size: 5rem; 
+            color: #e74c3c;
+            margin: 20px 0;
+            text-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+        }
+        button {
+            background: #2ecc71;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+        button:disabled { background: #95a5a6; }
+        #waveform { 
+            width: 100%; 
+            height: 100px;
+            margin: 20px 0;
+            background: #f0f0f0;
+        }
+        .status { color: #7f8c8d; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>极速念佛计数器</h1>
+    <div id="counter">0</div>
+    
+    <button id="startBtn">开始念佛</button>
+    <button id="stopBtn" disabled>停止</button>
+    <button id="resetBtn">重置</button>
+    
+    <div id="waveform"></div>
+    <div class="status" id="status">准备就绪</div>
+
+    <script>
+        // 核心参数配置
+        const CONFIG = {
+            DETECTION_THRESHOLD: 0.85,    // 波形匹配阈值 (0-1)
+            MIN_INTERVAL: 300,            // 最小计数间隔(ms)
+            PATTERN: [0.2,0.8,0.5,0.9,0.3] // 预设咒语波形特征
+        };
+
+        // 状态变量
+        let audioContext;
+        let processor;
+        let lastDetectTime = 0;
+        let count = 0;
+        let isRunning = false;
+
+        // 初始化音频处理
+        async function init() {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // 加载WASM模块（实际使用需替换为真实模块）
+            // const wasmModule = await loadWASM('pattern_match.wasm');
+            
+            document.getElementById('startBtn').addEventListener('click', start);
+            document.getElementById('stopBtn').addEventListener('click', stop);
+            document.getElementById('resetBtn').addEventListener('click', reset);
+        }
+
+        // 开始检测
+        async function start() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const source = audioContext.createMediaStreamSource(stream);
+                
+                processor = audioContext.createScriptProcessor(4096, 1, 1);
+                processor.onaudioprocess = processAudio;
+                
+                source.connect(processor);
+                processor.connect(audioContext.destination);
+                
+                isRunning = true;
+                updateUI();
+                document.getElementById('status').textContent = "检测中...";
+                
+            } catch (err) {
+                console.error("麦克风访问失败:", err);
+                document.getElementById('status').textContent = "错误: " + err.message;
+            }
+        }
+
+        // 音频处理核心逻辑
+        function processAudio(e) {
+            const inputBuffer = e.inputBuffer;
+            const inputData = inputBuffer.getChannelData(0);
+            
+            // 简化的波形特征检测（实际应使用WASM优化）
+            const currentPattern = extractPattern(inputData);
+            const similarity = comparePatterns(currentPattern, CONFIG.PATTERN);
+            
+            // 绘制波形（仅演示）
+            drawWaveform(inputData);
+            
+            // 检测到咒语且满足最小间隔
+            if (similarity > CONFIG.DETECTION_THRESHOLD && 
+                Date.now() - lastDetectTime > CONFIG.MIN_INTERVAL) {
+                
+                count++;
+                lastDetectTime = Date.now();
+                updateCounter();
+                
+                // 视觉反馈
+                document.getElementById('counter').style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    document.getElementById('counter').style.transform = 'scale(1)';
+                }, 200);
+            }
+        }
+
+        // 简化的波形特征提取
+        function extractPattern(data) {
+            const pattern = [];
+            const step = Math.floor(data.length / 5);
+            for (let i = 0; i < 5; i++) {
+                pattern.push(Math.abs(data[i * step]));
+            }
+            return pattern;
+        }
+
+        // 模式相似度计算
+        function comparePatterns(a, b) {
+            let dotProduct = 0;
+            let aNorm = 0;
+            let bNorm = 0;
+            
+            for (let i = 0; i < a.length; i++) {
+                dotProduct += a[i] * b[i];
+                aNorm += a[i] * a[i];
+                bNorm += b[i] * b[i];
+            }
+            
+            return dotProduct / (Math.sqrt(aNorm) * Math.sqrt(bNorm));
+        }
+
+        // 绘制波形（演示用）
+        function drawWaveform(data) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 800;
+            canvas.height = 100;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            
+            for (let i = 0; i < data.length; i++) {
+                const x = (i / data.length) * canvas.width;
+                const y = (1 + data[i]) * canvas.height / 2;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            
+            ctx.strokeStyle = '#3498db';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            document.getElementById('waveform').innerHTML = '';
+            document.getElementById('waveform').appendChild(canvas);
+        }
+
+        // 停止检测
+        function stop() {
+            if (processor) {
+                processor.disconnect();
+                processor = null;
+            }
+            isRunning = false;
+            updateUI();
+            document.getElementById('status').textContent = "已停止";
+        }
+
+        // 重置计数器
+        function reset() {
+            count = 0;
+            updateCounter();
+        }
+
+        // 更新UI
+        function updateUI() {
+            document.getElementById('startBtn').disabled = isRunning;
+            document.getElementById('stopBtn').disabled = !isRunning;
+        }
+
+        function updateCounter() {
+            document.getElementById('counter').textContent = count;
+        }
+
+        // 初始化
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
