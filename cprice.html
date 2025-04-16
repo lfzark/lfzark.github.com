@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Price Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #00ff00;
+            font-family: 'Press Start 2P', monospace;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .input-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"], select {
+            background-color: #333;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 16px;
+            padding: 10px;
+        }
+        input[type="text"] {
+            flex: 1;
+            min-width: 200px;
+        }
+        select {
+            width: 120px;
+        }
+        button {
+            background-color: #00ff00;
+            color: #1a1a1a;
+            border: none;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 16px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #00cc00;
+        }
+        .price-list {
+            list-style: none;
+            padding: 0;
+        }
+        .price-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #333;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .price-up {
+            animation: priceUp 1s;
+        }
+        .price-down {
+            animation: priceDown 1s;
+        }
+        @keyframes priceUp {
+            0% { background-color: #00ff00; color: #1a1a1a; }
+            100% { background-color: #333; color: #00ff00; }
+        }
+        @keyframes priceDown {
+            0% { background-color: #ff3333; color: #1a1a1a; }
+            100% { background-color: #333; color: #00ff00; }
+        }
+        .remove-btn {
+            background-color: #ff3333;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .remove-btn:hover {
+            background-color: #cc0000;
+        }
+        .error {
+            color: #ff3333;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 18px;
+            }
+            input[type="text"], select, button {
+                font-size: 12px;
+                padding: 8px;
+            }
+            select {
+                width: 100px;
+            }
+            .price-item {
+                font-size: 12px;
+            }
+            .remove-btn {
+                font-size: 10px;
+                padding: 4px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Crypto Price Tracker</h1>
+        <div class="input-area">
+            <input type="text" id="coinInput" placeholder="Enter coin ID (e.g., litecoin)">
+            <select id="refreshInterval">
+                <option value="1000">1 sec</option>
+                <option value="10000">10 sec</option>
+                <option value="30000" selected>30 sec</option>
+                <option value="60000">60 sec</option>
+            </select>
+            <button onclick="addCoin()">Add</button>
+        </div>
+        <div id="error" class="error"></div>
+        <ul id="priceList" class="price-list"></ul>
+    </div>
+    <script>
+        const apiUrl = 'https://api.coingecko.com/api/v3/simple/price';
+        const priceList = document.getElementById('priceList');
+        const coinInput = document.getElementById('coinInput');
+        const errorDiv = document.getElementById('error');
+        const refreshSelect = document.getElementById('refreshInterval');
+        const defaultCoins = ['bitcoin', 'ethereum', 'sui', 'solana', 'aptos', 'dogecoin'];
+        let priceHistory = {}; // 存储每个币种的上次价格
+        let refreshIntervalId;
+
+        // 处理回车键
+        coinInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addCoin();
+        });
+
+        // 更新刷新间隔
+        refreshSelect.addEventListener('change', () => {
+            clearInterval(refreshIntervalId);
+            startRefresh();
+        });
+
+        async function addCoin() {
+            const coinId = coinInput.value.trim().toLowerCase();
+            if (!coinId) {
+                showError('Please enter a coin ID');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${apiUrl}?ids=${coinId}&vs_currencies=usd`);
+                const data = await response.json();
+
+                if (!data[coinId]) {
+                    showError(`Coin "${coinId}" not found`);
+                    return;
+                }
+
+                const price = data[coinId].usd;
+                addPriceItem(coinId, price);
+                saveCoins();
+                coinInput.value = '';
+                errorDiv.textContent = '';
+            } catch (error) {
+                showError('Error fetching price');
+            }
+        }
+
+        function addPriceItem(coinId, price, animate = false) {
+            // 避免重复添加
+            let li = Array.from(priceList.children).find(li => li.dataset.coin === coinId);
+            if (li) {
+                updatePriceItem(coinId, price, animate);
+                return;
+            }
+            li = document.createElement('li');
+            li.className = 'price-item';
+            li.dataset.coin = coinId;
+            li.innerHTML = `
+                ${coinId.toUpperCase()}: $${price.toLocaleString()}
+                <button class="remove-btn" onclick="removeCoin(this.parentElement)">X</button>
+            `;
+            priceList.appendChild(li);
+            priceHistory[coinId] = price;
+            if (animate) {
+                li.classList.add(price > priceHistory[coinId] ? 'price-up' : 'price-down');
+                setTimeout(() => li.classList.remove('price-up', 'price-down'), 1000);
+            }
+        }
+
+        function updatePriceItem(coinId, price, animate = false) {
+            const li = Array.from(priceList.children).find(li => li.dataset.coin === coinId);
+            if (li) {
+                const oldPrice = priceHistory[coinId] || price;
+                li.innerHTML = `
+                    ${coinId.toUpperCase()}: $${price.toLocaleString()}
+                    <button class="remove-btn" onclick="removeCoin(this.parentElement)">X</button>
+                `;
+                if (animate && price !== oldPrice) {
+                    li.classList.add(price > oldPrice ? 'price-up' : 'price-down');
+                    setTimeout(() => li.classList.remove('price-up', 'price-down'), 1000);
+                }
+                priceHistory[coinId] = price;
+            }
+        }
+
+        function removeCoin(element) {
+            const coinId = element.dataset.coin;
+            element.remove();
+            delete priceHistory[coinId];
+            saveCoins();
+        }
+
+        function showError(message) {
+            errorDiv.textContent = message;
+            setTimeout(() => errorDiv.textContent = '', 3000);
+        }
+
+        // 保存币种到localStorage
+        function saveCoins() {
+            const coins = Array.from(priceList.children).map(li => li.dataset.coin);
+            localStorage.setItem('cryptoCoins', JSON.stringify(coins));
+        }
+
+        // 从localStorage加载币种
+        async function loadCoins() {
+            const savedCoins = localStorage.getItem('cryptoCoins');
+            const coins = savedCoins ? JSON.parse(savedCoins) : defaultCoins;
+            try {
+                const response = await fetch(`${apiUrl}?ids=${coins.join(',')}&vs_currencies=usd`);
+                const data = await response.json();
+                coins.forEach(coin => {
+                    if (data[coin]) {
+                        addPriceItem(coin, data[coin].usd);
+                    }
+                });
+            } catch (error) {
+                showError('Error loading coins');
+            }
+        }
+
+        // 刷新价格
+        async function refreshPrices() {
+            const coins = Array.from(priceList.children).map(li => li.dataset.coin);
+            if (coins.length) {
+                try {
+                    const response = await fetch(`${apiUrl}?ids=${coins.join(',')}&vs_currencies=usd`);
+                    const data = await response.json();
+                    coins.forEach(coin => {
+                        if (data[coin]) {
+                            updatePriceItem(coin, data[coin].usd, true);
+                        }
+                    });
+                } catch (error) {
+                    showError('Error refreshing prices');
+                }
+            }
+        }
+
+        // 启动刷新
+        function startRefresh() {
+            const interval = parseInt(refreshSelect.value);
+            refreshIntervalId = setInterval(refreshPrices, interval);
+        }
+
+        // 初始化
+        loadCoins();
+        startRefresh();
+    </script>
+</body>
+</html>
