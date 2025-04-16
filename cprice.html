@@ -74,18 +74,25 @@
             transition: background-color 0.3s;
         }
         .price-up {
-            animation: priceUp 1s;
+            animation: priceUp 0.8s;
         }
         .price-down {
-            animation: priceDown 1s;
+            animation: priceDown 0.8s;
+        }
+        .price-no-change {
+            animation: priceNoChange 0.8s;
         }
         @keyframes priceUp {
-            0% { background-color: #00ff00; color: #1a1a1a; }
-            100% { background-color: #333; color: #00ff00; }
+            0% { background-color: #00ff00; color: #1a1a1a; transform: scale(1.05); }
+            100% { background-color: #333; color: #00ff00; transform: scale(1); }
         }
         @keyframes priceDown {
-            0% { background-color: #ff3333; color: #1a1a1a; }
-            100% { background-color: #333; color: #00ff00; }
+            0% { background-color: #ff3333; color: #1a1a1a; transform: scale(1.05); }
+            100% { background-color: #333; color: #00ff00; transform: scale(1); }
+        }
+        @keyframes priceNoChange {
+            0% { background-color: #ffffff; color: #1a1a1a; transform: scale(1.02); opacity: 0.9; }
+            100% { background-color: #333; color: #00ff00; transform: scale(1); opacity: 1; }
         }
         .remove-btn {
             background-color: #ff3333;
@@ -128,9 +135,8 @@
         <div class="input-area">
             <input type="text" id="coinInput" placeholder="Enter coin ID (e.g., litecoin)">
             <select id="refreshInterval">
-                <option value="1000">1 sec</option>
-                <option value="10000">10 sec</option>
-                <option value="30000" selected>30 sec</option>
+                <option value="10000" selected>10 sec</option>
+                <option value="30000" >30 sec</option>
                 <option value="60000">60 sec</option>
             </select>
             <button onclick="addCoin()">Add</button>
@@ -202,8 +208,7 @@
             priceList.appendChild(li);
             priceHistory[coinId] = price;
             if (animate) {
-                li.classList.add(price > priceHistory[coinId] ? 'price-up' : 'price-down');
-                setTimeout(() => li.classList.remove('price-up', 'price-down'), 1000);
+                applyAnimation(li, price, price);
             }
         }
 
@@ -215,12 +220,24 @@
                     ${coinId.toUpperCase()}: $${price.toLocaleString()}
                     <button class="remove-btn" onclick="removeCoin(this.parentElement)">X</button>
                 `;
-                if (animate && price !== oldPrice) {
-                    li.classList.add(price > oldPrice ? 'price-up' : 'price-down');
-                    setTimeout(() => li.classList.remove('price-up', 'price-down'), 1000);
+                if (animate) {
+                    applyAnimation(li, price, oldPrice);
                 }
                 priceHistory[coinId] = price;
             }
+        }
+
+        function applyAnimation(li, newPrice, oldPrice) {
+            let animationClass;
+            if (newPrice > oldPrice) {
+                animationClass = 'price-up';
+            } else if (newPrice < oldPrice) {
+                animationClass = 'price-down';
+            } else {
+                animationClass = 'price-no-change';
+            }
+            li.classList.add(animationClass);
+            setTimeout(() => li.classList.remove(animationClass), 800);
         }
 
         function removeCoin(element) {
