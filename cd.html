@@ -20,7 +20,7 @@
 
     body {
       font-family: "阿里妈妈灵动体 VF Thin", sans-serif;
-      background-color: #fff;
+      background: linear-gradient(180deg, #fff, #f8f8f8);
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -34,20 +34,60 @@
       text-align: center;
       padding: 20px;
       max-width: 100%;
+      position: relative;
     }
 
     #timer {
       font-size: 12vw;
-      margin-bottom: 30px;
+      margin-bottom: 5vh;
       letter-spacing: 3px;
       font-weight: 100;
+      transition: opacity 0.3s ease;
+    }
+
+    #timer.update {
+      opacity: 0.7;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+
+    #timer.pulse {
+      animation: pulse 0.3s ease;
+    }
+
+    .progress {
+      position: absolute;
+      top: 2vh;
+      right: 2vw;
+      width: 50px;
+      height: 50px;
+    }
+
+    #progressCircle {
+      stroke-dasharray: 125.6;
+      stroke-dashoffset: 125.6;
+      transition: stroke-dashoffset 1s linear;
+    }
+
+    .preset-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 4vh;
+      padding: 10px;
+      border: 1px solid #eee;
+      border-radius: 5px;
     }
 
     .input-group {
       display: flex;
       justify-content: center;
       gap: 15px;
-      margin-bottom: 20px;
+      margin-bottom: 4vh;
     }
 
     input {
@@ -55,73 +95,163 @@
       padding: 10px;
       font-size: 4vw;
       border: none;
-      border-bottom: 1px solid #ccc;
+      border-bottom: 0.8px solid #ccc;
       text-align: center;
       font-family: "阿里妈妈灵动体 VF Thin", sans-serif;
       background: transparent;
-      transition: border-color 0.3s;
+      transition: border-color 0.3s ease, transform 0.2s ease;
+      min-width: 70px;
+      min-height: 40px;
+      touch-action: manipulation;
     }
 
     input:focus {
       outline: none;
       border-bottom-color: #222;
+      transform: scale(1.02);
     }
 
-    .preset-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-bottom: 20px;
+    input::placeholder {
+      color: #888;
+      transition: color 0.3s ease;
+    }
+
+    input:focus::placeholder {
+      color: #bbb;
     }
 
     .control-buttons {
       display: flex;
       justify-content: center;
       gap: 15px;
+      padding: 10px;
+      border: 1px solid #eee;
+      border-radius: 5px;
     }
 
     button {
       padding: 10px 25px;
       font-size: 4vw;
-      border: 1px solid #222;
+      border: none;
+      border-bottom: 0.5px solid transparent;
       background: transparent;
       color: #222;
-      border-radius: 0;
       cursor: pointer;
       font-family: "阿里妈妈灵动体 VF Thin", sans-serif;
-      transition: background-color 0.3s, color 0.3s;
+      transition: background-color 0.3s, color 0.3s, transform 0.2s ease, border-bottom-color 0.3s;
+      min-width: 70px;
+      min-height: 40px;
+      touch-action: manipulation;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     button:hover:not(:disabled) {
-      background-color: #222;
-      color: #fff;
+      background-color: #e6f0fa;
+      color: #222;
+      border-bottom-color: #222;
+      transform: translateY(-2px);
+    }
+
+    button:active:not(:disabled) {
+      transform: scale(0.95);
     }
 
     button:disabled {
       opacity: 0.5;
+      border-bottom-color: #ccc;
+      background: repeating-linear-gradient(45deg, transparent, transparent 5px, #eee 5px, #eee 10px);
       cursor: not-allowed;
+    }
+
+    button:focus {
+      outline: 2px dashed #222;
+      outline-offset: 2px;
+    }
+
+    button svg {
+      width: 16px;
+      height: 16px;
+      margin-right: 5px;
+      fill: currentColor;
+    }
+
+    @media (max-width: 768px) {
+      #timer {
+        font-size: 13vw;
+      }
+      input {
+        width: 22vw;
+        font-size: 4.5vw;
+      }
+      button {
+        font-size: 4.5vw;
+        padding: 10px 22px;
+      }
     }
 
     @media (max-width: 600px) {
       #timer {
         font-size: 14vw;
       }
-
       input {
         width: 25vw;
         font-size: 5vw;
       }
-
       button {
         font-size: 5vw;
         padding: 8px 20px;
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: linear-gradient(180deg, #1a1a1a, #222);
+        color: #ccc;
+      }
+      input {
+        border-bottom-color: #444;
+        color: #ccc;
+      }
+      input::placeholder {
+        color: #666;
+      }
+      input:focus::placeholder {
+        color: #888;
+      }
+      button {
+        color: #ccc;
+      }
+      button:hover:not(:disabled) {
+        background: #333;
+        color: #fff;
+        border-bottom-color: #ccc;
+      }
+      button:disabled {
+        border-bottom-color: #444;
+        background: repeating-linear-gradient(45deg, transparent, transparent 5px, #333 5px, #333 10px);
+      }
+      .preset-buttons, .control-buttons {
+        border-color: #333;
+        background: rgba(0, 0, 0, 0.3);
+      }
+      .progress circle {
+        stroke: #444;
+      }
+      #progressCircle {
+        stroke: #ccc;
       }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div id="timer">00:00:00</div>
+    <svg class="progress" width="50" height="50">
+      <circle cx="25" cy="25" r="20" stroke="#ccc" stroke-width="2" fill="none"/>
+      <circle id="progressCircle" cx="25" cy="25" r="20" stroke="#222" stroke-width="2" fill="none"/>
+    </svg>
+    <div id="timer" aria-live="polite">00:00:00</div>
     <div class="preset-buttons">
       <button onclick="setPreset(1)" aria-label="设置1分钟">1分钟</button>
       <button onclick="setPreset(3)" aria-label="设置3分钟">3分钟</button>
@@ -133,15 +263,31 @@
       <input type="number" id="seconds" placeholder="秒" min="0" max="59" aria-label="秒">
     </div>
     <div class="control-buttons">
-      <button id="startBtn" onclick="startTimer()" aria-label="开始倒计时">开始</button>
-      <button id="pauseBtn" onclick="togglePause()" disabled aria-label="暂停倒计时">暂停</button>
-      <button id="resetBtn" onclick="resetTimer()" aria-label="重置倒计时">重置</button>
+      <button id="startBtn" onclick="startTimer()" aria-label="开始倒计时">
+        <svg viewBox="0 0 16 16" fill="currentColor">
+          <path d="M4 2v12l10-6z"/>
+        </svg>
+        开始
+      </button>
+      <button id="pauseBtn" onclick="togglePause()" disabled aria-label="暂停倒计时">
+        <svg viewBox="0 0 16 16" fill="currentColor">
+          <path d="M5 3h2v10H5zm4 0h2v10H9z"/>
+        </svg>
+        暂停
+      </button>
+      <button id="resetBtn" onclick="resetTimer()" aria-label="重置倒计时">
+        <svg viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 3a5 5 0 100 10A5 5 0 008 3zm0 2a3 3 0 110 6 3 3 0 010-6zm3-2l2 2-2 2"/>
+        </svg>
+        重置
+      </button>
     </div>
   </div>
 
   <script>
     let timerInterval;
     let totalSeconds = 0;
+    let initialSeconds = 0;
     let isPaused = false;
     const elements = {
       hours: document.getElementById('hours'),
@@ -150,10 +296,10 @@
       timer: document.getElementById('timer'),
       startBtn: document.getElementById('startBtn'),
       pauseBtn: document.getElementById('pauseBtn'),
-      resetBtn: document.getElementById('resetBtn')
+      resetBtn: document.getElementById('resetBtn'),
+      progressCircle: document.getElementById('progressCircle')
     };
 
-    // 输入验证
     [elements.hours, elements.minutes, elements.seconds].forEach(input => {
       input.addEventListener('input', function() {
         if (this.value < 0) this.value = 0;
@@ -165,6 +311,7 @@
     function setPreset(minutes) {
       clearInterval(timerInterval);
       totalSeconds = minutes * 60;
+      initialSeconds = totalSeconds;
       elements.hours.value = '';
       elements.minutes.value = minutes;
       elements.seconds.value = '';
@@ -172,6 +319,8 @@
       elements.startBtn.disabled = false;
       elements.pauseBtn.disabled = true;
       isPaused = false;
+      elements.timer.classList.add('pulse');
+      setTimeout(() => elements.timer.classList.remove('pulse'), 300);
     }
 
     function startTimer() {
@@ -181,6 +330,7 @@
       const seconds = parseInt(elements.seconds.value) || 0;
 
       totalSeconds = hours * 3600 + minutes * 60 + seconds;
+      initialSeconds = totalSeconds;
 
       if (totalSeconds <= 0) {
         alert('请输入有效时间！');
@@ -190,6 +340,8 @@
       elements.startBtn.disabled = true;
       elements.pauseBtn.disabled = false;
       elements.resetBtn.disabled = false;
+      elements.timer.classList.add('pulse');
+      setTimeout(() => elements.timer.classList.remove('pulse'), 300);
 
       timerInterval = setInterval(() => {
         if (totalSeconds <= 0) {
@@ -198,6 +350,7 @@
           document.title = '倒计时结束';
           elements.startBtn.disabled = false;
           elements.pauseBtn.disabled = true;
+          vibrateDevice();
           alert('倒计时结束！');
           return;
         }
@@ -216,24 +369,40 @@
             document.title = '倒计时结束';
             elements.startBtn.disabled = false;
             elements.pauseBtn.disabled = true;
+            vibrateDevice();
             alert('倒计时结束！');
             return;
           }
           totalSeconds--;
           updateTimerDisplay();
         }, 1000);
-        elements.pauseBtn.textContent = '暂停';
+        elements.pauseBtn.innerHTML = `
+          <svg viewBox="0 0 16 16" fill="currentColor">
+            <path d="M5 3h2v10H5zm4 0h2v10H9z"/>
+          </svg>
+          暂停
+        `;
         isPaused = false;
+        elements.timer.classList.add('pulse');
+        setTimeout(() => elements.timer.classList.remove('pulse'), 300);
       } else {
         clearInterval(timerInterval);
-        elements.pauseBtn.textContent = '继续';
+        elements.pauseBtn.innerHTML = `
+          <svg viewBox="0 0 16 16" fill="currentColor">
+            <path d="M4 2v12l10-6z"/>
+          </svg>
+          继续
+        `;
         isPaused = true;
+        elements.timer.classList.add('pulse');
+        setTimeout(() => elements.timer.classList.remove('pulse'), 300);
       }
     }
 
     function resetTimer() {
       clearInterval(timerInterval);
       totalSeconds = 0;
+      initialSeconds = 0;
       elements.timer.textContent = '00:00:00';
       document.title = '极简倒计时';
       elements.hours.value = '';
@@ -241,9 +410,17 @@
       elements.seconds.value = '';
       elements.startBtn.disabled = false;
       elements.pauseBtn.disabled = true;
-      elements.pauseBtn.textContent = '暂停';
+      elements.pauseBtn.innerHTML = `
+        <svg viewBox="0 0 16 16" fill="currentColor">
+          <path d="M5 3h2v10H5zm4 0h2v10H9z"/>
+        </svg>
+        暂停
+      `;
       elements.resetBtn.disabled = true;
       isPaused = false;
+      elements.progressCircle.style.strokeDashoffset = 125.6;
+      elements.timer.classList.add('pulse');
+      setTimeout(() => elements.timer.classList.remove('pulse'), 300);
     }
 
     function updateTimerDisplay() {
@@ -252,12 +429,22 @@
       const seconds = totalSeconds % 60;
       const timeString = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 
+      elements.timer.classList.add('update');
       elements.timer.textContent = timeString;
       document.title = timeString + ' - 倒计时';
+      const progress = initialSeconds ? (totalSeconds / initialSeconds) * 125.6 : 125.6;
+      elements.progressCircle.style.strokeDashoffset = progress;
+      setTimeout(() => elements.timer.classList.remove('update'), 200);
     }
 
     function pad(num) {
       return num < 10 ? '0' + num : num;
+    }
+
+    function vibrateDevice() {
+      if (navigator.vibrate) {
+        navigator.vibrate([200, 100, 200]); // 震动模式：200ms, 暂停100ms, 再震动200ms
+      }
     }
   </script>
 </body>
