@@ -59,7 +59,7 @@
                 const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
                 const data = await response.json();
                 const rate = data.rates.CNY;
-                document.getElementById('exchangeRate').innerText = `1 USD = ${rate.toFixed(4)} CNY`;
+                document.getElementById('exchangeRate').innerText = `1 USD = ${rate.toFixed(2)} CNY`;
             } catch (error) {
                 document.getElementById('exchangeRate').innerText = 'ERROR: RETRY LATER';
                 console.error('Error fetching exchange rate:', error);
