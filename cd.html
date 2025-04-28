@@ -285,10 +285,12 @@
   </div>
 
   <script>
-    let timerInterval;
+    let timerInterval = null;
     let totalSeconds = 0;
     let initialSeconds = 0;
+    let startTime = 0;
     let isPaused = false;
+    let pausedTime = 0;
     const elements = {
       hours: document.getElementById('hours'),
       minutes: document.getElementById('minutes'),
@@ -309,7 +311,7 @@
     });
 
     function setPreset(minutes) {
-      clearInterval(timerInterval);
+      clearTimer();
       totalSeconds = minutes * 60;
       initialSeconds = totalSeconds;
       elements.hours.value = '';
@@ -324,7 +326,7 @@
     }
 
     function startTimer() {
-      clearInterval(timerInterval);
+      clearTimer();
       const hours = parseInt(elements.hours.value) || 0;
       const minutes = parseInt(elements.minutes.value) || 0;
       const seconds = parseInt(elements.seconds.value) || 0;
@@ -337,45 +339,19 @@
         return;
       }
 
+      startTime = Date.now();
       elements.startBtn.disabled = true;
       elements.pauseBtn.disabled = false;
       elements.resetBtn.disabled = false;
       elements.timer.classList.add('pulse');
       setTimeout(() => elements.timer.classList.remove('pulse'), 300);
 
-      timerInterval = setInterval(() => {
-        if (totalSeconds <= 0) {
-          clearInterval(timerInterval);
-          elements.timer.textContent = '00:00:00';
-          document.title = '倒计时结束';
-          elements.startBtn.disabled = false;
-          elements.pauseBtn.disabled = true;
-          vibrateDevice();
-          alert('倒计时结束！');
-          return;
-        }
-
-        totalSeconds--;
-        updateTimerDisplay();
-      }, 1000);
+      tick();
     }
 
     function togglePause() {
       if (isPaused) {
-        timerInterval = setInterval(() => {
-          if (totalSeconds <= 0) {
-            clearInterval(timerInterval);
-            elements.timer.textContent = '00:00:00';
-            document.title = '倒计时结束';
-            elements.startBtn.disabled = false;
-            elements.pauseBtn.disabled = true;
-            vibrateDevice();
-            alert('倒计时结束！');
-            return;
-          }
-          totalSeconds--;
-          updateTimerDisplay();
-        }, 1000);
+        startTime = Date.now() - (pausedTime - startTime);
         elements.pauseBtn.innerHTML = `
           <svg viewBox="0 0 16 16" fill="currentColor">
             <path d="M5 3h2v10H5zm4 0h2v10H9z"/>
@@ -385,8 +361,10 @@
         isPaused = false;
         elements.timer.classList.add('pulse');
         setTimeout(() => elements.timer.classList.remove('pulse'), 300);
+        tick();
       } else {
-        clearInterval(timerInterval);
+        clearTimer();
+        pausedTime = Date.now();
         elements.pauseBtn.innerHTML = `
           <svg viewBox="0 0 16 16" fill="currentColor">
             <path d="M4 2v12l10-6z"/>
@@ -400,7 +378,7 @@
     }
 
     function resetTimer() {
-      clearInterval(timerInterval);
+      clearTimer();
       totalSeconds = 0;
       initialSeconds = 0;
       elements.timer.textContent = '00:00:00';
@@ -423,6 +401,36 @@
       setTimeout(() => elements.timer.classList.remove('pulse'), 300);
     }
 
+    function tick() {
+      if (isPaused) return;
+
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      totalSeconds = initialSeconds - elapsed;
+
+      if (totalSeconds <= 0) {
+        clearTimer();
+        totalSeconds = 0;
+        elements.timer.textContent = '00:00:00';
+        document.title = '倒计时结束';
+        elements.startBtn.disabled = false;
+        elements.pauseBtn.disabled = true;
+        vibrateDevice();
+        alert('倒计时结束！');
+        elements.progressCircle.style.strokeDashoffset = 125.6;
+        return;
+      }
+
+      updateTimerDisplay();
+      timerInterval = setTimeout(tick, 1000);
+    }
+
+    function clearTimer() {
+      if (timerInterval) {
+        clearTimeout(timerInterval);
+        timerInterval = null;
+      }
+    }
+
     function updateTimerDisplay() {
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -443,9 +451,30 @@
 
     function vibrateDevice() {
       if (navigator.vibrate) {
-        navigator.vibrate([200, 100, 200]); // 震动模式：200ms, 暂停100ms, 再震动200ms
+        navigator.vibrate([200, 100, 200]);
       }
     }
+
+    // 监听页面可见性变化，校正时间
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && !isPaused && initialSeconds > 0) {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        totalSeconds = initialSeconds - elapsed;
+        if (totalSeconds <= 0) {
+          clearTimer();
+          totalSeconds = 0;
+          elements.timer.textContent = '00:00:00';
+          document.title = '倒计时结束';
+          elements.startBtn.disabled = false;
+          elements.pauseBtn.disabled = true;
+          vibrateDevice();
+          alert('倒计时结束！');
+          elements.progressCircle.style.strokeDashoffset = 125.6;
+        } else {
+          updateTimerDisplay();
+        }
+      }
+    });
   </script>
 </body>
 </html>
