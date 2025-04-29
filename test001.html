@@ -47,57 +47,74 @@
     const input = document.getElementById('todo-input');
     const addBtn = document.getElementById('add-btn');
     const todoList = document.getElementById('todo-list');
+    const restUrl = 'https://wired-mako-30204.upstash.io';
+    const restToken = 'AXX8AAIjcDEwNDI3YTUzZDIyMzU0ODY4OTZkMjkzNTZhMWQzYTU3OXAxMA'; // 替换为 Upstash REST API Token
 
-    // Load todos on page load
+    // Load todos
     async function loadTodos() {
       try {
-        const response = await fetch('http://60.205.170.175:55606/add', { // Replace with your proxy server URL
+        const response = await fetch(`${restUrl}/lrange/todos/0/-1`, {
           method: 'GET',
+          headers: {
+            Authorization: `Bearer ${restToken}`,
+          },
         });
-        const todos = await response.json();
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        const todos = data.result || [];
         todoList.innerHTML = '';
         todos.forEach((todo, index) => {
           const li = document.createElement('li');
           li.className = 'todo-item flex justify-between items-center p-2 border-b border-gray-300';
           li.innerHTML = `
             <span>${todo}</span>
-            <button class="text-red-600 hover:text-red-800" onclick="deleteTodo(${index})">删除</button>
+            <button class="text-red-600 hover:text-red-800" onclick="deleteTodo('${encodeURIComponent(todo)}')">删除</button>
           `;
           todoList.appendChild(li);
         });
       } catch (error) {
-        console.error('Error loading todos:', error);
+        console.error('加载待办事项失败:', error);
       }
     }
 
-    // Add a new todo
+    // Add a todo
     async function addTodo() {
       const todo = input.value.trim();
       if (!todo) return;
       try {
-        await fetch('http://60.205.170.175:55606/add', { // Replace with your proxy server URL
+        const response = await fetch(restUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ todo }),
+          headers: {
+            Authorization: `Bearer ${restToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(['LPUSH', 'todos', todo]),
         });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
         input.value = '';
         loadTodos();
       } catch (error) {
-        console.error('Error adding todo:', error);
+        console.error('添加待办事项失败:', error);
       }
     }
 
     // Delete a todo
-    async function deleteTodo(index) {
+    async function deleteTodo(todo) {
       try {
-        await fetch('http://60.205.170.175:55606/delete', { // Replace with your proxy server URL
+        const response = await fetch(restUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ index }),
+          headers: {
+            Authorization: `Bearer ${restToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(['LREM', 'todos', 1, decodeURIComponent(todo)]),
         });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
         loadTodos();
       } catch (error) {
-        console.error('Error deleting todo:', error);
+        console.error('删除待办事项失败:', error);
       }
     }
 
