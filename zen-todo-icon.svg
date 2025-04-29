@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-  <!-- Background (optional, subtle paper texture) -->
-  <rect width="64" height="64" fill="#F7F7F7" fill-opacity="0.8"/>
+  <!-- Transparent background -->
+  <rect width="64" height="64" fill="none"/>
 
-  <!-- Zen Circle (minimal, with subtle ink wash) -->
-  <circle cx="32" cy="32" r="14" fill="none" stroke="#1A1A1A" stroke-width="1.5" stroke-opacity="0.9"/>
+  <!-- Zen Circle (deep vermilion red, subtle ink wash) -->
+  <circle cx="32" cy="32" r="14" fill="none" stroke="#B22222" stroke-width="1.2" stroke-opacity="0.9"/>
 
-  <!-- Minimal Checkmark (task completion, barely visible) -->
-  <path d="M28 34 L31 37 L36 31" fill="none" stroke="#1A1A1A" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.7"/>
+  <!-- Minimal Checkmark (gray, faint) -->
+  <path d="M28 34 L31 37 L36 31" fill="none" stroke="#4A5568" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.6"/>
 </svg>
