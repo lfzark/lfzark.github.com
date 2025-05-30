@@ -1,0 +1,247 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快速念佛计数器</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f5f9fa;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #8e44ad;
+            margin-bottom: 30px;
+        }
+        .counter {
+            font-size: 72px;
+            color: #e74c3c;
+            margin: 30px 0;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .active {
+            transform: scale(1.1);
+            text-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+        }
+        button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+            width: 80%;
+        }
+        button:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 20px;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .settings {
+            margin-top: 30px;
+            text-align: left;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+        }
+        .settings label {
+            display: block;
+            margin: 10px 0;
+        }
+        .settings input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>快速念佛计数器</h1>
+        <div class="counter" id="counter">0</div>
+        
+        <button id="startBtn">开始念佛</button>
+        <button id="stopBtn" disabled>停止</button>
+        <button id="resetBtn">重置</button>
+        
+        <div class="settings">
+            <label>
+                念佛内容：
+                <input type="text" id="chantText" value="阿弥陀佛" placeholder="输入您要念诵的佛号">
+            </label>
+            <label>
+                灵敏度：
+                <input type="range" id="sensitivity" min="0.5" max="1.0" step="0.1" value="0.7">
+                <span id="sensitivityValue">0.7</span>
+            </label>
+        </div>
+        
+        <div class="status" id="status">准备就绪</div>
+    </div>
+
+    <script>
+        // 配置参数
+        const config = {
+            chantText: "阿弥陀佛",
+            sensitivity: 0.7,
+            minInterval: 300 // 最小计数间隔(ms)
+        };
+        
+        // 状态变量
+        let recognition;
+        let count = 0;
+        let lastCountTime = 0;
+        let isListening = false;
+        
+        // DOM元素
+        const counterEl = document.getElementById('counter');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const statusEl = document.getElementById('status');
+        const chantTextInput = document.getElementById('chantText');
+        const sensitivityInput = document.getElementById('sensitivity');
+        const sensitivityValue = document.getElementById('sensitivityValue');
+        
+        // 初始化语音识别
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                statusEl.textContent = "您的浏览器不支持语音识别，请使用Chrome或Edge";
+                startBtn.disabled = true;
+                return;
+            }
+            
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true; // 启用临时结果
+            recognition.lang = 'zh-CN';
+            
+            // 优化参数降低延迟
+            recognition.maxAlternatives = 1;
+            
+            recognition.onstart = () => {
+                isListening = true;
+                statusEl.textContent = "监听中...请念诵佛号";
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+            };
+            
+            recognition.onerror = (event) => {
+                console.error("语音识别错误:", event.error);
+                statusEl.textContent = `错误: ${event.error}`;
+                stopRecognition();
+            };
+            
+            recognition.onend = () => {
+                if (isListening) {
+                    // 自动重新连接
+                    recognition.start();
+                }
+            };
+            
+            recognition.onresult = (event) => {
+                const now = Date.now();
+                
+                // 优先使用临时结果降低延迟
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript.trim();
+                    
+                    // 简单关键词匹配（不要求完全匹配）
+                    if (transcript.includes(config.chantText) && 
+                        now - lastCountTime > config.minInterval) {
+                        
+                        count++;
+                        lastCountTime = now;
+                        updateCounter();
+                        
+                        // 视觉反馈
+                        counterEl.classList.add('active');
+                        setTimeout(() => counterEl.classList.remove('active'), 200);
+                        
+                        // 振动反馈（移动端）
+                        if (navigator.vibrate) navigator.vibrate(50);
+                    }
+                }
+            };
+        }
+        
+        // 开始语音识别
+        function startRecognition() {
+            // 更新配置
+            config.chantText = chantTextInput.value.trim() || "阿弥陀佛";
+            config.sensitivity = parseFloat(sensitivityInput.value);
+            
+            if (!recognition) {
+                initSpeechRecognition();
+            }
+            
+            try {
+                recognition.start();
+            } catch (err) {
+                statusEl.textContent = "无法启动语音识别: " + err.message;
+            }
+        }
+        
+        // 停止语音识别
+        function stopRecognition() {
+            if (recognition) {
+                recognition.stop();
+            }
+            isListening = false;
+            statusEl.textContent = "已停止";
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        }
+        
+        // 重置计数器
+        function resetCounter() {
+            count = 0;
+            counterEl.textContent = count;
+            statusEl.textContent = "计数器已重置";
+        }
+        
+        // 更新计数器显示
+        function updateCounter() {
+            counterEl.textContent = count;
+        }
+        
+        // 事件监听
+        startBtn.addEventListener('click', startRecognition);
+        stopBtn.addEventListener('click', stopRecognition);
+        resetBtn.addEventListener('click', resetCounter);
+        sensitivityInput.addEventListener('input', () => {
+            sensitivityValue.textContent = sensitivityInput.value;
+        });
+        
+        // 初始化
+        initSpeechRecognition();
+    </script>
+</body>
+</html>

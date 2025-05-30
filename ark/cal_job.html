@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>你的工作有多少分？</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .task-list {
+            margin-bottom: 20px;
+        }
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .task-item:last-child {
+            border-bottom: none;
+        }
+        .task-item input[type="checkbox"] {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ff8c00;
+            border-radius: 5px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .task-item input[type="checkbox"]:checked {
+            background-color: #ff8c00;
+            position: relative;
+        }
+        .task-item input[type="checkbox"]:checked::after {
+            content: '✔';
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+        }
+        .task-item label {
+            flex: 1;
+            color: #333;
+            font-size: 16px;
+        }
+        .task-item span {
+            color: #ff8c00;
+            font-weight: bold;
+        }
+        .total-score {
+            text-align: center;
+            font-size: 18px;
+            color: #333;
+            margin: 20px 0;
+        }
+        .result {
+            text-align: center;
+            font-size: 16px;
+            padding: 10px;
+            border-radius: 10px;
+            background-color: #e6f0fa;
+            color: #333;
+        }
+        .qr-code {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .qr-code img {
+            width: 150px;
+            height: 150px;
+        }
+    </style>
+    <script>
+        var _hmt = _hmt || [];
+        (function() {
+          var hm = document.createElement("script");
+          hm.src = "https://hm.baidu.com/hm.js?0b6595914faedee15b9816e11e9751e0";
+          var s = document.getElementsByTagName("script")[0]; 
+          s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>你的工作有多少分？</h1>
+        <div class="task-list">
+            <div class="task-item">
+                <input type="checkbox" value="10" onchange="calculateScore()">
+                <label>每月到手工资4500以上</label>
+                <span>10分</span>
+            </div>
+            <div class="task-item">
+                <input type="checkbox" value="10" onchange="calculateScore()">
+                <label>是自己热爱发展的事业</label>
+                <span>10分</span>
+            </div>
+            <div class="task-item">
+                <input type="checkbox" value="10" onchange="calculateScore()">
+                <label>通勤距离单程不超10公里</label>
+                <span>10分</span>
+            </div>
+            <div class="task-item">
+                <input type="checkbox" value="5" onchange="calculateScore()">
+                <label>同事年龄不超40岁</label>
+                <span>5分</span>
+            </div>
+            <div class="task-item">
+                <input type="checkbox" value="10" onchange="calculateScore()">
+                <label>几乎没有加班</label>
+                <span>10分</span>
+            </div>
+            <div class="task-item">
+                <input type="checkbox" value="10" onchange="calculateScore()">
+                <label>午休1小时以上</label>
+                <span>10分</span>
+            </div>
+            <div class="task-item">
+                <input type="checkbox" value="10" onchange="calculateScore()">
+                <label>加班有调休或加班工资</label>
+                <span>10分</span>
+            </div>
+            <div class="task-item">
+                <input type="checkbox" value="5" onchange="calculateScore()">
+                <label>请假方便</label>
+                <span>5分</span>
+            </div>
+            <div class="task-item">
+                <input type="checkbox" value="10" onchange="calculateScore()">
+                <label>朝九晚五或朝九晚六、双休</label>
+                <span>10分</span>
+            </div>
+            <div class="task-item">
+                <input type="checkbox" value="10" onchange="calculateScore()">
+                <label>五险一金</label>
+                <span>10分</span>
+            </div>
+            <div class="task-item">
+                <input type="checkbox" value="5" onchange="calculateScore()">
+                <label>没有经常性团建</label>
+                <span>5分</span>
+            </div>
+            <div class="task-item">
+                <input type="checkbox" value="5" onchange="calculateScore()">
+                <label>没有过度的酒文化</label>
+                <span>5分</span>
+            </div>
+        </div>
+        <div class="total-score" id="totalScore">总分：0</div>
+        <div class="result" id="result">请勾选任务，查看你的工作评分！</div>
+        <div class="qr-code">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://arkpy.com/cal_job.html" alt="QR Code">
+        </div>
+    </div>
+
+    <script>
+        function calculateScore() {
+            const checkboxes = document.querySelectorAll('.task-item input[type="checkbox"]');
+            let total = 0;
+
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    total += parseInt(checkbox.value);
+                }
+            });
+
+            document.getElementById('totalScore').textContent = `总分：${total}`;
+            
+            const result = document.getElementById('result');
+            if (total >= 60) {
+                result.textContent = '能超过60分就是好工作，别轻易辞职！';
+                result.style.backgroundColor = '#d4edda';
+                result.style.color = '#155724';
+            } else {
+                result.textContent = '总分未达60分，考虑多努力吧！';
+                result.style.backgroundColor = '#f8d7da';
+                result.style.color = '#721c24';
+            }
+        }
+    </script>
+</body>
+</html>

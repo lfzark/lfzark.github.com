@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USD to CNY Exchange Rate</title>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            image-rendering: pixelated;
+        }
+        .container {
+            text-align: center;
+            border: 1px solid #0f0;
+            padding: 20px;
+            background: #111;
+        }
+        h1 {
+            font-size: 20px;
+            margin: 0 0 15px;
+            text-transform: uppercase;
+        }
+        #exchangeRate {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        button {
+            background: none;
+            border: 1px solid #0f0;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            padding: 5px 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        button:hover {
+            background: #0f0;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>USD to CNY</h1>
+        <div id="exchangeRate">LOADING...</div>
+        <button onclick="fetchExchangeRate()">REFRESH</button>
+    </div>
+
+    <script>
+        async function fetchExchangeRate() {
+            try {
+                const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                const data = await response.json();
+                const rate = data.rates.CNY;
+                document.getElementById('exchangeRate').innerText = `1 USD = ${rate.toFixed(2)} CNY`;
+            } catch (error) {
+                document.getElementById('exchangeRate').innerText = 'ERROR: RETRY LATER';
+                console.error('Error fetching exchange rate:', error);
+            }
+        }
+
+        window.onload = fetchExchangeRate;
+    </script>
+</body>
+</html>
