@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>护眼色调 - 智能护眼Chrome扩展，减少眼疲劳</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); /* 柔和蓝调，模拟护眼 */
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        header {
+            text-align: center;
+            padding: 60px 0;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 3em;
+            color: #1976d2;
+            margin: 0 0 20px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        .subtitle {
+            font-size: 1.5em;
+            color: #555;
+            margin: 0 0 30px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(45deg, #2196f3, #1976d2);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            font-weight: bold;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+        }
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            padding: 60px 0;
+        }
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .feature-icon {
+            font-size: 3em;
+            color: #2196f3;
+            margin-bottom: 15px;
+        }
+        .benefits {
+            padding: 60px 0;
+            background: rgba(255, 255, 255, 0.6);
+            text-align: center;
+        }
+        .benefits ul {
+            list-style: none;
+            padding: 0;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .benefits li {
+            font-size: 1.1em;
+            margin: 15px 0;
+            padding-left: 40px;
+            position: relative;
+        }
+        .benefits li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #4caf50;
+            font-weight: bold;
+            font-size: 1.5em;
+        }
+        .reviews {
+            padding: 60px 0;
+            text-align: center;
+        }
+        .review-quote {
+            font-size: 1.8em;
+            font-style: italic;
+            color: #1976d2;
+            margin: 20px 0;
+        }
+        .rating {
+            font-size: 2em;
+            color: #ffeb3b;
+        }
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            background: #1976d2;
+            color: white;
+        }
+        @media (max-width: 768px) {
+            h1 { font-size: 2em; }
+            .features { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>护眼色调</h1>
+            <p class="subtitle">智能调整网页色调，守护您的双眼，减少长时间浏览带来的眼疲劳</p>
+            <a href="https://chromewebstore.google.com/detail/%E6%8A%A4%E7%9C%BC%E8%89%B2%E8%B0%83/hbcplgamdcjcmkonjcdgdioijkndhghi" class="cta-button" target="_blank">立即添加至Chrome</a>
+        </div>
+    </header>
+
+    <section class="features">
+        <div class="container">
+            <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <h2>色调调整</h2>
+                <p>一键修改网页背景色调，营造柔和阅读环境，模拟夜间模式以保护视力。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">☀️</div>
+                <h2>亮度调节</h2>
+                <p>智能降低屏幕亮度，避免强光刺眼，让眼睛在任何光线下都感到舒适。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🛡️</div>
+                <h2>简单高效</h2>
+                <p>轻量级设计，仅97.5KiB，无数据收集，隐私安全，支持多语言。</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="benefits">
+        <div class="container">
+            <h2>为什么选择护眼色调？</h2>
+            <ul>
+                <li>减少眼疲劳：长时间上网后，眼睛不再干涩酸痛。</li>
+                <li>提升浏览体验：色调自适应，适合工作、学习或娱乐。</li>
+                <li>科学护眼：基于专业亮度调节，守护视力健康。</li>
+                <li>320+ 用户信赖：已帮助无数人重获舒适浏览。</li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="reviews">
+        <div class="container">
+            <h2>用户评价</h2>
+            <div class="rating">⭐⭐⭐⭐⭐ 5.0 (基于2条评价)</div>
+            <p class="review-quote">"这款扩展太棒了！色调调整后，眼睛舒服多了，强烈推荐！"</p>
+            <a href="https://chromewebstore.google.com/detail/%E6%8A%A4%E7%9C%BC%E8%89%B2%E8%B0%83/hbcplgamdcjcmkonjcdgdioijkndhghi" class="cta-button" target="_blank">查看更多评价</a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 护眼色调扩展。已安装用户：320+ | 版本：1.0</p>
+            <a href="https://chromewebstore.google.com/detail/%E6%8A%A4%E7%9C%BC%E8%89%B2%E8%B0%83/hbcplgamdcjcmkonjcdgdioijkndhghi" class="cta-button" target="_blank" style="margin-top: 10px; display: inline-block;">现在就试试吧！</a>
+        </div>
+    </footer>
+</body>
+</html>
