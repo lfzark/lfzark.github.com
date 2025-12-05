@@ -11,28 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500&display=swap" rel="stylesheet">
 
-  <style
-    :root { --bg:#f8f7f5; --text:#2d1810; --accent:#8c6b4a; --muted:#888; }
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{min-height:100vh;font-family:'Noto Serif SC',Georgia,serif;background:var(--bg) url('https://images.unsplash.com/photo-1506905925346-21bda4d8df73?ixlib=rb-4.0.3&auto=format&fit=crop&q=85&w=2850&h=1600') center/cover fixed;color:var(--text);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:2rem 2rem 0;position:relative;line-height:1.8;overflow-x:hidden;}
-    body::before{content:"";position:absolute;inset:0;background:rgba(248,247,245,0.82);backdrop-filter:blur(2px);}
-    main{position:relative;z-index:1;text-align:center;max-width:720px;}
-    h1{font-size:4.5rem;font-weight:400;letter-spacing:0.2em;margin-bottom:4rem;color:var(--accent);}
-    .quote{font-size:1.55rem;margin:4rem auto;max-width:90%;opacity:0.95;}
-    .quote p{margin-bottom:1.8rem;}
-    .author{font-size:1.2rem;opacity:0.7;margin-top:1rem;}
-    footer{position:relative;z-index:1;margin-top:8rem;font-size:0.8rem;color:var(--muted);opacity:0.7;padding-bottom:100px;}
-    footer .countdown{margin-top:0.6rem;font-size:0.78rem;}
-    .nav-trigger{position:fixed;bottom:0;left:0;right:0;height:80px;z-index:10;cursor:pointer;}
-    nav{position:fixed;bottom:0;left:0;right:0;background:rgba(248,247,245,0.85);backdrop-filter:blur(12px);border-top:1px solid rgba(140,107,74,0.12);padding:1.2rem 0;transform:translateY(100%);transition:transform .48s cubic-bezier(.22,1,.36,1);z-index:20;}
-    nav.visible{transform:translateY(0);}
-    .nav-inner{max-width:800px;margin:0 auto;display:flex;justify-content:center;flex-wrap:wrap;gap:2.8rem;font-size:1rem;color:var(--text);}
-    nav a{color:var(--text);text-decoration:none;opacity:0.6;transition:opacity .3s;white-space:nowrap;}
-    nav a:hover{opacity:1;}
-    nav a::before{content:"◦";margin-right:0.6em;opacity:0.4;}
-    @media(max-width:768px){h1{font-size:3.4rem;}.quote{font-size:1.35rem;}.nav-inner{gap:2rem;font-size:0.95rem;}}
-    @media(max-width:480px){h1{font-size:2.9rem;}.nav-inner{gap:1.6rem;flex-direction:column;align-items:center;}nav a::before{content:none;}}
-  </style>
+  <style>:root{--bg:#f8f7f5;--text:#2d1810;--accent:#8c6b4a;--muted:#888;}*{margin:0;padding:0;box-sizing:border-box;}body{min-height:100vh;font-family:'Noto Serif SC',Georgia,serif;background:var(--bg) url('https://images.unsplash.com/photo-1506905925346-21bda4d8df73?ixlib=rb-4.0.3&auto=format&fit=crop&q=85&w=2850&h=1600') center/cover fixed;color:var(--text);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:2rem 2rem 0;position:relative;line-height:1.8;overflow-x:hidden;}body::before{content:"";position:absolute;inset:0;background:rgba(248,247,245,0.82);backdrop-filter:blur(2px);}main{position:relative;z-index:1;text-align:center;max-width:720px;}h1{font-size:4.5rem;font-weight:400;letter-spacing:0.2em;margin-bottom:4rem;color:var(--accent);}.quote{font-size:1.55rem;margin:4rem auto;max-width:90%;opacity:0.95;}.quote p{margin-bottom:1.8rem;}.author{font-size:1.2rem;opacity:0.7;margin-top:1rem;}footer{position:relative;z-index:1;margin-top:8rem;font-size:0.8rem;color:var(--muted);opacity:0.7;padding-bottom:100px;}footer .countdown{margin-top:0.6rem;font-size:0.78rem;}.nav-trigger{position:fixed;bottom:0;left:0;right:0;height:80px;z-index:10;cursor:pointer;}nav{position:fixed;bottom:0;left:0;right:0;background:rgba(248,247,245,0.85);backdrop-filter:blur(12px);border-top:1px solid rgba(140,107,74,0.12);padding:1.2rem 0;transform:translateY(100%);transition:transform .48s cubic-bezier(.22,1,.36,1);z-index:20;}nav.visible{transform:translateY(0);}.nav-inner{max-width:800px;margin:0 auto;display:flex;justify-content:center;flex-wrap:wrap;gap:2.8rem;font-size:1rem;color:var(--text);}nav a{color:var(--text);text-decoration:none;opacity:0.6;transition:opacity .3s;white-space:nowrap;}nav a:hover{opacity:1;}nav a::before{content:"◦";margin-right:0.6em;opacity:0.4;}@media(max-width:768px){h1{font-size:3.4rem;}.quote{font-size:1.35rem;}.nav-inner{gap:2rem;font-size:0.95rem;}}@media(max-width:480px){h1{font-size:2.9rem;}.nav-inner{gap:1.6rem;flex-direction:column;align-items:center;}nav a::before{content:none;}}</style>
 </head>
 
 <body>
@@ -57,57 +36,14 @@
   </nav>
 
   <script>
-    // 每年1月8日倒计时（页脚小字）
-    function getNextBirthday(){
-      const today=new Date();const y=today.getFullYear();
-      let bd=new Date(y,0,8);
-      if(today>bd)bd.setFullYear(y+1);
-      return bd;
-    }
-    function updateCountdown(){
-      const days=Math.floor((getNextBirthday()-new Date())/86400000);
-      document.getElementById('countdown').textContent=days===0?"今日 · 一月八日":`距明年1月8日还有 ${days} 天`;
-    }
-    updateCountdown();
-    setInterval(updateCountdown,86400000);
+    // 每年1月8日倒计时
+    function getNextBirthday(){const today=new Date();const y=today.getFullYear();let bd=new Date(y,0,8);if(today>bd)bd.setFullYear(y+1);return bd;}function updateCountdown(){const days=Math.floor((getNextBirthday()-new Date())/86400000);document.getElementById('countdown').textContent=days===0?"今日 · 一月八日":`距明年1月8日还有 ${days} 天`;}updateCountdown();setInterval(updateCountdown,86400000);
 
-    // 每日一念（已加入你指定的两句）
-    const quotes=[
-      {text:"直心是道场。",author:"—— 黄檗希运禅师"},
-      {text:"上善若水。水善利万物而不争，处众人之所恶，故几于道。",author:"—— 《道德经》第八章"},
-      {text:"应无所住，而生其心。",author:"—— 《金刚经》"},
-      {text:"当下即是。",author:"—— 永嘉玄觉"},
-      {text:"行住坐卧，应无非禅。",author:"—— 庞蕴居士"},
-      {text:"一念净，心即是佛。",author:"—— 六祖惠能"},
-      {text:"本来无一物，何处惹尘埃。",author:"—— 六祖惠能"},
-      {text:"饥来吃饭，困来即眠。",author:"—— 庞蕴居士"},
-      {text:"我且问尔。忽然临命终时，尔将何抵敌生死。",author:"—— 黄檗禅师"},
-      {text:"致虚极，守静笃。万物并作，吾以观其复。",author:"—— 《道德经》"}
-    ];
+    // 每日一念
+    const quotes=[{text:"直心是道场。",author:"—— 黄檗希运禅师"},{text:"上善若水。水善利万物而不争，处众人之所恶，故几于道。",author:"—— 《道德经》第八章"},{text:"应无所住，而生其心。",author:"—— 《金刚经》"},{text:"当下即是。",author:"—— 永嘉玄觉"},{text:"行住坐卧，应无非禅。",author:"—— 庞蕴居士"},{text:"一念净，心即是佛。",author:"—— 六祖惠能"},{text:"本来无一物，何处惹尘埃。",author:"—— 六祖惠能"},{text:"饥来吃饭，困来即眠。",author:"—— 庞蕴居士"},{text:"我且问尔。忽然临命终时，尔将何抵敌生死。",author:"—— 黄檗禅师"},{text:"致虚极，守静笃。万物并作，吾以观其复。",author:"—— 《道德经》"}];const day=new Date().getDate();const q=quotes[day % quotes.length];document.getElementById('daily-quote').innerHTML=`<p>“${q.text}”</p><div class="author">${q.author}</div>`;
 
-    const day=new Date().getDate();
-    const q=quotes[day % quotes.length];
-    document.getElementById('daily-quote').innerHTML=`<p>“${q.text}”</p><div class="author">${q.author}</div>`;
-
-    // 底部导航显示逻辑
-    const nav=document.getElementById('nav');
-    const trigger=document.getElementById('navTrigger');
-    let showed=false;
-    function check(){if(trigger.getBoundingClientRect().top<window.innerHeight+100&&!showed){nav.classList.add('visible');showed=true;}}
-    window.addEventListener('scroll',check);
-    trigger.addEventListener('mouseenter',()=>nav.classList.add('visible'));
-    check();
+    // 导航显示
+    const nav=document.getElementById('nav');const trigger=document.getElementById('navTrigger');let showed=false;function check(){if(trigger.getBoundingClientRect().top<window.innerHeight+100&&!showed){nav.classList.add('visible');showed=true;}}window.addEventListener('scroll',check);trigger.addEventListener('mouseenter',()=>nav.classList.add('visible'));check();
   </script>
 </body>
 </html>
-
-好了，现在这两句已经正式入池：
-
-- 「我且问尔。忽然临命终时，尔将何抵敌生死。」—— 黄檗禅师  
-- 「致虚极，守静笃。万物并作，吾以观其复。」—— 《道德经》
-
-以后每天刷新都会随机轮到其中一句，永远都在。  
-整个页面依旧清净如初，只是内心更丰盛了一点。
-
-随时再想加新句子，复制一句丢进 `quotes` 数组就行。  
-愿你所护之念，常得这两句猛烈加持。
