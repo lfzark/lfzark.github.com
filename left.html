@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>墨 · 五秩浮生 十日之约</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #ece7df;
+            font-family: 'STKaiti', '华文楷体', 'KaiTi', '楷体', 'Times New Roman', serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            color: #2f2b24;
+            position: relative;
+        }
+
+        /* 水墨氤氲背景 */
+        body::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 10% 30%, rgba(140, 125, 105, 0.05) 0%, transparent 40%),
+                        radial-gradient(circle at 95% 70%, rgba(100, 85, 70, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 880px;
+            width: 100%;
+            background: rgba(249, 244, 235, 0.7);
+            backdrop-filter: blur(2px);
+            border: 1px solid #cabeaf;
+            border-radius: 70px 18px 70px 18px;
+            box-shadow: 0 25px 35px -20px #4f4437;
+            padding: 2rem 2rem 2.5rem 2rem;
+        }
+
+        /* 标题区 —— 无出生日期 */
+        .title-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 1px solid #b6a792;
+            padding-bottom: 0.6rem;
+            margin-bottom: 1.6rem;
+        }
+
+        .title-area h1 {
+            font-weight: 300;
+            font-size: 2rem;
+            color: #28231d;
+            letter-spacing: 5px;
+        }
+
+        .title-area h1 .thin {
+            font-size: 1rem;
+            margin-left: 1rem;
+            border: 1px solid #ad9e88;
+            padding: 0.1rem 1rem;
+            border-radius: 40px;
+            background: #e9dfd1;
+            font-weight: 300;
+            color: #4e4334;
+        }
+
+        .seal {
+            border: 1px solid #a2927b;
+            background: #e4d8c7;
+            color: #3d362b;
+            padding: 0.2rem 1.2rem;
+            border-radius: 40px;
+            font-size: 0.9rem;
+        }
+
+        /* 八十主卡（稍突出） */
+        .main-eighty {
+            margin: 1.8rem 0 2.2rem 0;
+            padding: 1rem 1.5rem;
+            background: #ebe1d2;
+            border-left: 8px solid #887b66;
+            border-right: 8px solid #887b66;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            justify-content: center;
+            gap: 0.8rem 2.2rem;
+            border-radius: 2px;
+        }
+
+        .main-eighty .label {
+            font-size: 1.5rem;
+            color: #3d3629;
+            letter-spacing: 4px;
+        }
+
+        .main-eighty .number-pack {
+            display: flex;
+            align-items: baseline;
+            gap: 0.2rem;
+            background: #f3ede3;
+            padding: 0.2rem 1.2rem;
+            border-radius: 60px;
+            border: 1px solid #9b8b74;
+        }
+
+        .main-eighty .big {
+            font-size: 2.4rem;
+            font-family: 'Courier New', monospace;
+            font-weight: 400;
+            color: #1f1b14;
+        }
+
+        .main-eighty .unit {
+            font-size: 1.1rem;
+            color: #625746;
+            margin-left: 0.2rem;
+        }
+
+        /* 四岳小卡  (40 50 60 70) */
+        .grid-four {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem 0.8rem;
+            margin: 2rem 0 2.5rem;
+        }
+
+        .age-card {
+            background: rgba(240, 233, 222, 0.6);
+            border: 1px solid #cbbca7;
+            border-radius: 50px 6px 50px 6px;
+            padding: 1rem 0.2rem 0.9rem 0.2rem;
+            text-align: center;
+            box-shadow: inset 0 0 0 1px #faf5ec, 0 6px 10px -8px #665b4b;
+            transition: 0.1s;
+        }
+
+        .age-card:hover {
+            background: #e5dacb;
+        }
+
+        .age-tag {
+            font-size: 1.1rem;
+            color: #6b5e4b;
+            border-bottom: 1px dashed #bfae96;
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .age-number {
+            font-size: 2.1rem;
+            font-family: 'Courier New', monospace;
+            color: #1c1812;
+            line-height: 1.3;
+        }
+
+        .age-unit {
+            font-size: 0.85rem;
+            color: #6f624f;
+            margin-left: 2px;
+        }
+
+        /* 总天数八十已经在上方 main-eighty 中体现，但我们也想保留一个“合计八十总日”？
+           但为了精简，将八十总日放在主卡，其余每个卡显示距该整岁天数。满足要求。 */
+
+        .foot-note {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+            border-top: 1px solid #ccbcaa;
+            padding-top: 1.2rem;
+            color: #665b48;
+            font-size: 0.9rem;
+        }
+
+        .ink-signature {
+            background: #e3d9cb;
+            padding: 0.1rem 1.4rem;
+            border-radius: 30px;
+            border: 1px solid #a6947b;
+        }
+
+        footer {
+            z-index: 10;
+            margin-top: 0.8rem;
+            color: #988e7b;
+            font-size: 0.7rem;
+            letter-spacing: 2px;
+        }
+
+        @media (max-width: 600px) {
+            .grid-four {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .main-eighty {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 标题 · 无出生日期 -->
+        <div class="title-area">
+            <h1>半百·從心 <span class="thin">四岳之期</span></h1>
+            <div class="seal"> 不知老之将至 </div>
+        </div>
+
+        <!-- 八十主区域：显示距80岁还有多少年/月/日  + 合计总天数 (用card强调) -->
+        <div class="main-eighty" id="eightyBlock">
+            <span class="label">八十 · 期颐</span>
+            <div class="number-pack">
+                <span class="big" id="eightyYears">--</span><span class="unit">年</span>
+            </div>
+            <div class="number-pack">
+                <span class="big" id="eightyMonths">--</span><span class="unit">月</span>
+            </div>
+            <div class="number-pack">
+                <span class="big" id="eightyDays">--</span><span class="unit">日</span>
+            </div>
+            <div class="number-pack" style="background:#e3d5c2;">
+                <span class="big" id="eightyTotalDays">---</span><span class="unit">总日</span>
+            </div>
+        </div>
+
+        <!-- 四十、五十、六十、七十 小卡: 只显示距该岁剩余天数 (符合需求: 多少日) -->
+        <div class="grid-four">
+            <!-- 40岁 卡片 -->
+            <div class="age-card">
+                <div class="age-tag">四十 · 不惑</div>
+                <div>
+                    <span class="age-number" id="daysTo40">--</span>
+                    <span class="age-unit">日</span>
+                </div>
+            </div>
+            <!-- 50岁 卡片 -->
+            <div class="age-card">
+                <div class="age-tag">五十 · 知命</div>
+                <div>
+                    <span class="age-number" id="daysTo50">--</span>
+                    <span class="age-unit">日</span>
+                </div>
+            </div>
+            <!-- 60岁 卡片 -->
+            <div class="age-card">
+                <div class="age-tag">六十 · 耳顺</div>
+                <div>
+                    <span class="age-number" id="daysTo60">--</span>
+                    <span class="age-unit">日</span>
+                </div>
+            </div>
+            <!-- 70岁 卡片 -->
+            <div class="age-card">
+                <div class="age-tag">七十 · 从心</div>
+                <div>
+                    <span class="age-number" id="daysTo70">--</span>
+                    <span class="age-unit">日</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 落款 · 今日日期，依然不显示出生 -->
+        <div class="foot-note">
+            <div>⦿ 甲辰 · 墨余 </div>
+            <div class="ink-signature" id="todayDate"></div>
+        </div>
+    </div>
+
+    <footer>
+        人生到处知何似 · 应似飞鸿踏雪泥
+    </footer>
+
+    <script>
+        (function() {
+            // 固定出生日期 1990年1月8日 (界面不展示)
+            const birth = new Date(1990, 0, 8);   // 1月8日
+
+            // 目标整岁日期: 40,50,60,70,80 (基于出生日期)
+            const target40 = new Date(2030, 0, 8);  // 1990+40 = 2030-01-08
+            const target50 = new Date(2040, 0, 8);  // 2040-01-08
+            const target60 = new Date(2050, 0, 8);  // 2050-01-08
+            const target70 = new Date(2060, 0, 8);  // 2060-01-08
+            const target80 = new Date(2070, 0, 8);  // 2070-01-08
+
+            const today = new Date();
+
+            // 工具: 转为UTC午夜 (只比较日期)
+            function toUTCMidnight(d) {
+                return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            }
+
+            const todayUTC = toUTCMidnight(today);
+
+            // 计算两个UTC日期的天数差 (target - today), 若已过则返回0
+            function daysBetween(targetDate) {
+                const targetUTC = toUTCMidnight(targetDate);
+                if (targetUTC <= todayUTC) return 0;
+                const diffMs = targetUTC - todayUTC;
+                return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            }
+
+            // 专门为80岁计算剩余年月日 (与之前逻辑保持一致, 使用借位法)
+            function computeYMD(targetDate) {
+                const targetUTC = toUTCMidnight(targetDate);
+                if (targetUTC <= todayUTC) {
+                    return { years: 0, months: 0, days: 0 };
+                }
+
+                let yT = targetUTC.getUTCFullYear();
+                let mT = targetUTC.getUTCMonth();
+                let dT = targetUTC.getUTCDate();
+
+                let yN = todayUTC.getUTCFullYear();
+                let mN = todayUTC.getUTCMonth();
+                let dN = todayUTC.getUTCDate();
+
+                let years = yT - yN;
+                let months = mT - mN;
+                let days = dT - dN;
+
+                // 借天
+                if (days < 0) {
+                    // 上个月最后一天
+                    let lastDayPrev = new Date(Date.UTC(yN, mN + 1, 0)).getUTCDate();
+                    days += lastDayPrev;
+                    months -= 1;
+                }
+                // 借月
+                if (months < 0) {
+                    months += 12;
+                    years -= 1;
+                }
+                return { years, months, days };
+            }
+
+            // 获取80岁的年月日
+            const ymd80 = computeYMD(target80);
+            document.getElementById('eightyYears').innerText = ymd80.years;
+            document.getElementById('eightyMonths').innerText = ymd80.months;
+            document.getElementById('eightyDays').innerText = ymd80.days;
+
+            // 80岁总天数 (与总天数卡一致)
+            const days80 = daysBetween(target80);
+            document.getElementById('eightyTotalDays').innerText = days80;
+
+            // 40 50 60 70 天数
+            document.getElementById('daysTo40').innerText = daysBetween(target40);
+            document.getElementById('daysTo50').innerText = daysBetween(target50);
+            document.getElementById('daysTo60').innerText = daysBetween(target60);
+            document.getElementById('daysTo70').innerText = daysBetween(target70);
+
+            // 落款今日日期
+            function formatYMD(date) {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return y + '.' + m + '.' + d;
+            }
+            document.getElementById('todayDate').innerText = formatYMD(today);
+        })();
+    </script>
+    <!-- 界面完全无出生日期，但内部固定 1990-01-08 用于计算 -->
+</body>
+</html>
