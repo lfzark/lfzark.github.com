@@ -1,0 +1,69 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-02-27",
+  "audios": [
+    {
+      "id": "rain",
+      "name": "雨声",
+      "description": "细雨绵绵，洗涂心灵",
+      "url": "https://cdn.rainsound.online/sounds/rain/light-rain.mp3",
+      "enabled": true
+    },
+    {
+      "id": "ocean",
+      "name": "海浪",
+      "description": "潮起潮落，心随浪动",
+      "url": "https://cdn.rainsound.online/sounds/nature/waves.mp3",
+      "enabled": true
+    },
+    {
+      "id": "wind_chime",
+      "name": "风铃",
+      "description": "清脆悦耳，随风摇曳",
+      "url": null,
+      "enabled": false
+    },
+    {
+      "id": "forest",
+      "name": "森林",
+      "description": "鸟鸣虫唱，回归自然",
+      "url": null,
+      "enabled": false
+    },
+    {
+      "id": "stream",
+      "name": "溪流",
+      "description": "潺潺流水，涤荡心灵",
+      "url": null,
+      "enabled": false
+    },
+    {
+      "id": "bamboo",
+      "name": "竹林",
+      "description": "竹影婆娑，清风徐来",
+      "url": null,
+      "enabled": false
+    },
+    {
+      "id": "fireplace",
+      "name": "壁炉",
+      "description": "温暖舒适，静谧安详",
+      "url": "https://cdn.rainsound.online/sounds/nature/campfire.mp3",
+      "enabled": true
+    },
+    {
+      "id": "thunder",
+      "name": "雷雨",
+      "description": "雷声阵阵，释放压力",
+      "url": null,
+      "enabled": false
+    },
+    {
+      "id": "night",
+      "name": "夜晚",
+      "description": "虫鸣蛙叫，宁静夜色",
+      "url": null,
+      "enabled": false
+    }
+  ]
+}
