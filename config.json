@@ -1,6 +1,6 @@
 {
-  "version": "1.0.1",
-  "lastUpdated": "2026-02-27",
+  "version": "1.0.0",
+  "lastUpdated": "2026-03-10",
   "audios": [
     {
       "id": "rain",
@@ -20,50 +20,57 @@
       "id": "wind_chime",
       "name": "风铃",
       "description": "清脆悦耳，随风摇曳",
-      "url": null,
-      "enabled": false
+      "url": "https://cdn.rainsound.online/sounds/things/wind-chimes.mp3",
+      "enabled": true
     },
     {
       "id": "forest",
       "name": "森林",
       "description": "鸟鸣虫唱，回归自然",
-      "url": null,
-      "enabled": false
+      "url": "https://cdn.rainsound.online/sounds/nature/birds-chirping.mp3",
+      "enabled": true
     },
     {
       "id": "stream",
       "name": "溪流",
       "description": "潺潺流水，涤荡心灵",
-      "url": null,
-      "enabled": false
+      "url": "https://cdn.rainsound.online/sounds/nature/stream.mp3",
+      "enabled": true
     },
     {
       "id": "bamboo",
       "name": "竹林",
       "description": "竹影婆娑，清风徐来",
-      "url": null,
-      "enabled": false
+      "url": "https://cdn.rainsound.online/sounds/nature/wind-through-trees.mp3",
+      "enabled": true
     },
     {
       "id": "fireplace",
       "name": "壁炉",
       "description": "温暖舒适，静谧安详",
-      "url": "https://cdn.rainsound.online/sounds/nature/campfire.mp3",
+      "url": "https://cdn.rainsound.online/sounds/things/fireplace.mp3",
       "enabled": true
     },
     {
       "id": "thunder",
       "name": "雷雨",
       "description": "雷声阵阵，释放压力",
-      "url": null,
-      "enabled": false
+      "url": "https://cdn.rainsound.online/sounds/weather/thunder.mp3",
+      "enabled": true
     },
     {
       "id": "night",
       "name": "夜晚",
       "description": "虫鸣蛙叫，宁静夜色",
-      "url": null,
-      "enabled": false
+      "url": "https://cdn.rainsound.online/sounds/nature/crickets.mp3",
+      "enabled": true
+    },
+    {
+      "id": "paper",
+      "name": "纸张翻动",
+      "description": "纸页翻动，轻柔白噪音",
+      "url": "https://cdn.rainsound.online/sounds/things/paper.mp3",
+      "enabled": true
     }
   ]
 }
