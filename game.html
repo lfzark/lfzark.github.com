@@ -1,0 +1,4303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>极简世界 - 策略探索版</title>
+<style>
+    :root {
+        --bg: #0a0e14;
+        --panel: #0f141c;
+        --panel-strong: #11151f;
+        --border: #2a3444;
+        --text: #d0d8e0;
+        --muted: #8fa0b2;
+        --accent: #9fe3b0;
+        --accent-strong: #7fc7ff;
+        --warning: #ffcd76;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    header {
+        background: var(--panel-strong);
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+    }
+
+    header h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    .header-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: flex-end;
+        color: var(--muted);
+    }
+
+    .container {
+        display: grid;
+        grid-template-columns: 300px minmax(560px, 1fr) 280px;
+        height: calc(100vh - 60px);
+        gap: 1px;
+        background: #111;
+    }
+
+    .panel {
+        background: var(--panel);
+        padding: 16px;
+        overflow-y: auto;
+    }
+
+    .map-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background:
+            radial-gradient(circle at top, rgba(80, 115, 160, 0.16), transparent 36%),
+            linear-gradient(180deg, #0d131b 0%, #091018 100%);
+        overflow: hidden;
+    }
+
+    .section-title {
+        margin: 0 0 10px;
+        color: #a8d0ff;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(110, 140, 180, 0.18);
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+
+    .small-note {
+        color: var(--muted);
+        font-size: 12px;
+    }
+
+    .stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .stat-item {
+        background: rgba(0, 0, 0, 0.18);
+        border: 1px solid rgba(95, 120, 155, 0.14);
+        border-radius: 6px;
+        padding: 8px;
+    }
+
+    .stat-item strong {
+        display: block;
+        color: #dbe9f5;
+        font-size: 15px;
+    }
+
+    .control-btn,
+    .mode-btn {
+        display: block;
+        width: 100%;
+        padding: 9px 10px;
+        margin: 4px 0;
+        background: #1b2735;
+        border: 1px solid #334455;
+        color: #d4e4f2;
+        cursor: pointer;
+        font-size: 12px;
+        border-radius: 6px;
+        text-align: left;
+        transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .control-btn:hover,
+    .mode-btn:hover {
+        background: #223247;
+        border-color: #4a6588;
+    }
+
+    .control-btn.active,
+    .mode-btn.active {
+        background: #35597c;
+        border-color: #88aaff;
+        color: #fff;
+    }
+
+    .compact-row {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 4px;
+    }
+
+    .speed-btn {
+        padding: 6px 0;
+        margin: 0;
+        text-align: center;
+        font-size: 12px;
+        border-radius: 5px;
+    }
+
+    #map-grid {
+        display: grid;
+        gap: 1px;
+        background: #0c121a;
+        padding: 10px;
+        border: 1px solid rgba(110, 140, 180, 0.22);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+        transition: transform 0.18s ease-out;
+    }
+
+    .cell {
+        position: relative;
+        overflow: visible;
+        cursor: default;
+        min-width: 6px;
+        min-height: 6px;
+    }
+
+    .cell::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(0, 0, 0, 0.18) 60%, rgba(0, 0, 0, 0.28) 100%);
+        opacity: var(--shadow-opacity, 0.6);
+    }
+
+    .cell.plain     { background: #1e252c; --shadow-opacity: 0.42; }
+    .cell.forest    { background: #122013; --shadow-opacity: 0.56; }
+    .cell.hill      { background: #2a2d34; --shadow-opacity: 0.78; }
+    .cell.mountain  { background: #1b1e25; --shadow-opacity: 0.96; }
+    .cell.water     { background: #10203b; --shadow-opacity: 0.62; }
+    .cell.structure { background: #32233c; --shadow-opacity: 0.88; box-shadow: inset 0 0 10px rgba(110, 70, 40, 0.4); }
+
+    .cell.impassable::before {
+        content: "";
+        position: absolute;
+        inset: 2px;
+        border: 1px solid rgba(120, 170, 255, 0.18);
+        pointer-events: none;
+    }
+
+    .avatar {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 170%;
+        color: #b6ffdd;
+        text-shadow: 0 0 12px rgba(85, 255, 136, 0.75);
+        z-index: 5;
+    }
+
+    .avatar-main {
+        display: block;
+        filter: drop-shadow(0 0 6px rgba(90, 255, 156, 0.45));
+    }
+
+    .avatar-badge {
+        position: absolute;
+        right: 2px;
+        top: 2px;
+        font-size: 11px;
+        line-height: 1;
+        z-index: 7;
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.7);
+    }
+
+    .avatar.state-idle .avatar-main {
+        animation: avatar-breathe 1.8s ease-in-out infinite;
+    }
+
+    .avatar.state-move .avatar-main {
+        animation: avatar-move 0.56s linear infinite;
+    }
+
+    .avatar.state-gather .avatar-main {
+        animation: avatar-gather 0.9s ease-in-out infinite;
+    }
+
+    .avatar.state-battle .avatar-main {
+        animation: avatar-battle 0.22s linear infinite;
+    }
+
+    @keyframes avatar-breathe {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.03); }
+    }
+
+    @keyframes avatar-move {
+        0% { transform: translateY(0); }
+        25% { transform: translateY(-1px); }
+        50% { transform: translateY(1px); }
+        75% { transform: translateY(-1px); }
+        100% { transform: translateY(0); }
+    }
+
+    @keyframes avatar-gather {
+        0%, 100% { transform: scale(1); opacity: 0.95; }
+        50% { transform: scale(1.05); opacity: 1; }
+    }
+
+    @keyframes avatar-battle {
+        0%, 100% { transform: translateX(0); filter: brightness(1); }
+        25% { transform: translateX(-1px); filter: brightness(1.2); }
+        50% { transform: translateX(1px); filter: brightness(0.9); }
+        75% { transform: translateX(-1px); filter: brightness(1.25); }
+    }
+
+    #combat-fx-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 40;
+    }
+
+    .combat-fx {
+        position: absolute;
+        left: var(--fx-left, 50%);
+        top: var(--fx-top, 50%);
+        transform: translate(-50%, -50%);
+        font-weight: 700;
+        font-size: 14px;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+        opacity: 0;
+        animation: combat-float 850ms ease-out forwards;
+        white-space: nowrap;
+    }
+
+    .combat-fx.damage { color: #ff7777; }
+    .combat-fx.heal { color: #7eff95; }
+    .combat-fx.info { color: #ffe08a; }
+
+    @keyframes combat-float {
+        0% {
+            opacity: 0;
+            transform: translate(-50%, -40%) scale(0.92);
+        }
+        15% {
+            opacity: 1;
+            transform: translate(-50%, -58%) scale(1.04);
+        }
+        100% {
+            opacity: 0;
+            transform: translate(-50%, -120%) scale(1);
+        }
+    }
+
+    .chunk-tag,
+    .resource-tag,
+    .home-tag,
+    .target-tag {
+        position: absolute;
+        z-index: 4;
+        font-size: 10px;
+        line-height: 1;
+        pointer-events: none;
+        text-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+    }
+
+    .resource-tag {
+        right: 2px;
+        bottom: 2px;
+    }
+
+    .chunk-tag {
+        left: 2px;
+        top: 2px;
+        color: rgba(255, 255, 255, 0.75);
+    }
+
+    .home-tag {
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        color: #ffc87d;
+        font-size: 12px;
+    }
+
+    .target-tag {
+        left: 50%;
+        bottom: -10px;
+        transform: translateX(-50%);
+        color: #9fe3b0;
+    }
+
+    .cell.monster-cell::before {
+        content: "";
+        position: absolute;
+        inset: 2px;
+        border-radius: 3px;
+        pointer-events: none;
+        border: 1px solid rgba(255, 178, 96, 0.65);
+        box-shadow: 0 0 10px rgba(255, 160, 92, 0.38);
+        animation: monster-pulse 1.4s ease-in-out infinite;
+        z-index: 3;
+    }
+
+    .cell.monster-elite::before {
+        border-color: rgba(255, 106, 106, 0.72);
+        box-shadow: 0 0 12px rgba(255, 96, 96, 0.48);
+    }
+
+    .cell.monster-boss::before {
+        border-color: rgba(211, 124, 255, 0.8);
+        box-shadow: 0 0 14px rgba(198, 102, 255, 0.62);
+        animation-duration: 1s;
+    }
+
+    @keyframes monster-pulse {
+        0%, 100% { opacity: 0.8; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.03); }
+    }
+
+    .cell.home-build-zone::before {
+        content: "";
+        position: absolute;
+        inset: 1px;
+        border: 1px dashed rgba(255, 208, 126, 0.35);
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    .cell.home-edge-top { box-shadow: inset 0 2px 0 rgba(255, 210, 130, 0.7); }
+    .cell.home-edge-bottom { box-shadow: inset 0 -2px 0 rgba(255, 210, 130, 0.7); }
+    .cell.home-edge-left { outline: 2px solid rgba(255, 210, 130, 0.6); outline-offset: -2px; }
+    .cell.home-edge-right { outline: 2px solid rgba(255, 210, 130, 0.6); outline-offset: -2px; }
+
+    .gathering {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 56px;
+        height: 56px;
+        margin-bottom: 4px;
+        z-index: 20;
+        pointer-events: none;
+    }
+
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+
+    .progress-ring__circle {
+        transition: stroke-dashoffset 0.1s linear;
+        transform-origin: 50% 50%;
+    }
+
+    .progress-text {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+        color: #aaffcc;
+    }
+
+    #tooltip {
+        position: absolute;
+        background: rgba(20, 28, 40, 0.95);
+        border: 1px solid #334455;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 13px;
+        pointer-events: none;
+        z-index: 100;
+        max-width: 280px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+        display: none;
+        white-space: pre-line;
+    }
+
+    #build-panel {
+        position: absolute;
+        right: 16px;
+        bottom: 16px;
+        width: 340px;
+        max-height: 70vh;
+        overflow-y: auto;
+        background: rgba(16, 23, 34, 0.96);
+        border: 1px solid rgba(130, 165, 210, 0.42);
+        border-radius: 10px;
+        box-shadow: 0 14px 32px rgba(0, 0, 0, 0.55);
+        padding: 12px;
+        z-index: 130;
+        pointer-events: auto;
+    }
+
+    #build-panel.hidden {
+        display: none;
+    }
+
+    .build-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        align-items: center;
+        margin: 6px 0;
+        padding: 8px;
+        border: 1px solid rgba(100, 130, 160, 0.25);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    .build-meta {
+        font-size: 12px;
+        color: #9fb3c8;
+    }
+
+    .mini-btn {
+        border: 1px solid #3e5572;
+        background: #213247;
+        color: #d6e4f1;
+        border-radius: 6px;
+        padding: 6px 8px;
+        cursor: pointer;
+        font-size: 12px;
+    }
+
+    .mini-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+
+    .mini-meta-warn {
+        color: #ffb98f;
+    }
+
+    .mat-line {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 2px;
+    }
+
+    .mat-item {
+        font-size: 12px;
+        padding: 1px 4px;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .mat-ok {
+        color: #93e0a9;
+        border: 1px solid rgba(100, 210, 120, 0.35);
+    }
+
+    .mat-bad {
+        color: #ff9d9d;
+        border: 1px solid rgba(255, 120, 120, 0.35);
+    }
+
+    .log {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 6px 0;
+        padding-left: 10px;
+        border-left: 2px solid #334455;
+    }
+
+    .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    .pill {
+        border-radius: 999px;
+        padding: 4px 8px;
+        font-size: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(110, 140, 180, 0.16);
+    }
+
+    .tab-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .tab-pane.hidden {
+        display: none;
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    .inv-block {
+        margin-bottom: 12px;
+    }
+
+    .inv-title {
+        font-size: 13px;
+        color: #cddcf0;
+        margin-bottom: 6px;
+    }
+
+    .inv-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 4px;
+    }
+
+    .inv-slot {
+        position: relative;
+        min-height: 48px;
+        border-radius: 6px;
+        border: 1px solid rgba(95, 120, 155, 0.18);
+        background: rgba(17, 24, 36, 0.92);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+    }
+
+    .inv-slot.rarity-common {
+        border-color: rgba(170, 185, 210, 0.35);
+    }
+
+    .inv-slot.rarity-uncommon {
+        border-color: rgba(110, 210, 135, 0.55);
+    }
+
+    .inv-slot.rarity-rare {
+        border-color: rgba(109, 174, 255, 0.65);
+    }
+
+    .inv-slot.rarity-epic {
+        border-color: rgba(213, 122, 255, 0.7);
+    }
+
+    .inv-slot .qty {
+        position: absolute;
+        right: 4px;
+        bottom: 2px;
+        font-size: 12px;
+        color: #eaf4ff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
+    .codex-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .codex-item {
+        border-radius: 6px;
+        padding: 8px;
+        border: 1px solid rgba(95, 120, 155, 0.2);
+        background: rgba(20, 28, 40, 0.75);
+    }
+
+    .codex-item.locked {
+        opacity: 0.55;
+        filter: grayscale(0.55);
+    }
+
+    .codex-item.rarity-common { border-color: rgba(170, 185, 210, 0.35); }
+    .codex-item.rarity-uncommon { border-color: rgba(110, 210, 135, 0.55); }
+    .codex-item.rarity-rare { border-color: rgba(109, 174, 255, 0.65); }
+    .codex-item.rarity-epic { border-color: rgba(213, 122, 255, 0.7); }
+
+    #codex-panel {
+        position: fixed;
+        right: 24px;
+        top: 72px;
+        width: min(420px, calc(100vw - 40px));
+        max-height: calc(100vh - 96px);
+        overflow-y: auto;
+        z-index: 60;
+        background: rgba(13, 19, 28, 0.96);
+        border: 1px solid rgba(110, 140, 180, 0.25);
+        border-radius: 10px;
+        padding: 12px;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+    }
+
+    #item-detail {
+        position: fixed;
+        z-index: 70;
+        max-width: 260px;
+        pointer-events: none;
+        background: rgba(10, 16, 24, 0.96);
+        border: 1px solid rgba(110, 140, 180, 0.28);
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 12px;
+        color: #d4e4f2;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    #item-menu {
+        position: fixed;
+        z-index: 75;
+        min-width: 180px;
+        background: rgba(9, 15, 22, 0.97);
+        border: 1px solid rgba(110, 140, 180, 0.35);
+        border-radius: 8px;
+        padding: 8px;
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+    }
+
+    #item-menu .menu-title {
+        font-size: 12px;
+        color: #c9d9ea;
+        margin-bottom: 6px;
+    }
+
+    #item-menu .menu-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    #battle-panel {
+        position: fixed;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        width: min(680px, calc(100vw - 28px));
+        z-index: 58;
+        background: rgba(11, 17, 26, 0.94);
+        border: 1px solid rgba(120, 155, 200, 0.28);
+        border-radius: 10px;
+        padding: 10px 12px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+    }
+
+    #battleLogList {
+        max-height: 110px;
+        overflow-y: auto;
+        font-size: 12px;
+        color: #cfe1f7;
+        line-height: 1.45;
+    }
+
+    #craft-panel,
+    #shop-panel,
+    #enhance-panel {
+        position: fixed;
+        left: 24px;
+        top: 72px;
+        width: min(430px, calc(100vw - 40px));
+        max-height: calc(100vh - 96px);
+        overflow-y: auto;
+        z-index: 60;
+        background: rgba(13, 19, 28, 0.96);
+        border: 1px solid rgba(110, 140, 180, 0.25);
+        border-radius: 10px;
+        padding: 12px;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+    }
+
+    .attr-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 6px 0;
+        font-size: 13px;
+    }
+
+    .attr-ops {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .warning {
+        color: var(--warning);
+    }
+
+    .cultivation-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+
+    .cultivation-ring {
+        position: relative;
+        width: 56px;
+        height: 56px;
+        flex: 0 0 auto;
+    }
+
+    .cultivation-ring svg {
+        width: 56px;
+        height: 56px;
+        transform: rotate(-90deg);
+    }
+
+    .cultivation-ring circle {
+        fill: none;
+        stroke-width: 5;
+    }
+
+    .cultivation-ring .bg {
+        stroke: rgba(120, 150, 190, 0.25);
+    }
+
+    .cultivation-ring .fg {
+        stroke: #8fd9ff;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.2s ease;
+    }
+
+    .cultivation-ring .icon {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+    }
+
+    @media (max-width: 1280px) {
+        .container {
+            grid-template-columns: 280px minmax(420px, 1fr) 250px;
+        }
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>极简世界 - 策略探索版</h1>
+    <div class="header-meta">
+        <span>境界 <span id="realm-name">练气中期</span></span>
+        <span>第 <span id="day-count">1</span> 天</span>
+        <span>坐标 (<span id="coord-x">5000</span>, <span id="coord-y">5000</span>)</span>
+        <span>缩放 <span id="zoom-label">巡视</span></span>
+        <span>行动模式 无行动力限制</span>
+    </div>
+</header>
+
+<div class="container">
+    <div class="panel left-panel">
+        <div class="card" id="cultivationPanel">
+            <div class="cultivation-head">
+                <div class="cultivation-ring">
+                    <svg viewBox="0 0 56 56">
+                        <circle class="bg" cx="28" cy="28" r="22"></circle>
+                        <circle id="cultivationTickRing" class="fg" cx="28" cy="28" r="22" stroke-dasharray="138.2" stroke-dashoffset="138.2"></circle>
+                    </svg>
+                    <div class="icon">🧘</div>
+                </div>
+                <div style="font-size:1.05em; color:#a8d0ff;">
+                    主角 · 肉身修炼
+                </div>
+            </div>
+            <div id="cultivationMeta" class="small-note">境界与修为载入中...</div>
+            <div class="compact-row" style="grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:8px;">
+                <button id="meditateBtn" class="mode-btn speed-btn">🧘 开始打坐</button>
+                <button id="breakthroughBtn" class="mode-btn speed-btn">⛰ 突破</button>
+            </div>
+            <label class="small-note" style="display:block; margin-top:6px;">
+                <input id="autoBreakthroughToggle" type="checkbox"> 自动突破
+            </label>
+        </div>
+
+        <div class="card">
+            <div style="font-size:1.02em; margin-bottom:8px; color:#a8d0ff;">🧍 化身 · 外出历练</div>
+            <button id="autoBtn" class="control-btn">▶ 自动探索</button>
+            <button id="returnBtn" class="control-btn">🏠 回城优先</button>
+        </div>
+
+        <div class="section-title" style="margin-top:8px;">倍速</div>
+        <div id="speedButtons"></div>
+
+        <div class="section-title" style="margin-top:10px;">探索策略</div>
+        <div id="strategyButtons"></div>
+        <div class="section-title" style="margin-top:10px;">战斗策略</div>
+        <div id="tacticButtons"></div>
+        <div class="card" style="margin:8px 0 0;">
+            <div class="small-note">用药阈值：丹 <span id="pillThresholdLabel">50</span>% / 散 <span id="salveThresholdLabel">32</span>%</div>
+            <input id="pillThresholdInput" type="range" min="30" max="85" step="5" value="50" style="width:100%; margin-top:6px;">
+            <input id="salveThresholdInput" type="range" min="15" max="65" step="5" value="32" style="width:100%; margin-top:6px;">
+        </div>
+
+        <div class="section-title" style="margin-top:10px;">地图缩放</div>
+        <div id="zoomButtons"></div>
+
+        <div class="section-title" style="margin-top:8px;">洞府建设</div>
+        <button id="refineBtn" class="control-btn">⚗ 洞府炼化</button>
+
+        <div class="section-title" style="margin-top:10px;">功能</div>
+        <div class="compact-row" style="grid-template-columns:repeat(2,minmax(0,1fr));">
+            <button id="craftBtn" class="mode-btn speed-btn">🧪 合成</button>
+            <button id="saveBtn" class="mode-btn speed-btn">💾 存档</button>
+            <button id="loadBtn" class="mode-btn speed-btn">📂 读档</button>
+            <button id="helpBtn" class="mode-btn speed-btn">📘 帮助</button>
+        </div>
+        <button id="shopBtn" class="control-btn">🛒 丹药商店</button>
+        <button id="enhanceBtn" class="control-btn">⚒ 装备强化</button>
+        <button id="changelogBtn" class="control-btn">📝 更新日志</button>
+
+        <div class="section-title" style="margin-top:16px;">测试开关</div>
+        <label class="small-note" style="display:block; margin:6px 0;">
+            <input id="forceMonsterToggle" type="checkbox"> 强制附近刷怪
+        </label>
+        <label class="small-note" style="display:block; margin:6px 0;">
+            <input id="fixedDropToggle" type="checkbox"> 固定掉落结果
+        </label>
+        <button id="debugBattleBtn" class="control-btn">⚔ 一键触发战斗</button>
+
+        <div class="section-title" style="margin-top:16px;">当前状态</div>
+        <div id="avatarStatus" class="card" style="font-size:13px; line-height:1.6; margin-bottom:0;"></div>
+        <div class="section-title" style="margin-top:12px;">化身行进状态</div>
+        <div id="movementStatus" class="card" style="font-size:13px; line-height:1.5; margin-bottom:0;"></div>
+    </div>
+
+    <div class="map-container">
+        <div id="map-grid"></div>
+        <div id="combat-fx-layer"></div>
+        <div id="tooltip"></div>
+        <div id="build-panel" class="hidden"></div>
+    </div>
+
+    <div class="panel right-panel">
+        <div class="section-title">信息面板</div>
+        <div id="rightTabButtons" class="tab-row">
+            <button class="mode-btn active" data-right-tab="resource">资源</button>
+            <button class="mode-btn" data-right-tab="attributes">属性</button>
+            <button id="codexBtn" class="mode-btn">📚 图鉴</button>
+        </div>
+        <div id="resourceSummary" class="card tab-pane"></div>
+        <div id="attributeSummary" class="card tab-pane hidden"></div>
+
+        <div class="section-title">地图解读</div>
+        <div id="worldSummary" class="card"></div>
+
+        <div class="section-title">活动日志</div>
+        <div id="log-container" style="max-height:380px; overflow-y:auto;"></div>
+    </div>
+</div>
+<div id="codex-panel" class="hidden">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <strong>📚 物品图鉴</strong>
+        <button id="codexCloseBtn" class="mini-btn">关闭</button>
+    </div>
+    <div id="codexSummary"></div>
+</div>
+<div id="item-detail" class="hidden"></div>
+<div id="item-menu" class="hidden"></div>
+<div id="battle-panel" class="hidden">
+    <div id="battleSummary" style="font-size:13px; margin-bottom:6px;"></div>
+    <div id="battleLogList"></div>
+</div>
+<div id="craft-panel" class="hidden">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <strong>🧪 合成配置清单</strong>
+        <button id="craftCloseBtn" class="mini-btn">关闭</button>
+    </div>
+    <div id="craftSummary"></div>
+</div>
+<div id="shop-panel" class="hidden">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <strong>🛒 丹药商店</strong>
+        <button id="shopCloseBtn" class="mini-btn">关闭</button>
+    </div>
+    <div id="shopSummary"></div>
+</div>
+<div id="enhance-panel" class="hidden">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <strong>⚒ 装备强化</strong>
+        <button id="enhanceCloseBtn" class="mini-btn">关闭</button>
+    </div>
+    <div id="enhanceSummary"></div>
+</div>
+
+<script>
+const HOME_X = 5000;
+const HOME_Y = 5000;
+const AUTO_STEP_MS = 1000;
+const GATHER_BASE_MS = 9000;
+const MAX_LOGS = 16;
+const RESERVATION_TTL_MS = 24000;
+const PLAYER_ID = "player-local";
+const TARGET_BACKOFF_BASE_MS = 1800;
+const TARGET_BACKOFF_MAX_MS = 12000;
+const TARGET_POOL_SIZE = 6;
+const CHUNK_SIZE = 16;
+const CHUNK_HEAT_DECAY_PER_SEC = 0.025;
+const HOME_BUILD_RADIUS = 2;
+const MEDITATE_BASE_MS = 12000;
+const BODY_CULTIVATION_TICK_MS = 20000;
+const DAILY_MOVE_RADIUS = 15;
+const BUILDING_PRODUCTION_TICK_MS = 5000;
+const MONSTER_RESPAWN_MS = 45000;
+const SAVE_KEY = "simpleworld_save_v2";
+
+const BALANCE_CONFIG = {
+    timing: {
+        autoStepMs: AUTO_STEP_MS,
+        battleStepMs: 1600,
+        gatherBaseMs: GATHER_BASE_MS,
+        buildingTickMs: BUILDING_PRODUCTION_TICK_MS,
+        monsterRespawnMs: MONSTER_RESPAWN_MS
+    },
+    combat: {
+        lowHpRetreatRatio: 0.35,
+        lowHpReturnRatio: 0.42,
+        monsterHpScale: 1.8,
+        playerDamageScale: 0.54,
+        monsterDamageScale: 0.9,
+        injuryDebuffRatio: 0.85,
+        injuryDurationMs: 120000
+    },
+    drops: {
+        rareBase: 12,
+        rareMax: 45,
+        chestSmallBase: 12,
+        chestMediumBase: 6,
+        chestLargeBase: 2
+    },
+    crafting: {
+        tierUnlock: {
+            1: { refinementLevel: 1, spiritWell: 0, trainingRoom: 0 },
+            2: { refinementLevel: 2, spiritWell: 1, trainingRoom: 0 },
+            3: { refinementLevel: 3, spiritWell: 1, trainingRoom: 1 }
+        }
+    }
+};
+
+const ZOOM_LEVELS = [
+    { label: "入微", size: 21, cellPx: 34, span: 1 },
+    { label: "近观", size: 25, cellPx: 28, span: 1 },
+    { label: "巡视", size: 31, cellPx: 20, span: 2 },
+    { label: "舆图", size: 35, cellPx: 15, span: 4 },
+    { label: "疆域", size: 39, cellPx: 11, span: 8 },
+    { label: "天下", size: 41, cellPx: 8, span: 16 },
+    { label: "全貌", size: 41, cellPx: 6, span: 32 }
+];
+
+const TERRAIN_RULES = {
+    plain: { label: "平原", moveCost: 1, passable: true },
+    forest: { label: "密林", moveCost: 2, passable: true },
+    hill: { label: "丘陵", moveCost: 2, passable: true },
+    mountain: { label: "高山", moveCost: 3, passable: true },
+    water: { label: "水域", moveCost: Infinity, passable: false },
+    structure: { label: "洞府", moveCost: 1, passable: true }
+};
+
+const RESOURCE_META = {
+    gold: { label: "金币", icon: "🪙" },
+    spiritStone: { label: "灵石", icon: "✦" },
+    herb: { label: "灵草", icon: "✿" },
+    wood: { label: "灵木", icon: "❖" },
+    rareCrystal: { label: "异晶", icon: "✧" },
+    demonCore: { label: "妖丹", icon: "◈" }
+};
+
+const ITEM_DEFS = {
+    spiritStone: { label: "灵石", icon: "✦", rarity: "common", category: "资源", source: "采集 / 战斗掉落", sellValue: 1 },
+    herb: { label: "灵草", icon: "✿", rarity: "uncommon", category: "资源", source: "采集 / 战斗掉落", sellValue: 3 },
+    wood: { label: "灵木", icon: "❖", rarity: "common", category: "资源", source: "采集 / 建筑产出", sellValue: 2 },
+    rareCrystal: { label: "异晶", icon: "✧", rarity: "epic", category: "资源", source: "高阶采集 / 战斗掉落", sellValue: 26 },
+    demonCore: { label: "妖丹", icon: "◈", rarity: "rare", category: "资源", source: "怪物掉落", sellValue: 12 },
+    spiritPill: { label: "聚灵丹", icon: "◉", rarity: "rare", category: "消耗品", source: "合成配置", bonus: { def: 1 }, sellValue: 18, usable: true },
+    healingSalve: { label: "回春散", icon: "✚", rarity: "uncommon", category: "消耗品", source: "合成配置", sellValue: 12, usable: true },
+    wardCharm: { label: "护体符", icon: "☉", rarity: "rare", category: "符咒", source: "合成配置", bonus: { def: 2 }, sellValue: 22, usable: true },
+    focusCharm: { label: "凝神符", icon: "✶", rarity: "rare", category: "符咒", source: "合成配置", bonus: { hit: 0.02, luck: 2 }, sellValue: 24, usable: true },
+    baitFlag: { label: "引妖旗", icon: "⚑", rarity: "uncommon", category: "道具", source: "合成配置", sellValue: 16, usable: true },
+    chestSmall: { label: "小宝箱", icon: "🧰", rarity: "uncommon", category: "战利品", source: "战斗掉落", sellValue: 20, usable: true },
+    chestMedium: { label: "中宝箱", icon: "🎁", rarity: "rare", category: "战利品", source: "战斗掉落", sellValue: 45, usable: true },
+    chestLarge: { label: "大宝箱", icon: "🗃️", rarity: "epic", category: "战利品", source: "战斗掉落", sellValue: 100, usable: true },
+    coreElixir: { label: "妖丹精华", icon: "⬢", rarity: "epic", category: "炼化材料", source: "合成配置", sellValue: 40 },
+    starShard: { label: "星辉碎片", icon: "✺", rarity: "epic", category: "炼化材料", source: "合成配置", sellValue: 52 },
+    ascendSeal: { label: "飞升印", icon: "⟐", rarity: "epic", category: "关键道具", source: "高阶合成", sellValue: 120 },
+    sword: { label: "佩剑", icon: "🗡️", rarity: "rare", category: "装备", source: "初始装备", bonus: { atk: 8, hit: 0.03 }, sellValue: 88 },
+    bow: { label: "木弓", icon: "🏹", rarity: "uncommon", category: "装备", source: "初始装备", bonus: { atk: 4, hit: 0.02 }, sellValue: 62 },
+    shield: { label: "护心镜", icon: "🛡️", rarity: "rare", category: "装备", source: "初始装备", bonus: { def: 6, dodge: 0.02 }, sellValue: 86 },
+    artifact: { label: "符器", icon: "📿", rarity: "epic", category: "装备", source: "主角执事配装", bonus: { luck: 8, atk: 2, def: 2 }, sellValue: 160 },
+    thunderBlade: { label: "雷劫断岳", icon: "⚡🗡", rarity: "epic", category: "装备", source: "精英/BOSS掉落", bonus: { atk: 16, hit: 0.05 }, sellValue: 240 },
+    phoenixBow: { label: "赤凰长弓", icon: "🔥🏹", rarity: "epic", category: "装备", source: "精英/BOSS掉落", bonus: { atk: 12, hit: 0.06, luck: 2 }, sellValue: 228 },
+    voidArmor: { label: "太虚战铠", icon: "🛡️✨", rarity: "epic", category: "装备", source: "精英/BOSS掉落", bonus: { def: 14, dodge: 0.05 }, sellValue: 252 },
+    dragonRelic: { label: "天龙遗宝", icon: "🐉", rarity: "epic", category: "关键道具", source: "BOSS稀有掉落", bonus: { atk: 4, def: 4, luck: 6 }, sellValue: 360 }
+};
+
+const MONSTER_CODEX = [
+    {
+        type: "邪祟",
+        levelRange: "Lv.1-2",
+        drops: [
+            { id: "spiritStone", chance: "100%" },
+            { id: "herb", chance: "35%" },
+            { id: "demonCore", chance: "8%" }
+        ]
+    },
+    {
+        type: "妖兽",
+        levelRange: "Lv.2-3",
+        drops: [
+            { id: "spiritStone", chance: "100%" },
+            { id: "herb", chance: "45%" },
+            { id: "demonCore", chance: "14%" },
+            { id: "rareCrystal", chance: "18%" }
+        ]
+    },
+    {
+        type: "妖将",
+        levelRange: "Lv.3-5",
+        drops: [
+            { id: "spiritStone", chance: "100%" },
+            { id: "demonCore", chance: "22%" },
+            { id: "rareCrystal", chance: "32%" }
+        ]
+    },
+    {
+        type: "精英妖将",
+        levelRange: "Lv.5-7",
+        drops: [
+            { id: "demonCore", chance: "100%" },
+            { id: "rareCrystal", chance: "55%" },
+            { id: "thunderBlade", chance: "12%" },
+            { id: "phoenixBow", chance: "10%" },
+            { id: "voidArmor", chance: "10%" }
+        ]
+    },
+    {
+        type: "天劫妖王",
+        levelRange: "Lv.8-10",
+        drops: [
+            { id: "rareCrystal", chance: "100%" },
+            { id: "dragonRelic", chance: "20%" },
+            { id: "thunderBlade", chance: "18%" },
+            { id: "phoenixBow", chance: "18%" },
+            { id: "voidArmor", chance: "18%" }
+        ]
+    }
+];
+
+const CRAFT_RECIPES = [
+    {
+        id: "spiritPill",
+        label: "聚灵丹",
+        tier: 1,
+        out: { spiritPill: 1 },
+        cost: { herb: 4, spiritStone: 18 },
+        use: "战斗中自动保命回复"
+    },
+    {
+        id: "healingSalve",
+        label: "回春散",
+        tier: 1,
+        out: { healingSalve: 1 },
+        cost: { herb: 3, wood: 2 },
+        use: "返城后额外恢复"
+    },
+    {
+        id: "wardCharm",
+        label: "护体符",
+        tier: 1,
+        out: { wardCharm: 1 },
+        cost: { spiritStone: 24, wood: 3 },
+        use: "提高化身防御"
+    },
+    {
+        id: "focusCharm",
+        label: "凝神符",
+        tier: 2,
+        out: { focusCharm: 1 },
+        cost: { spiritStone: 20, herb: 2 },
+        use: "提高命中与掉率"
+    },
+    {
+        id: "baitFlag",
+        label: "引妖旗",
+        tier: 2,
+        out: { baitFlag: 1 },
+        cost: { wood: 4, demonCore: 1 },
+        use: "强制附近刷怪消耗品"
+    },
+    {
+        id: "coreElixir",
+        label: "妖丹精华",
+        tier: 2,
+        out: { coreElixir: 1 },
+        cost: { demonCore: 2, herb: 2 },
+        use: "炼化时可替代部分材料"
+    },
+    {
+        id: "starShard",
+        label: "星辉碎片",
+        tier: 3,
+        out: { starShard: 1 },
+        cost: { rareCrystal: 1, spiritStone: 36 },
+        use: "高阶炼化核心材料"
+    },
+    {
+        id: "ascendSeal",
+        label: "飞升印",
+        tier: 3,
+        out: { ascendSeal: 1 },
+        cost: { starShard: 2, coreElixir: 1, spiritStone: 80 },
+        use: "后续飞升功能预留凭证"
+    }
+];
+
+const STRATEGIES = [
+    { id: "balanced", label: "均衡搜索", hint: "综合距离、地形和资源价值。", weights: { herb: 1.0, wood: 1.0, stone: 1.0, rare: 1.7 } },
+    { id: "herb", label: "采药优先", hint: "更偏向灵草和林地。", weights: { herb: 2.2, wood: 0.9, stone: 0.5, rare: 1.2 } },
+    { id: "wood", label: "伐木优先", hint: "优先找灵木和林地区域。", weights: { herb: 0.9, wood: 2.2, stone: 0.5, rare: 1.0 } },
+    { id: "rare", label: "异晶搜寻", hint: "承受更高成本去找稀有资源。", weights: { herb: 0.7, wood: 0.7, stone: 1.2, rare: 2.8 } }
+];
+const BATTLE_TACTICS = [
+    { id: "steady", label: "稳健", hint: "更稳更抗，适合远行保命", atkMul: 0.88, defMul: 1.2, hitBonus: 0.01, dodgeBonus: 0.02, critBonus: -0.02, incomingMul: 0.86 },
+    { id: "balanced", label: "均衡", hint: "攻防均衡，默认推荐", atkMul: 1.0, defMul: 1.0, hitBonus: 0.0, dodgeBonus: 0.0, critBonus: 0.0, incomingMul: 1.0 },
+    { id: "aggressive", label: "激进", hint: "高爆发高风险，战斗更快", atkMul: 1.22, defMul: 0.82, hitBonus: 0.02, dodgeBonus: -0.02, critBonus: 0.04, incomingMul: 1.16 }
+];
+const CHEST_LOOT_TABLES = {
+    chestSmall: [
+        { id: "spiritStone", weight: 42, min: 20, max: 44 },
+        { id: "herb", weight: 24, min: 3, max: 8 },
+        { id: "wood", weight: 18, min: 3, max: 7 },
+        { id: "spiritPill", weight: 7, min: 1, max: 2 },
+        { id: "demonCore", weight: 6, min: 1, max: 2 },
+        { id: "rareCrystal", weight: 3, min: 1, max: 1 }
+    ],
+    chestMedium: [
+        { id: "spiritStone", weight: 28, min: 38, max: 72 },
+        { id: "herb", weight: 18, min: 6, max: 14 },
+        { id: "demonCore", weight: 18, min: 1, max: 3 },
+        { id: "spiritPill", weight: 11, min: 1, max: 2 },
+        { id: "healingSalve", weight: 9, min: 1, max: 2 },
+        { id: "focusCharm", weight: 7, min: 1, max: 1 },
+        { id: "rareCrystal", weight: 9, min: 1, max: 2 }
+    ],
+    chestLarge: [
+        { id: "spiritStone", weight: 20, min: 80, max: 140 },
+        { id: "demonCore", weight: 22, min: 2, max: 5 },
+        { id: "rareCrystal", weight: 18, min: 1, max: 3 },
+        { id: "coreElixir", weight: 14, min: 1, max: 2 },
+        { id: "starShard", weight: 12, min: 1, max: 2 },
+        { id: "wardCharm", weight: 7, min: 1, max: 2 },
+        { id: "ascendSeal", weight: 7, min: 1, max: 1 }
+    ]
+};
+
+const REALM_NAMES = ["练气初期", "练气中期", "练气后期", "筑基初期", "筑基中期", "筑基后期"];
+const BUILDING_TYPES = [
+    { id: "none", label: "查看模式", icon: "·", buildCost: null, upgradeCost: null, effect: "不操作，仅查看" },
+    { id: "herbGarden", label: "灵草圃", icon: "🌿", buildCost: { spiritStone: 28, wood: 6, herb: 4 }, upgradeCost: { spiritStone: 20, wood: 4, herb: 3 }, effect: "每周期产出灵草，且打坐效率 +4%/级" },
+    { id: "woodWorkshop", label: "灵木坊", icon: "🪵", buildCost: { spiritStone: 26, wood: 8, herb: 2 }, upgradeCost: { spiritStone: 22, wood: 5, herb: 2 }, effect: "每周期产出灵木" },
+    { id: "spiritWell", label: "聚灵井", icon: "⛲", buildCost: { spiritStone: 40, wood: 4, herb: 6 }, upgradeCost: { spiritStone: 30, wood: 3, herb: 4 }, effect: "消耗灵草产出灵石，仓储 +12/级" },
+    { id: "trainingRoom", label: "悟道室", icon: "🕯", buildCost: { spiritStone: 34, wood: 5, herb: 5 }, upgradeCost: { spiritStone: 26, wood: 4, herb: 4 }, effect: "消耗灵石促生灵草，打坐经验 +8%/级" }
+];
+
+let avatarX = HOME_X;
+let avatarY = HOME_Y;
+let zoomLevel = 2;
+let dayCount = 1;
+let isAutoMode = false;
+let isGathering = false;
+let autoObjective = "explore";
+let gatherRemainingMs = 0;
+let gatherTotalMs = 0;
+let gatheringTarget = null;
+let gatheringProgress = 0;
+let autoAccumulatorMs = 0;
+let simulationTimeMs = 0;
+let strategyId = "balanced";
+let cultivationLevel = 1;
+let gatherCount = 0;
+let inspectText = "";
+let exploreTarget = null;
+let dayRefineCount = 0;
+let isMeditating = false;
+let meditateRemainingMs = 0;
+let meditateTotalMs = 0;
+let meditationExp = 0;
+let meditationLevel = 1;
+let isBuildFocus = false;
+let buildPanelTile = null;
+let hasAscended = false;
+let dayOriginX = HOME_X;
+let dayOriginY = HOME_Y;
+let dayMoveCount = 0;
+let dayMoveLogBatch = 0;
+let timeScale = 1;
+let buildingProductionAccumMs = 0;
+let avatarBagCap = 320;
+let bagReturnRatio = 0.9;
+let dayGatherUnits = 0;
+let dayStartMs = 0;
+let avatarHp = 140;
+let avatarMp = 120;
+let battleState = null;
+let dayCombatWins = 0;
+let rightPanelTab = "resource";
+let battleRoundLogs = [];
+let devForceMonster = false;
+let devFixedDrops = false;
+let baitBoostUntilMs = 0;
+let lastMoveAtMs = -99999;
+let battleTacticId = "balanced";
+let autoUsePillRatio = 0.5;
+let autoUseSalveRatio = 0.32;
+let injuryDebuffUntilMs = 0;
+let lastBattleFrame = null;
+let goldCoins = 0;
+let itemMenuState = null;
+let bodyCultivationExp = 0;
+let bodyCultivationAccumMs = 0;
+let heavenlyEssence = 0;
+let cultivationBuffUntilMs = 0;
+let autoBreakthrough = false;
+const equipmentEnhanceLevels = { sword: 0, bow: 0, shield: 0, artifact: 0, thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0 };
+
+const avatarInventory = {
+    spiritStone: 0, herb: 0, wood: 0, rareCrystal: 0, demonCore: 0,
+    spiritPill: 0, healingSalve: 0, wardCharm: 0, focusCharm: 0, baitFlag: 0, coreElixir: 0, starShard: 0, ascendSeal: 0,
+    chestSmall: 0, chestMedium: 0, chestLarge: 0,
+    thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0
+};
+const homeInventory = {
+    spiritStone: 156, herb: 11, wood: 0, rareCrystal: 0, demonCore: 0,
+    spiritPill: 0, healingSalve: 0, wardCharm: 0, focusCharm: 0, baitFlag: 0, coreElixir: 0, starShard: 0, ascendSeal: 0,
+    chestSmall: 0, chestMedium: 0, chestLarge: 0,
+    thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0
+};
+const equipmentInventory = { sword: 1, bow: 1, shield: 1, artifact: 1, thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0 };
+const town = { prosperity: 1, refinementLevel: 1, storageCap: 260 };
+const sharedStats = {
+    body: 10,
+    spirit: 10,
+    mind: 10,
+    control: 10,
+    fortune: 10,
+    level: 1,
+    freePoints: 0
+};
+const seedMap = new Map();
+const stateMap = new Map();
+const homeBuildingMap = new Map();
+const chunkHeatMap = new Map();
+const targetBackoffMap = new Map();
+const reservationMap = new Map();
+const monsterStateMap = new Map();
+const discoveredItemSet = new Set(["spiritStone", "herb", "wood", "sword", "bow", "shield", "artifact"]);
+const reservationBackend = {
+    mode: "local",
+    nowMs() {
+        return simulationTimeMs;
+    },
+    key(x, y) {
+        return `${x},${y}`;
+    },
+    cleanup() {
+        reservationMap.forEach((reservation, key) => {
+            if (reservation.expiresAt <= this.nowMs()) {
+                reservationMap.delete(key);
+            }
+        });
+    },
+    get(x, y) {
+        this.cleanup();
+        return reservationMap.get(this.key(x, y)) || null;
+    },
+    acquire(x, y, owner, ttlMs) {
+        this.cleanup();
+        const key = this.key(x, y);
+        const current = reservationMap.get(key);
+        if (current && current.owner !== owner) {
+            return false;
+        }
+        reservationMap.set(key, {
+            owner,
+            expiresAt: this.nowMs() + ttlMs
+        });
+        return true;
+    },
+    release(x, y, owner) {
+        const key = this.key(x, y);
+        const current = reservationMap.get(key);
+        if (current && current.owner === owner) {
+            reservationMap.delete(key);
+        }
+    },
+    list() {
+        this.cleanup();
+        const items = [];
+        reservationMap.forEach((entry, key) => {
+            const [x, y] = key.split(",").map(Number);
+            items.push({
+                x,
+                y,
+                owner: entry.owner,
+                ttlMs: Math.max(0, Math.floor(entry.expiresAt - this.nowMs()))
+            });
+        });
+        return items;
+    },
+    exportSnapshot() {
+        return JSON.stringify({
+            mode: this.mode,
+            nowMs: this.nowMs(),
+            reservations: this.list()
+        });
+    },
+    importSnapshot(snapshot, { merge = false } = {}) {
+        let payload = snapshot;
+        if (typeof snapshot === "string") {
+            try {
+                payload = JSON.parse(snapshot);
+            } catch {
+                return false;
+            }
+        }
+        if (!payload || !Array.isArray(payload.reservations)) {
+            return false;
+        }
+        if (!merge) {
+            reservationMap.clear();
+        }
+        for (const item of payload.reservations) {
+            if (!Number.isFinite(item.x) || !Number.isFinite(item.y)) continue;
+            if (typeof item.owner !== "string" || !item.owner) continue;
+            const ttlMs = Number.isFinite(item.ttlMs) ? Math.max(1, Math.floor(item.ttlMs)) : RESERVATION_TTL_MS;
+            reservationMap.set(this.key(item.x, item.y), {
+                owner: item.owner,
+                expiresAt: this.nowMs() + ttlMs
+            });
+        }
+        return true;
+    }
+};
+
+const grid = document.getElementById("map-grid");
+const combatFxLayerEl = document.getElementById("combat-fx-layer");
+const tooltip = document.getElementById("tooltip");
+const logContainer = document.getElementById("log-container");
+const autoBtn = document.getElementById("autoBtn");
+const returnBtn = document.getElementById("returnBtn");
+const refineBtn = document.getElementById("refineBtn");
+const meditateBtn = document.getElementById("meditateBtn");
+const breakthroughBtn = document.getElementById("breakthroughBtn");
+const autoBreakthroughToggle = document.getElementById("autoBreakthroughToggle");
+const cultivationMetaEl = document.getElementById("cultivationMeta");
+const cultivationTickRingEl = document.getElementById("cultivationTickRing");
+const helpBtn = document.getElementById("helpBtn");
+const changelogBtn = document.getElementById("changelogBtn");
+const saveBtn = document.getElementById("saveBtn");
+const loadBtn = document.getElementById("loadBtn");
+const bagCapInput = document.getElementById("bagCapInput");
+const bagReturnInput = document.getElementById("bagReturnInput");
+const pillThresholdInput = document.getElementById("pillThresholdInput");
+const salveThresholdInput = document.getElementById("salveThresholdInput");
+const bagCapLabel = document.getElementById("bagCapLabel");
+const bagReturnLabel = document.getElementById("bagReturnLabel");
+const pillThresholdLabel = document.getElementById("pillThresholdLabel");
+const salveThresholdLabel = document.getElementById("salveThresholdLabel");
+const buildPanel = document.getElementById("build-panel");
+const statusEl = document.getElementById("avatarStatus");
+const resourceSummaryEl = document.getElementById("resourceSummary");
+const attributeSummaryEl = document.getElementById("attributeSummary");
+const codexSummaryEl = document.getElementById("codexSummary");
+const codexPanelEl = document.getElementById("codex-panel");
+const itemDetailEl = document.getElementById("item-detail");
+const itemMenuEl = document.getElementById("item-menu");
+const battlePanelEl = document.getElementById("battle-panel");
+const battleSummaryEl = document.getElementById("battleSummary");
+const battleLogListEl = document.getElementById("battleLogList");
+const craftPanelEl = document.getElementById("craft-panel");
+const craftSummaryEl = document.getElementById("craftSummary");
+const shopPanelEl = document.getElementById("shop-panel");
+const shopSummaryEl = document.getElementById("shopSummary");
+const enhancePanelEl = document.getElementById("enhance-panel");
+const enhanceSummaryEl = document.getElementById("enhanceSummary");
+const worldSummaryEl = document.getElementById("worldSummary");
+const movementStatusEl = document.getElementById("movementStatus");
+const strategyButtonsEl = document.getElementById("strategyButtons");
+const tacticButtonsEl = document.getElementById("tacticButtons");
+const zoomButtonsEl = document.getElementById("zoomButtons");
+const speedButtonsEl = document.getElementById("speedButtons");
+const rightTabButtonsEl = document.getElementById("rightTabButtons");
+const codexBtn = document.getElementById("codexBtn");
+const codexCloseBtn = document.getElementById("codexCloseBtn");
+const craftBtn = document.getElementById("craftBtn");
+const craftCloseBtn = document.getElementById("craftCloseBtn");
+const shopBtn = document.getElementById("shopBtn");
+const shopCloseBtn = document.getElementById("shopCloseBtn");
+const enhanceBtn = document.getElementById("enhanceBtn");
+const enhanceCloseBtn = document.getElementById("enhanceCloseBtn");
+const forceMonsterToggle = document.getElementById("forceMonsterToggle");
+const fixedDropToggle = document.getElementById("fixedDropToggle");
+const debugBattleBtn = document.getElementById("debugBattleBtn");
+let movementStatusText = "待命";
+
+function simpleHash(x, y) {
+    let n = x * 374761393 + y * 668265263;
+    n = (n ^ (n >> 13)) * 1274126177;
+    return (n ^ (n >> 11)) >>> 0;
+}
+
+function getElevation(x, y) {
+    let e = 0;
+    e += Math.sin(x / 55) * 0.45 + Math.cos(y / 48) * 0.38;
+    e += Math.sin((x + y) / 31) * 0.27 + Math.sin(x / 13) * 0.18;
+    e += (simpleHash(x, y) / 0xFFFFFFFF - 0.5) * 0.22;
+    return (e + 1.6) / 3.2;
+}
+
+function isWater(x, y) {
+    const elev = getElevation(x, y);
+    const rv = Math.sin(x / 38 + y / 52) * 1.4 + Math.sin((x + y) / 11.4) * 0.55;
+    return elev < 0.62 && Math.abs(rv) < 0.95;
+}
+
+function getTerrainClass(x, y) {
+    const elev = getElevation(x, y);
+    if (Math.abs(x - HOME_X) < 3 && Math.abs(y - HOME_Y) < 3) return "structure";
+    if (isWater(x, y)) return "water";
+    if (elev > 0.82) return "mountain";
+    if (elev > 0.65) return "hill";
+    if (simpleHash(x + 111, y) / 0xFFFFFFFF < 0.25) return "forest";
+    return "plain";
+}
+
+function getResourceMainType(x, y, terrainClass) {
+    const h = simpleHash(x * 7 + y * 13, x * 19 + y * 23) / 0xFFFFFFFF;
+    if (terrainClass === "forest") return h < 0.52 ? "wood" : "herb";
+    if (terrainClass === "mountain") return h < 0.65 ? "stone" : "rare";
+    if (terrainClass === "hill") return h < 0.48 ? "stone" : h < 0.82 ? "herb" : "rare";
+    if (terrainClass === "water") return "rare";
+    if (terrainClass === "structure") return "stone";
+    return h < 0.28 ? "herb" : h < 0.52 ? "wood" : h < 0.82 ? "stone" : "rare";
+}
+
+function getOrCreateSeed(x, y) {
+    const key = `${x},${y}`;
+    if (seedMap.has(key)) return seedMap.get(key);
+
+    const terrainClass = getTerrainClass(x, y);
+    const h = simpleHash(x * 7 + y * 13, x * 19 + y * 23) / 0xFFFFFFFF;
+    const mainType = getResourceMainType(x, y, terrainClass);
+    const terrainBonus = terrainClass === "mountain" ? 22 : terrainClass === "forest" ? 12 : terrainClass === "hill" ? 8 : 0;
+    const maxCapacity = 36 + terrainBonus + Math.floor(h * 70);
+    const regenRate = 0.18 + h * 0.24;
+    const seed = { mainType, maxCapacity, regenRate, terrainClass };
+    seedMap.set(key, seed);
+    return seed;
+}
+
+function applyStateRegen(state, seed) {
+    const elapsed = simulationTimeMs - state.lastRegen;
+    if (elapsed < 180000) return;
+    const cycles = Math.floor(elapsed / 180000);
+    if (cycles <= 0) return;
+    const addPerCycle = Math.max(1, Math.floor(seed.maxCapacity * seed.regenRate));
+    state.remaining = Math.min(seed.maxCapacity, state.remaining + addPerCycle * cycles);
+    state.lastRegen += cycles * 180000;
+}
+
+function getOrInitState(x, y) {
+    const key = `${x},${y}`;
+    if (!stateMap.has(key)) {
+        const seed = getOrCreateSeed(x, y);
+        stateMap.set(key, {
+            remaining: seed.maxCapacity,
+            lastRegen: simulationTimeMs,
+            depletion: 0
+        });
+    }
+    const state = stateMap.get(key);
+    applyStateRegen(state, getOrCreateSeed(x, y));
+    return state;
+}
+
+function cleanupReservations() {
+    reservationBackend.cleanup();
+}
+
+function getReservationAt(x, y) {
+    return reservationBackend.get(x, y);
+}
+
+function isReservedByOther(x, y) {
+    const reservation = getReservationAt(x, y);
+    return !!reservation && reservation.owner !== PLAYER_ID;
+}
+
+function releaseReservation(x, y) {
+    reservationBackend.release(x, y, PLAYER_ID);
+}
+
+function releaseExploreTargetReservation() {
+    if (!exploreTarget) return;
+    releaseReservation(exploreTarget.x, exploreTarget.y);
+}
+
+function acquireReservation(x, y) {
+    return reservationBackend.acquire(x, y, PLAYER_ID, RESERVATION_TTL_MS);
+}
+
+function currentStrategy() {
+    return STRATEGIES.find((item) => item.id === strategyId) || STRATEGIES[0];
+}
+
+function tileKey(x, y) {
+    return `${x},${y}`;
+}
+
+function isHomeBuildTile(x, y) {
+    return Math.abs(x - HOME_X) <= HOME_BUILD_RADIUS && Math.abs(y - HOME_Y) <= HOME_BUILD_RADIUS;
+}
+
+function getBuildingConfig(typeId) {
+    return BUILDING_TYPES.find((item) => item.id === typeId) || null;
+}
+
+function getHomeBuilding(x, y) {
+    return homeBuildingMap.get(tileKey(x, y)) || null;
+}
+
+function setHomeBuilding(x, y, building) {
+    if (!isHomeBuildTile(x, y)) return;
+    if (!building) {
+        homeBuildingMap.delete(tileKey(x, y));
+    } else {
+        homeBuildingMap.set(tileKey(x, y), building);
+    }
+}
+
+function countBuildingsByType(typeId) {
+    let count = 0;
+    homeBuildingMap.forEach((building) => {
+        if (building.type === typeId) count += 1;
+    });
+    return count;
+}
+
+function runBuildingProductionTick() {
+    const result = {
+        herb: 0,
+        wood: 0,
+        spiritStone: 0,
+        consumedHerb: 0,
+        consumedStone: 0
+    };
+
+    homeBuildingMap.forEach((building) => {
+        const lvl = building.level || 1;
+        if (building.type === "herbGarden") {
+            result.herb += lvl;
+        } else if (building.type === "woodWorkshop") {
+            result.wood += lvl;
+        } else if (building.type === "spiritWell") {
+            const needHerb = lvl;
+            if (homeInventory.herb >= needHerb) {
+                homeInventory.herb -= needHerb;
+                result.consumedHerb += needHerb;
+                result.spiritStone += lvl * 2;
+            }
+        } else if (building.type === "trainingRoom") {
+            const needStone = lvl;
+            if (homeInventory.spiritStone >= needStone) {
+                homeInventory.spiritStone -= needStone;
+                result.consumedStone += needStone;
+                result.herb += lvl;
+            }
+        }
+    });
+
+    if (result.herb > 0) homeInventory.herb += result.herb;
+    if (result.wood > 0) homeInventory.wood += result.wood;
+    if (result.spiritStone > 0) homeInventory.spiritStone += result.spiritStone;
+
+    if (result.herb || result.wood || result.spiritStone || result.consumedHerb || result.consumedStone) {
+        const pieces = [];
+        if (result.herb) pieces.push(`灵草 +${result.herb}`);
+        if (result.wood) pieces.push(`灵木 +${result.wood}`);
+        if (result.spiritStone) pieces.push(`灵石 +${result.spiritStone}`);
+        if (result.consumedHerb) pieces.push(`灵草 -${result.consumedHerb}`);
+        if (result.consumedStone) pieces.push(`灵石 -${result.consumedStone}`);
+        addLog(`洞府产出结算：${pieces.join(" / ")}`);
+    }
+}
+
+function getBuildingBonuses() {
+    let meditateSpeed = 1;
+    let meditateExp = 1;
+    let maintenanceDiscount = 0;
+    let storageBonus = 0;
+
+    homeBuildingMap.forEach((building) => {
+        const lvl = building.level || 1;
+        if (building.type === "herbGarden") meditateSpeed += 0.04 * lvl;
+        if (building.type === "trainingRoom") meditateExp += 0.08 * lvl;
+        if (building.type === "woodWorkshop") maintenanceDiscount += 0.06 * lvl;
+        if (building.type === "spiritWell") storageBonus += 12 * lvl;
+    });
+    return {
+        meditateSpeed,
+        meditateExp,
+        maintenanceDiscount: Math.min(0.6, maintenanceDiscount),
+        storageBonus
+    };
+}
+
+function applyCost(cost) {
+    if (!cost) return true;
+    if (
+        homeInventory.spiritStone < (cost.spiritStone || 0) ||
+        homeInventory.wood < (cost.wood || 0) ||
+        homeInventory.herb < (cost.herb || 0) ||
+        homeInventory.rareCrystal < (cost.rareCrystal || 0)
+    ) {
+        return false;
+    }
+    homeInventory.spiritStone -= cost.spiritStone || 0;
+    homeInventory.wood -= cost.wood || 0;
+    homeInventory.herb -= cost.herb || 0;
+    homeInventory.rareCrystal -= cost.rareCrystal || 0;
+    return true;
+}
+
+function canAffordFromHome(cost) {
+    if (!cost) return true;
+    return Object.entries(cost).every(([key, amount]) => (homeInventory[key] || 0) >= amount);
+}
+
+function applyHomeCost(cost) {
+    if (!canAffordFromHome(cost)) return false;
+    Object.entries(cost || {}).forEach(([key, amount]) => {
+        homeInventory[key] = (homeInventory[key] || 0) - amount;
+    });
+    return true;
+}
+
+function applyHomeGain(gain) {
+    Object.entries(gain || {}).forEach(([key, amount]) => {
+        homeInventory[key] = (homeInventory[key] || 0) + amount;
+        if (amount > 0 && ITEM_DEFS[key]) discoveredItemSet.add(key);
+    });
+}
+
+function getWorkbenchTier() {
+    const spiritWell = countBuildingsByType("spiritWell");
+    const trainingRoom = countBuildingsByType("trainingRoom");
+    if (town.refinementLevel >= BALANCE_CONFIG.crafting.tierUnlock[3].refinementLevel &&
+        spiritWell >= BALANCE_CONFIG.crafting.tierUnlock[3].spiritWell &&
+        trainingRoom >= BALANCE_CONFIG.crafting.tierUnlock[3].trainingRoom) {
+        return 3;
+    }
+    if (town.refinementLevel >= BALANCE_CONFIG.crafting.tierUnlock[2].refinementLevel &&
+        spiritWell >= BALANCE_CONFIG.crafting.tierUnlock[2].spiritWell &&
+        trainingRoom >= BALANCE_CONFIG.crafting.tierUnlock[2].trainingRoom) {
+        return 2;
+    }
+    return 1;
+}
+
+function canCraftRecipe(recipe) {
+    const tier = recipe.tier || 1;
+    if (getWorkbenchTier() < tier) return false;
+    return canAffordFromHome(recipe.cost);
+}
+
+function craftItem(recipeId) {
+    const recipe = CRAFT_RECIPES.find((r) => r.id === recipeId);
+    if (!recipe) return false;
+    if (getWorkbenchTier() < (recipe.tier || 1)) {
+        addLog(`合成失败：工坊等级不足，需要 ${recipe.tier} 阶`);
+        return false;
+    }
+    if (!applyHomeCost(recipe.cost)) {
+        addLog(`合成失败：${recipe.label} 材料不足`);
+        return false;
+    }
+    applyHomeGain(recipe.out);
+    addLog(`合成成功：${recipe.label}`);
+    return true;
+}
+
+function getMeditationExpNeed(level) {
+    return 26 + level * 12;
+}
+
+function getBodyCultivationExpNeed(level) {
+    return 36 + level * 24;
+}
+
+function getCultivationRateMultiplier() {
+    return simulationTimeMs < cultivationBuffUntilMs ? 1.8 : 1;
+}
+
+function applyBodyCultivationTick() {
+    const mult = getCultivationRateMultiplier();
+    const essenceGain = Math.max(1, Math.floor((2 + Math.floor(sharedStats.spirit / 4)) * mult));
+    const expGain = Math.max(1, Math.floor((3 + Math.floor(sharedStats.mind / 4)) * mult));
+    heavenlyEssence += essenceGain;
+    bodyCultivationExp += expGain;
+    addLog(`打坐修炼结算：天地精华 +${essenceGain}，修为 +${expGain}`);
+    if (autoBreakthrough) {
+        while (tryBreakthrough(true)) {}
+    }
+}
+
+function getBreakthroughEssenceNeed() {
+    return 6 + cultivationLevel * 2;
+}
+
+function tryBreakthrough(autoTriggered = false) {
+    const needExp = getBodyCultivationExpNeed(cultivationLevel);
+    const needEssence = getBreakthroughEssenceNeed();
+    if (bodyCultivationExp < needExp || heavenlyEssence < needEssence) {
+        if (!autoTriggered) {
+            addLog(`突破条件不足：需修为 ${needExp} 与天地精华 ${needEssence}`);
+        }
+        return false;
+    }
+    bodyCultivationExp -= needExp;
+    heavenlyEssence -= needEssence;
+    cultivationLevel = Math.min(cultivationLevel + 1, REALM_NAMES.length - 1);
+    sharedStats.level += 1;
+    sharedStats.spirit += 1;
+    sharedStats.mind += 1;
+    sharedStats.body += 1;
+    sharedStats.freePoints += 3;
+    addLog(`突破成功：境界提升至 ${getRealmName()}`);
+    return true;
+}
+
+function startMeditation() {
+    if (isMeditating || isGathering) {
+        addLog("当前已有进行中的修炼行为");
+        return;
+    }
+    const bonuses = getBuildingBonuses();
+    const duration = Math.max(4000, Math.floor(MEDITATE_BASE_MS / bonuses.meditateSpeed));
+    isMeditating = true;
+    meditateTotalMs = duration;
+    meditateRemainingMs = duration;
+    addLog(`开始打坐，预计 ${Math.ceil(duration / 1000)} 秒`);
+}
+
+function finishMeditation() {
+    const bonuses = getBuildingBonuses();
+    const mult = getCultivationRateMultiplier();
+    const gain = Math.max(1, Math.floor((4 + Math.floor(sharedStats.mind / 4)) * bonuses.meditateExp * mult));
+    bodyCultivationExp += gain;
+    heavenlyEssence += Math.max(1, Math.floor(1 * mult));
+    isMeditating = false;
+    meditateRemainingMs = 0;
+    meditateTotalMs = 0;
+    addLog(`打坐完成，获得修为 ${gain}`);
+    if (autoBreakthrough) {
+        while (tryBreakthrough(true)) {}
+    }
+}
+
+function chunkKeyFromTile(x, y) {
+    const cx = Math.floor(x / CHUNK_SIZE);
+    const cy = Math.floor(y / CHUNK_SIZE);
+    return `${cx},${cy}`;
+}
+
+function getChunkHeatAt(x, y) {
+    const key = chunkKeyFromTile(x, y);
+    const entry = chunkHeatMap.get(key);
+    if (!entry) return 0;
+    const elapsedSec = Math.max(0, (simulationTimeMs - entry.updatedAt) / 1000);
+    if (elapsedSec > 0) {
+        entry.heat *= Math.exp(-CHUNK_HEAT_DECAY_PER_SEC * elapsedSec);
+        entry.updatedAt = simulationTimeMs;
+    }
+    if (entry.heat < 0.01) {
+        chunkHeatMap.delete(key);
+        return 0;
+    }
+    return entry.heat;
+}
+
+function addChunkHeatAt(x, y, amount) {
+    const key = chunkKeyFromTile(x, y);
+    const current = getChunkHeatAt(x, y);
+    chunkHeatMap.set(key, {
+        heat: Math.min(30, current + amount),
+        updatedAt: simulationTimeMs
+    });
+}
+
+function cleanupTargetBackoff() {
+    targetBackoffMap.forEach((entry, key) => {
+        if (entry.untilMs <= simulationTimeMs) {
+            targetBackoffMap.delete(key);
+        }
+    });
+}
+
+function markTargetBackoff(x, y) {
+    const key = tileKey(x, y);
+    const prev = targetBackoffMap.get(key);
+    const failCount = prev ? prev.failCount + 1 : 1;
+    const duration = Math.min(TARGET_BACKOFF_MAX_MS, TARGET_BACKOFF_BASE_MS * Math.pow(2, failCount - 1));
+    targetBackoffMap.set(key, {
+        failCount,
+        untilMs: simulationTimeMs + duration
+    });
+}
+
+function canUseTarget(x, y) {
+    cleanupTargetBackoff();
+    const entry = targetBackoffMap.get(tileKey(x, y));
+    return !entry || entry.untilMs <= simulationTimeMs;
+}
+
+function resourceUnitWeight(resourceKey) {
+    return resourceKey === "rareCrystal" ? 4 : 1;
+}
+
+function getSharedPowerScore() {
+    return sharedStats.body + sharedStats.spirit + sharedStats.mind + sharedStats.control + sharedStats.fortune;
+}
+
+function allocSharedStat(statKey) {
+    if (sharedStats.freePoints <= 0) return false;
+    if (!Object.prototype.hasOwnProperty.call(sharedStats, statKey)) return false;
+    sharedStats[statKey] += 1;
+    sharedStats.freePoints -= 1;
+    return true;
+}
+
+function getEquipmentBonus() {
+    const bonus = { atk: 0, def: 0, hit: 0, dodge: 0, luck: 0 };
+    Object.entries(equipmentInventory).forEach(([itemId, count]) => {
+        const def = ITEM_DEFS[itemId];
+        if (!def || count <= 0) return;
+        const cfg = def.bonus || {};
+        const enhanceMul = 1 + (equipmentEnhanceLevels[itemId] || 0) * 0.12;
+        bonus.atk += (cfg.atk || 0) * count * enhanceMul;
+        bonus.def += (cfg.def || 0) * count * enhanceMul;
+        bonus.hit += (cfg.hit || 0) * count * enhanceMul;
+        bonus.dodge += (cfg.dodge || 0) * count * enhanceMul;
+        bonus.luck += (cfg.luck || 0) * count * enhanceMul;
+    });
+    if ((homeInventory.ascendSeal || 0) > 0) {
+        bonus.luck += 6;
+        bonus.def += 2;
+    }
+    return bonus;
+}
+
+function getEnhanceCost(itemId) {
+    const level = equipmentEnhanceLevels[itemId] || 0;
+    const rarity = ITEM_DEFS[itemId]?.rarity || "common";
+    const rarityMul = rarity === "epic" ? 1.8 : rarity === "rare" ? 1.45 : rarity === "uncommon" ? 1.2 : 1;
+    return Math.floor((28 + level * 16) * rarityMul);
+}
+
+function enhanceEquipment(itemId) {
+    if ((equipmentInventory[itemId] || 0) <= 0) return false;
+    const level = equipmentEnhanceLevels[itemId] || 0;
+    if (level >= 10) {
+        addLog(`强化失败：${ITEM_DEFS[itemId]?.label || itemId} 已达 +10`);
+        return false;
+    }
+    const cost = getEnhanceCost(itemId);
+    if (goldCoins < cost) {
+        addLog(`强化失败：金币不足（需要 ${cost}）`);
+        return false;
+    }
+    goldCoins -= cost;
+    equipmentEnhanceLevels[itemId] = level + 1;
+    addLog(`强化成功：${ITEM_DEFS[itemId]?.label || itemId} +${equipmentEnhanceLevels[itemId]}`);
+    return true;
+}
+
+function buyFromShop(itemId, cost, qty = 1) {
+    if (goldCoins < cost) {
+        addLog(`购买失败：金币不足（需要 ${cost}）`);
+        return false;
+    }
+    goldCoins -= cost;
+    homeInventory[itemId] = (homeInventory[itemId] || 0) + qty;
+    discoveredItemSet.add(itemId);
+    addLog(`商店购买：${ITEM_DEFS[itemId]?.label || itemId} x${qty}（花费 ${cost} 金币）`);
+    return true;
+}
+
+function bindItemHover(containerEl) {
+    if (!containerEl) return;
+    containerEl.querySelectorAll(".inv-slot[data-item-id], .codex-item[data-item-id]").forEach((el) => {
+        el.addEventListener("mousemove", (e) => {
+            const itemId = el.dataset.itemId;
+            const def = ITEM_DEFS[itemId];
+            if (!def) return;
+            const qty = el.dataset.itemCount || "0";
+            const rarity = (def.rarity || "common").toUpperCase();
+            const bonus = def.bonus
+                ? `加成: ${Object.entries(def.bonus).map(([k, v]) => `${k}+${v}`).join(" / ")}`
+                : "加成: 无";
+            itemDetailEl.innerHTML = `<strong>${def.icon} ${def.label}</strong><br>品质: ${rarity}<br>类别: ${def.category}<br>${bonus}<br>来源: ${def.source}<br>回收: ${def.sellValue || 0} 金币<br>持有: ${qty}`;
+            itemDetailEl.classList.remove("hidden");
+            itemDetailEl.style.left = `${e.clientX + 12}px`;
+            itemDetailEl.style.top = `${e.clientY + 12}px`;
+        });
+        el.addEventListener("mouseleave", () => {
+            itemDetailEl.classList.add("hidden");
+        });
+    });
+}
+
+function getAvatarMaxHp() {
+    return 120 + sharedStats.body * 7 + Math.floor(getSharedPowerScore() * 0.7);
+}
+
+function getAvatarMaxMp() {
+    return 90 + sharedStats.spirit * 8 + sharedStats.mind * 4;
+}
+
+function getAvatarCombatPower() {
+    const eq = getEquipmentBonus();
+    const wardBonus = Math.min(6, (homeInventory.wardCharm || 0));
+    const focusBonus = Math.min(6, (homeInventory.focusCharm || 0));
+    return {
+        atk: 10 + Math.floor(sharedStats.spirit * 1.4) + Math.floor(sharedStats.control * 0.9) + Math.floor(eq.atk),
+        def: 4 + Math.floor(sharedStats.body * 0.9) + Math.floor(sharedStats.control * 0.4) + Math.floor(eq.def) + wardBonus,
+        hit: Math.min(0.97, 0.78 + sharedStats.mind * 0.008 + sharedStats.control * 0.004 + eq.hit + focusBonus * 0.005),
+        dodge: Math.min(0.42, 0.06 + sharedStats.body * 0.008 + sharedStats.mind * 0.004 + eq.dodge)
+    };
+}
+
+function getAvatarCombatSnapshot() {
+    const me = getAvatarCombatPower();
+    const tactic = currentBattleTactic();
+    const critRate = Math.max(0.03, Math.min(0.55, 0.08 + sharedStats.fortune * 0.006 + tactic.critBonus));
+    return {
+        hp: avatarHp,
+        maxHp: getAvatarMaxHp(),
+        mp: avatarMp,
+        maxMp: getAvatarMaxMp(),
+        atk: me.atk,
+        def: me.def,
+        hit: me.hit,
+        dodge: me.dodge,
+        critRate
+    };
+}
+
+function currentBattleTactic() {
+    return BATTLE_TACTICS.find((t) => t.id === battleTacticId) || BATTLE_TACTICS[1];
+}
+
+function getRiskRewardBonusAt(x, y) {
+    const dist = Math.abs(x - HOME_X) + Math.abs(y - HOME_Y);
+    return Math.min(0.9, dist * 0.03);
+}
+
+function weightedPick(table, seedA, seedB) {
+    const total = table.reduce((sum, row) => sum + row.weight, 0);
+    if (total <= 0) return table[0];
+    const roll = simpleHash(seedA, seedB) % total;
+    let acc = 0;
+    for (const row of table) {
+        acc += row.weight;
+        if (roll < acc) return row;
+    }
+    return table[table.length - 1];
+}
+
+function openChest(chestId) {
+    if (!Object.prototype.hasOwnProperty.call(avatarInventory, chestId)) return false;
+    if ((avatarInventory[chestId] || 0) <= 0) return false;
+    const table = CHEST_LOOT_TABLES[chestId];
+    if (!table) return false;
+    avatarInventory[chestId] -= 1;
+    const rolls = chestId === "chestSmall" ? 1 : chestId === "chestMedium" ? 2 : 3;
+    const rewards = {};
+    for (let i = 0; i < rolls; i++) {
+        const pick = weightedPick(table, dayCount * 97 + i * 17 + gatherCount, simulationTimeMs + i * 113);
+        const qtyRange = Math.max(0, pick.max - pick.min);
+        const qty = pick.min + (simpleHash(dayCount + i * 7, simulationTimeMs + i * 41) % (qtyRange + 1));
+        avatarInventory[pick.id] = (avatarInventory[pick.id] || 0) + qty;
+        rewards[pick.id] = (rewards[pick.id] || 0) + qty;
+        discoveredItemSet.add(pick.id);
+    }
+    const rewardText = Object.entries(rewards).map(([id, qty]) => `${ITEM_DEFS[id]?.label || id}×${qty}`).join(" / ");
+    addLog(`开启${ITEM_DEFS[chestId]?.label || "宝箱"}：${rewardText}`);
+    updateSidePanels();
+    updateStatus();
+    return true;
+}
+
+function getItemContainer(source) {
+    if (source === "avatar") return avatarInventory;
+    if (source === "home") return homeInventory;
+    if (source === "equipment") return equipmentInventory;
+    return null;
+}
+
+function isEquipItem(itemId) {
+    return ITEM_DEFS[itemId]?.category === "装备";
+}
+
+function canUseItem(itemId) {
+    return ITEM_DEFS[itemId]?.usable || itemId === "baitFlag" || itemId.startsWith("chest");
+}
+
+function useItemFrom(source, itemId) {
+    const bag = getItemContainer(source);
+    if (!bag || (bag[itemId] || 0) <= 0) return false;
+    if (itemId === "chestSmall" || itemId === "chestMedium" || itemId === "chestLarge") {
+        if (source !== "avatar") return false;
+        return openChest(itemId);
+    }
+    if (itemId === "spiritPill") {
+        bag[itemId] -= 1;
+        if (battleState || avatarHp < getAvatarMaxHp()) {
+            const heal = Math.floor(getAvatarMaxHp() * 0.28);
+            avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
+            addLog(`使用聚灵丹，恢复生命 ${heal}`);
+        } else {
+            cultivationBuffUntilMs = Math.max(cultivationBuffUntilMs, simulationTimeMs) + 180000;
+            addLog("服用聚灵丹：肉身修炼效率提升 180 秒");
+        }
+        return true;
+    }
+    if (itemId === "healingSalve") {
+        bag[itemId] -= 1;
+        const heal = Math.floor(getAvatarMaxHp() * 0.2);
+        avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
+        addLog(`使用回春散，恢复生命 ${heal}`);
+        return true;
+    }
+    if (itemId === "baitFlag") {
+        if (source !== "avatar") return false;
+        bag[itemId] -= 1;
+        baitBoostUntilMs = simulationTimeMs + 120000;
+        addLog("使用引妖旗：120秒内刷怪率提升");
+        return true;
+    }
+    if (itemId === "wardCharm") {
+        bag[itemId] -= 1;
+        homeInventory.wardCharm = (homeInventory.wardCharm || 0) + 1;
+        addLog("使用护体符：转化为洞府护持层数");
+        return true;
+    }
+    if (itemId === "focusCharm") {
+        bag[itemId] -= 1;
+        homeInventory.focusCharm = (homeInventory.focusCharm || 0) + 1;
+        addLog("使用凝神符：转化为洞府凝神层数");
+        return true;
+    }
+    return false;
+}
+
+function equipItemFrom(source, itemId) {
+    if (!isEquipItem(itemId)) return false;
+    const bag = getItemContainer(source);
+    if (!bag || (bag[itemId] || 0) <= 0) return false;
+    if (source === "equipment") return false;
+    bag[itemId] -= 1;
+    equipmentInventory[itemId] = (equipmentInventory[itemId] || 0) + 1;
+    addLog(`装备已激活：${ITEM_DEFS[itemId]?.label || itemId}`);
+    return true;
+}
+
+function recycleItemFrom(source, itemId) {
+    if (source === "equipment") return false;
+    const bag = getItemContainer(source);
+    if (!bag || (bag[itemId] || 0) <= 0) return false;
+    if (itemId === "ascendSeal" || itemId === "dragonRelic") return false;
+    const value = ITEM_DEFS[itemId]?.sellValue || 0;
+    if (value <= 0) return false;
+    bag[itemId] -= 1;
+    goldCoins += value;
+    addLog(`回收 ${ITEM_DEFS[itemId]?.label || itemId}，获得金币 ${value}`);
+    return true;
+}
+
+function closeItemMenu() {
+    itemMenuState = null;
+    itemMenuEl.classList.add("hidden");
+}
+
+function openItemMenu(itemId, source, anchorEvent) {
+    const def = ITEM_DEFS[itemId];
+    const bag = getItemContainer(source);
+    if (!def || !bag || (bag[itemId] || 0) <= 0) return;
+    itemMenuState = { itemId, source };
+    const canUse = canUseItem(itemId);
+    const canEquip = isEquipItem(itemId) && source !== "equipment";
+    const canRecycle = source !== "equipment" && (def.sellValue || 0) > 0 && itemId !== "ascendSeal" && itemId !== "dragonRelic";
+    itemMenuEl.innerHTML = `
+        <div class="menu-title">${def.icon} ${def.label} · 数量 ${bag[itemId] || 0}</div>
+        <div class="menu-actions">
+            <button class="mini-btn" data-item-action="use" ${canUse ? "" : "disabled"}>使用</button>
+            <button class="mini-btn" data-item-action="equip" ${canEquip ? "" : "disabled"}>装备</button>
+            <button class="mini-btn" data-item-action="recycle" ${canRecycle ? "" : "disabled"}>回收为金币（${def.sellValue || 0}）</button>
+        </div>
+    `;
+    itemMenuEl.style.left = `${Math.min(window.innerWidth - 210, anchorEvent.clientX + 8)}px`;
+    itemMenuEl.style.top = `${Math.min(window.innerHeight - 150, anchorEvent.clientY + 8)}px`;
+    itemMenuEl.classList.remove("hidden");
+}
+
+function getAvatarVisualState() {
+    if (battleState) return { css: "state-battle", badge: "⚔" };
+    if (isGathering) return { css: "state-gather", badge: "⛏" };
+    if (autoObjective === "return_home") return { css: "state-move", badge: "🏠" };
+    if (simulationTimeMs - lastMoveAtMs <= 900) return { css: "state-move", badge: "🧭" };
+    return { css: "state-idle", badge: isAutoMode ? "🧭" : "•" };
+}
+
+function spawnCombatFx(text, type = "damage", yOffset = 0) {
+    if (!combatFxLayerEl || !text) return;
+    const fx = document.createElement("div");
+    fx.className = `combat-fx ${type}`;
+    fx.textContent = text;
+    const baseTop = battleState ? 46 : 52;
+    fx.style.setProperty("--fx-left", "50%");
+    fx.style.setProperty("--fx-top", `${baseTop + yOffset}%`);
+    combatFxLayerEl.appendChild(fx);
+    setTimeout(() => fx.remove(), 900);
+}
+
+function monsterLevelAt(x, y) {
+    const dist = Math.abs(x - HOME_X) + Math.abs(y - HOME_Y);
+    if (dist <= 5) return 1;
+    if (dist <= 9) return 2;
+    if (dist <= 13) return 3;
+    if (dist <= 18) return 4;
+    return 5;
+}
+
+function getMonsterDropProfile(type) {
+    return MONSTER_CODEX.find((m) => m.type === type) || null;
+}
+
+function getMonsterSeed(x, y) {
+    const h = simpleHash(x * 17 + 13, y * 19 + 29);
+    const terrain = getTerrainClass(x, y);
+    if (!isPassable(x, y)) return null;
+    if (isHomeBuildTile(x, y)) return null;
+    if (devForceMonster) {
+        const level = Math.max(1, monsterLevelAt(x, y));
+        const type = level >= 8 ? "天劫妖王" : level >= 6 ? "精英妖将" : level >= 4 ? "妖将" : level >= 2 ? "妖兽" : "邪祟";
+        const devMul = type === "天劫妖王" ? 3.1 : type === "精英妖将" ? 2.1 : 1;
+        return {
+            type,
+            level,
+            maxHp: Math.floor((34 + level * 24) * BALANCE_CONFIG.combat.monsterHpScale * devMul),
+            atk: Math.floor((8 + level * 3 + (level >= 6 ? 7 : 0)) * (type === "天劫妖王" ? 2.2 : type === "精英妖将" ? 1.55 : 1)),
+            def: Math.floor((2 + level * 2 + (level >= 6 ? 4 : 0)) * (type === "天劫妖王" ? 2.0 : type === "精英妖将" ? 1.5 : 1))
+        };
+    }
+    const baitBoost = simulationTimeMs < baitBoostUntilMs ? 0.2 : 0;
+    const spawnBase = (terrain === "mountain" ? 0.34 : terrain === "forest" ? 0.28 : terrain === "hill" ? 0.22 : 0.12) + baitBoost;
+    const spawnRoll = (h % 1000) / 1000;
+    if (spawnRoll > spawnBase) return null;
+    const level = monsterLevelAt(x, y);
+    const rareRoll = ((h >> 10) % 1000) / 1000;
+    let type = rareRoll < 0.08 ? "妖将" : rareRoll < 0.28 ? "妖兽" : "邪祟";
+    if (level >= 4 && rareRoll < 0.05) type = "精英妖将";
+    if (level >= 4 && rareRoll < 0.01) type = "天劫妖王";
+    const eliteMul = type === "精英妖将" ? 2.0 : type === "天劫妖王" ? 3.0 : 1;
+    const maxHp = Math.floor((32 + level * 22 + (h % 9)) * BALANCE_CONFIG.combat.monsterHpScale * eliteMul);
+    const atk = Math.floor((8 + level * 3 + (h % 4)) * (type === "天劫妖王" ? 2.4 : type === "精英妖将" ? 1.75 : 1));
+    const def = Math.floor((2 + level * 2) * (type === "天劫妖王" ? 2.3 : type === "精英妖将" ? 1.7 : 1));
+    return { type, level, maxHp, atk, def };
+}
+
+function getMonsterAt(x, y) {
+    const key = tileKey(x, y);
+    const seed = getMonsterSeed(x, y);
+    if (!seed) return null;
+    const entry = monsterStateMap.get(key);
+    if (!entry) {
+        const created = { alive: true, hp: seed.maxHp, respawnAt: 0 };
+        monsterStateMap.set(key, created);
+        return { ...seed, x, y, hp: created.hp, alive: true };
+    }
+    if (!entry.alive) {
+        if (simulationTimeMs >= entry.respawnAt) {
+            entry.alive = true;
+            entry.hp = seed.maxHp;
+        } else {
+            return null;
+        }
+    }
+    return { ...seed, x, y, hp: entry.hp, alive: true };
+}
+
+function setMonsterHp(x, y, hp, maxHp) {
+    const key = tileKey(x, y);
+    const entry = monsterStateMap.get(key) || { alive: true, hp: maxHp, respawnAt: 0 };
+    entry.hp = Math.max(0, hp);
+    if (entry.hp <= 0) {
+        entry.alive = false;
+        entry.respawnAt = simulationTimeMs + BALANCE_CONFIG.timing.monsterRespawnMs;
+    } else {
+        entry.alive = true;
+    }
+    monsterStateMap.set(key, entry);
+}
+
+function startBattleWith(monster) {
+    if (!monster) return false;
+    isGathering = false;
+    gatherRemainingMs = 0;
+    gatherTotalMs = 0;
+    gatheringProgress = 0;
+    gatheringTarget = null;
+    battleState = {
+        x: monster.x,
+        y: monster.y,
+        type: monster.type,
+        level: monster.level,
+        hp: monster.hp,
+        maxHp: monster.maxHp,
+        atk: monster.atk,
+        def: monster.def,
+        rounds: 0
+    };
+    battleRoundLogs = [`遭遇 ${monster.type} Lv.${monster.level}`];
+    lastBattleFrame = null;
+    movementStatusText = `遭遇 ${monster.type} Lv.${monster.level}，进入战斗`;
+    return true;
+}
+
+function grantBattleLoot(monster) {
+    const riskBonus = getRiskRewardBonusAt(monster.x, monster.y);
+    const tierMul = monster.type === "天劫妖王" ? 3.2 : monster.type === "精英妖将" ? 2.2 : monster.type === "妖将" ? 1.5 : 1;
+    const gainStone = Math.floor((8 + monster.level * 4) * (1 + riskBonus * 0.9) * tierMul);
+    const gainHerb = monster.level >= 2 ? Math.max(1, Math.floor((riskBonus >= 0.35 ? 2 : 1) * tierMul)) : 0;
+    const eq = getEquipmentBonus();
+    const rareChance = Math.min(BALANCE_CONFIG.drops.rareMax, BALANCE_CONFIG.drops.rareBase + sharedStats.fortune + Math.floor(eq.luck * 0.8));
+    const coreBase = monster.type === "妖将" ? 22 : monster.type === "妖兽" ? 14 : 8;
+    const coreChance = Math.min(55, coreBase + Math.floor(sharedStats.fortune * 0.6));
+    const gainRare = monster.level >= 3 && (devFixedDrops || (simpleHash(monster.x + dayCount, monster.y + dayCombatWins) % 100 < (rareChance + Math.floor(riskBonus * 18) + (monster.type === "天劫妖王" ? 22 : monster.type === "精英妖将" ? 12 : 0)))) ? Math.max(1, Math.floor(tierMul / 1.5)) : 0;
+    const gainCore = devFixedDrops ? Math.max(1, Math.floor(tierMul)) : (simpleHash(monster.x + dayCount * 3, monster.y + dayCombatWins * 11) % 100 < coreChance ? Math.max(1, Math.floor(tierMul)) : 0);
+    const chestSmallChance = Math.min(95, BALANCE_CONFIG.drops.chestSmallBase + Math.floor(riskBonus * 42) + monster.level * 7);
+    const chestMediumChance = Math.min(75, BALANCE_CONFIG.drops.chestMediumBase + Math.floor(riskBonus * 36) + (monster.level >= 2 ? 14 : 0));
+    const chestLargeChance = Math.min(55, BALANCE_CONFIG.drops.chestLargeBase + Math.floor(riskBonus * 20) + (monster.type === "妖将" ? 14 : monster.type === "精英妖将" ? 24 : monster.type === "天劫妖王" ? 40 : 0));
+    const gainSmallChest = devFixedDrops || (simpleHash(monster.x + 41, monster.y + dayCombatWins * 7) % 100 < chestSmallChance) ? 1 : 0;
+    const gainMediumChest = devFixedDrops || (simpleHash(monster.x + 71, monster.y + dayCombatWins * 13) % 100 < chestMediumChance) ? 1 : 0;
+    const gainLargeChest = devFixedDrops || (simpleHash(monster.x + 97, monster.y + dayCombatWins * 19) % 100 < chestLargeChance) ? 1 : 0;
+    const dropWeaponRoll = simpleHash(monster.x + dayCount * 37, monster.y + dayCombatWins * 31) % 1000;
+    let gainThunderBlade = 0;
+    let gainPhoenixBow = 0;
+    let gainVoidArmor = 0;
+    let gainDragonRelic = 0;
+    if (monster.type === "精英妖将" || monster.type === "天劫妖王") {
+        if (dropWeaponRoll < 90) gainThunderBlade = 1;
+        else if (dropWeaponRoll < 170) gainPhoenixBow = 1;
+        else if (dropWeaponRoll < 250) gainVoidArmor = 1;
+    }
+    if (monster.type === "天劫妖王" && (devFixedDrops || (simpleHash(monster.x + 211, monster.y + dayCombatWins * 53) % 100 < 20))) {
+        gainDragonRelic = 1;
+    }
+    avatarInventory.spiritStone += gainStone;
+    avatarInventory.herb += gainHerb;
+    avatarInventory.rareCrystal += gainRare;
+    avatarInventory.demonCore += gainCore;
+    avatarInventory.chestSmall += gainSmallChest;
+    avatarInventory.chestMedium += gainMediumChest;
+    avatarInventory.chestLarge += gainLargeChest;
+    avatarInventory.thunderBlade += gainThunderBlade;
+    avatarInventory.phoenixBow += gainPhoenixBow;
+    avatarInventory.voidArmor += gainVoidArmor;
+    avatarInventory.dragonRelic += gainDragonRelic;
+    discoveredItemSet.add("demonCore");
+    if (gainRare > 0) discoveredItemSet.add("rareCrystal");
+    if (gainSmallChest > 0) discoveredItemSet.add("chestSmall");
+    if (gainMediumChest > 0) discoveredItemSet.add("chestMedium");
+    if (gainLargeChest > 0) discoveredItemSet.add("chestLarge");
+    if (gainThunderBlade > 0) discoveredItemSet.add("thunderBlade");
+    if (gainPhoenixBow > 0) discoveredItemSet.add("phoenixBow");
+    if (gainVoidArmor > 0) discoveredItemSet.add("voidArmor");
+    if (gainDragonRelic > 0) discoveredItemSet.add("dragonRelic");
+    dayCombatWins += 1;
+    addLog(`战斗胜利：${monster.type}，掉落 灵石×${gainStone}${gainHerb ? ` / 灵草×${gainHerb}` : ""}${gainCore ? ` / 妖丹×${gainCore}` : ""}${gainRare ? ` / 异晶×${gainRare}` : ""}${gainSmallChest ? ` / 小宝箱×${gainSmallChest}` : ""}${gainMediumChest ? ` / 中宝箱×${gainMediumChest}` : ""}${gainLargeChest ? ` / 大宝箱×${gainLargeChest}` : ""}${gainThunderBlade ? " / 雷劫断岳×1" : ""}${gainPhoenixBow ? " / 赤凰长弓×1" : ""}${gainVoidArmor ? " / 太虚战铠×1" : ""}${gainDragonRelic ? " / 天龙遗宝×1" : ""}`);
+}
+
+function resolveBattleStep() {
+    if (!battleState) return;
+    const tactic = currentBattleTactic();
+    const debuffActive = simulationTimeMs < injuryDebuffUntilMs;
+    const meBase = getAvatarCombatPower();
+    const debuffMul = debuffActive ? BALANCE_CONFIG.combat.injuryDebuffRatio : 1;
+    const me = {
+        atk: Math.max(1, Math.floor(meBase.atk * tactic.atkMul * debuffMul)),
+        def: Math.max(1, Math.floor(meBase.def * tactic.defMul * debuffMul)),
+        hit: Math.min(0.98, Math.max(0.55, meBase.hit + tactic.hitBonus - (debuffActive ? 0.03 : 0))),
+        dodge: Math.min(0.55, Math.max(0.03, meBase.dodge + tactic.dodgeBonus - (debuffActive ? 0.02 : 0)))
+    };
+    battleState.rounds += 1;
+    const rollA = (simpleHash(battleState.x + battleState.rounds * 7, battleState.y + dayCount * 17) % 1000) / 1000;
+    const rollB = (simpleHash(battleState.x + battleState.rounds * 13, battleState.y + dayCount * 23) % 1000) / 1000;
+    const avatarHit = rollA <= me.hit;
+    const monsterHit = rollB > me.dodge;
+    const avatarDmgBase = avatarHit ? Math.max(1, me.atk - battleState.def + (battleState.rounds % 3)) : 0;
+    const monsterDmgBase = monsterHit ? Math.max(1, battleState.atk - me.def) : 0;
+    const critRoll = (simpleHash(battleState.x + battleState.rounds * 29, battleState.y + dayCount * 5) % 1000) / 1000;
+    const didCrit = avatarHit && critRoll < (0.1 + tactic.critBonus);
+    const avatarScaled = Math.max(0, Math.floor(avatarDmgBase * BALANCE_CONFIG.combat.playerDamageScale));
+    const monsterScaled = Math.max(0, Math.floor(monsterDmgBase * BALANCE_CONFIG.combat.monsterDamageScale * tactic.incomingMul));
+    const finalAvatarDmg = didCrit ? Math.max(1, Math.floor(avatarScaled * 1.6)) : avatarScaled;
+    const hpBefore = { enemy: battleState.hp, self: avatarHp };
+    battleState.hp = Math.max(0, battleState.hp - finalAvatarDmg);
+    avatarHp = Math.max(0, avatarHp - monsterScaled);
+    lastBattleFrame = {
+        round: battleState.rounds,
+        tactic: tactic.label,
+        avatarHit,
+        monsterHit,
+        crit: didCrit,
+        avatarDmg: finalAvatarDmg,
+        monsterDmg: monsterScaled,
+        hitRoll: Number(rollA.toFixed(3)),
+        dodgeRoll: Number(rollB.toFixed(3)),
+        hpBefore,
+        hpAfter: { enemy: battleState.hp, self: avatarHp }
+    };
+    if (didCrit) {
+        spawnCombatFx(`暴击 ${finalAvatarDmg}`, "info", -6);
+    } else if (avatarHit) {
+        spawnCombatFx(`-${finalAvatarDmg}`, "damage", -6);
+    } else {
+        spawnCombatFx("闪避", "info", -6);
+    }
+    if (monsterHit) {
+        spawnCombatFx(`受击 -${monsterScaled}`, "damage", 6);
+    } else {
+        spawnCombatFx("未命中", "info", 6);
+    }
+    battleRoundLogs.unshift(`R${battleState.rounds} ${tactic.label} | 我方${avatarHit ? "命中" : "未中"}-${finalAvatarDmg}${didCrit ? "(暴)" : ""} / 敌方${monsterHit ? "命中" : "未中"}-${monsterScaled} | 命中检定 ${rollA.toFixed(2)}/${me.hit.toFixed(2)} | 闪避检定 ${rollB.toFixed(2)}/${me.dodge.toFixed(2)}`);
+    if (battleRoundLogs.length > 14) battleRoundLogs.length = 14;
+    movementStatusText = `战斗中 ${battleState.type} HP ${battleState.hp}/${battleState.maxHp}，化身HP ${avatarHp}/${getAvatarMaxHp()}`;
+    if (battleState.hp <= 0) {
+        setMonsterHp(battleState.x, battleState.y, 0, battleState.maxHp);
+        grantBattleLoot(battleState);
+        battleState = null;
+        if (shouldReturnHome()) autoObjective = "return_home";
+        return;
+    }
+    if (avatarHp <= Math.floor(getAvatarMaxHp() * autoUsePillRatio) && (avatarInventory.spiritPill || 0) > 0) {
+        avatarInventory.spiritPill -= 1;
+        const heal = Math.floor(getAvatarMaxHp() * 0.32);
+        avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
+        spawnCombatFx(`+${heal}`, "heal", 12);
+        battleRoundLogs.unshift("触发聚灵丹：回复生命");
+    }
+    if (avatarHp <= Math.floor(getAvatarMaxHp() * autoUseSalveRatio) && (avatarInventory.healingSalve || 0) > 0) {
+        avatarInventory.healingSalve -= 1;
+        const heal = Math.floor(getAvatarMaxHp() * 0.22);
+        avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
+        spawnCombatFx(`+${heal}`, "heal", 16);
+        battleRoundLogs.unshift("触发回春散：稳定伤势");
+    }
+    if (avatarHp <= 0) {
+        const riskBonus = getRiskRewardBonusAt(battleState.x, battleState.y);
+        const lossRatio = 0.12 + riskBonus * 0.18;
+        const lostStone = Math.floor(avatarInventory.spiritStone * lossRatio);
+        const lostCore = Math.floor((avatarInventory.demonCore || 0) * (0.08 + riskBonus * 0.12));
+        avatarInventory.spiritStone = Math.max(0, avatarInventory.spiritStone - lostStone);
+        avatarInventory.demonCore = Math.max(0, avatarInventory.demonCore - lostCore);
+        avatarX = HOME_X;
+        avatarY = HOME_Y;
+        avatarHp = Math.floor(getAvatarMaxHp() * 0.6);
+        avatarMp = Math.floor(getAvatarMaxMp() * 0.6);
+        injuryDebuffUntilMs = simulationTimeMs + BALANCE_CONFIG.combat.injuryDurationMs;
+        battleState = null;
+        autoObjective = "explore";
+        addLog(`化身重伤退回洞府，损失灵石 ${lostStone}${lostCore ? ` / 妖丹 ${lostCore}` : ""}，2分钟内战斗属性衰减`);
+        return;
+    }
+    if (avatarHp <= Math.floor(getAvatarMaxHp() * BALANCE_CONFIG.combat.lowHpRetreatRatio)) {
+        addLog("化身血量偏低，撤离返城");
+        autoObjective = "return_home";
+        battleState = null;
+    }
+}
+
+function getRealmName() {
+    return REALM_NAMES[Math.min(cultivationLevel, REALM_NAMES.length - 1)];
+}
+
+function totalInventoryLoad() {
+    return avatarInventory.spiritStone + avatarInventory.herb + avatarInventory.wood + avatarInventory.demonCore * 2 + avatarInventory.rareCrystal * 4 +
+        avatarInventory.chestSmall + avatarInventory.chestMedium * 2 + avatarInventory.chestLarge * 3;
+}
+
+function distanceToHome() {
+    return Math.abs(avatarX - HOME_X) + Math.abs(avatarY - HOME_Y);
+}
+
+function isAtHome() {
+    return avatarX === HOME_X && avatarY === HOME_Y;
+}
+
+function resourceKeyFromSeed(seed) {
+    if (seed.mainType === "herb") return "herb";
+    if (seed.mainType === "wood") return "wood";
+    if (seed.mainType === "rare") return "rareCrystal";
+    return "spiritStone";
+}
+
+function movementCostAt(x, y) {
+    const terrain = getTerrainClass(x, y);
+    return TERRAIN_RULES[terrain].moveCost;
+}
+
+function isPassable(x, y) {
+    return TERRAIN_RULES[getTerrainClass(x, y)].passable;
+}
+
+function chooseResourceTargets(limit = TARGET_POOL_SIZE) {
+    const strategy = currentStrategy();
+    const searchRadius = 18 + Math.floor(sharedStats.mind * 0.6);
+    const candidates = [];
+
+    for (let dy = -searchRadius; dy <= searchRadius; dy++) {
+        for (let dx = -searchRadius; dx <= searchRadius; dx++) {
+            const tx = avatarX + dx;
+            const ty = avatarY + dy;
+            if (tx === avatarX && ty === avatarY) continue;
+            if (!isPassable(tx, ty)) continue;
+            if (isReservedByOther(tx, ty)) continue;
+            if (!canUseTarget(tx, ty)) continue;
+
+            const state = getOrInitState(tx, ty);
+            if (state.remaining <= 0) continue;
+
+            const seed = getOrCreateSeed(tx, ty);
+            if (seed.terrainClass === "structure") continue;
+            const dist = Math.abs(dx) + Math.abs(dy);
+            const moveCost = movementCostAt(tx, ty);
+            const typeWeight = strategy.weights[seed.mainType] || 1;
+            const amountFactor = state.remaining / seed.maxCapacity;
+            const homePenalty = Math.max(0, (Math.abs(tx - HOME_X) + Math.abs(ty - HOME_Y) - 12) * 0.015);
+            const terrainBonus = seed.terrainClass === "forest" && strategyId === "herb" ? 0.45 : seed.terrainClass === "mountain" && strategyId === "rare" ? 0.55 : 0;
+            const heatPenalty = getChunkHeatAt(tx, ty) * 0.35;
+            const score = typeWeight * (1.6 + amountFactor + terrainBonus) - dist * 0.085 - moveCost * 0.28 - homePenalty - heatPenalty;
+            candidates.push({ x: tx, y: ty, score, seed, heat: getChunkHeatAt(tx, ty) });
+        }
+    }
+    candidates.sort((a, b) => b.score - a.score);
+    return candidates.slice(0, limit);
+}
+
+function shouldReturnHome() {
+    if (isAtHome()) return false;
+    const bagThreshold = Math.floor(avatarBagCap * bagReturnRatio);
+    const bagLoad = totalInventoryLoad();
+    if (bagLoad >= bagThreshold) return true;
+    if (avatarHp <= Math.floor(getAvatarMaxHp() * BALANCE_CONFIG.combat.lowHpReturnRatio)) return true;
+    if (avatarInventory.rareCrystal >= 3) return true;
+    return false;
+}
+
+function depositAvatarInventoryToHome() {
+    const moved = [];
+    Object.keys(avatarInventory).forEach((key) => {
+        const amount = avatarInventory[key];
+        if (amount > 0) {
+            homeInventory[key] += amount;
+            avatarInventory[key] = 0;
+            const name = RESOURCE_META[key]?.label || ITEM_DEFS[key]?.label || key;
+            moved.push(`${name} ${amount}`);
+        }
+    });
+    if (moved.length) {
+        addLog(`化身已入库：${moved.join(" / ")}`);
+        updateSidePanels();
+        updateStatus();
+        updateMovementStatus();
+    }
+    avatarHp = getAvatarMaxHp();
+    avatarMp = getAvatarMaxMp();
+}
+
+function isWithinDailyMoveRadius(x, y) {
+    const dx = x - dayOriginX;
+    const dy = y - dayOriginY;
+    return Math.hypot(dx, dy) <= DAILY_MOVE_RADIUS;
+}
+
+function hasValidExploreTarget() {
+    if (!exploreTarget) return false;
+    if (!isPassable(exploreTarget.x, exploreTarget.y)) return false;
+    if (isReservedByOther(exploreTarget.x, exploreTarget.y)) return false;
+    const seed = getOrCreateSeed(exploreTarget.x, exploreTarget.y);
+    if (seed.terrainClass === "structure") return false;
+    const state = getOrInitState(exploreTarget.x, exploreTarget.y);
+    return state.remaining > 0;
+}
+
+function pickStepToward(targetX, targetY) {
+    const candidates = [];
+    const dx = targetX - avatarX;
+    const dy = targetY - avatarY;
+
+    if (dx !== 0) candidates.push({ x: avatarX + Math.sign(dx), y: avatarY });
+    if (dy !== 0) candidates.push({ x: avatarX, y: avatarY + Math.sign(dy) });
+
+    candidates.push({ x: avatarX + 1, y: avatarY });
+    candidates.push({ x: avatarX - 1, y: avatarY });
+    candidates.push({ x: avatarX, y: avatarY + 1 });
+    candidates.push({ x: avatarX, y: avatarY - 1 });
+
+    const deduped = [];
+    const seen = new Set();
+    for (const step of candidates) {
+        const key = `${step.x},${step.y}`;
+        if (!seen.has(key)) {
+            seen.add(key);
+            deduped.push(step);
+        }
+    }
+
+    deduped.sort((a, b) => {
+        const aDist = Math.abs(targetX - a.x) + Math.abs(targetY - a.y);
+        const bDist = Math.abs(targetX - b.x) + Math.abs(targetY - b.y);
+        const aCost = movementCostAt(a.x, a.y);
+        const bCost = movementCostAt(b.x, b.y);
+        return aDist - bDist || aCost - bCost;
+    });
+
+    return deduped.find((step) => isPassable(step.x, step.y) && movementCostAt(step.x, step.y) !== Infinity) || null;
+}
+
+function moveOneStep(targetX, targetY) {
+    const step = pickStepToward(targetX, targetY);
+    if (!step) {
+        movementStatusText = "前方为大水或死路，改道失败";
+        return false;
+    }
+    if (!isWithinDailyMoveRadius(step.x, step.y)) {
+        movementStatusText = `今日活动半径已达 ${DAILY_MOVE_RADIUS} 格，返城中`;
+        autoObjective = "return_home";
+        return false;
+    }
+
+    avatarX = step.x;
+    avatarY = step.y;
+    lastMoveAtMs = simulationTimeMs;
+    dayMoveCount += 1;
+    dayMoveLogBatch += 1;
+    if (dayMoveLogBatch >= 5 || autoObjective === "return_home") dayMoveLogBatch = 0;
+    movementStatusText = `今日已移动 ${dayMoveCount} 格，当前位置 (${avatarX}, ${avatarY})`;
+    return true;
+}
+
+function getGatherDurationMs(seed) {
+    const terrainCost = seed.terrainClass === "mountain" ? 2200 : seed.terrainClass === "forest" ? 900 : 0;
+    const refinementBonus = town.refinementLevel * 320 + sharedStats.control * 110 + sharedStats.spirit * 120;
+    return Math.max(3800, BALANCE_CONFIG.timing.gatherBaseMs + terrainCost - refinementBonus);
+}
+
+function updateGatheringRing() {
+    document.querySelectorAll(".gathering").forEach((el) => el.remove());
+    if (!isGathering || !gatheringTarget) return;
+
+    const cell = document.querySelector(`.cell[data-wx="${avatarX}"][data-wy="${avatarY}"]`);
+    if (!cell) return;
+
+    const ring = document.createElement("div");
+    ring.className = "gathering";
+    ring.innerHTML = `
+        <svg class="progress-ring" width="56" height="56">
+            <circle class="progress-ring__circle" stroke="#88ffaa" stroke-width="5" fill="transparent" r="23" cx="28" cy="28"
+                stroke-dasharray="144.5" stroke-dashoffset="144.5"></circle>
+        </svg>
+        <div class="progress-text">${Math.ceil(gatherRemainingMs / 1000)}s</div>
+    `;
+    cell.appendChild(ring);
+    const circle = ring.querySelector("circle");
+    circle.style.strokeDashoffset = 144.5 * (1 - gatheringProgress);
+}
+
+function startGathering(tx, ty) {
+    if (isGathering || avatarX !== tx || avatarY !== ty) return;
+    const monster = getMonsterAt(tx, ty);
+    if (monster) {
+        startBattleWith(monster);
+        return;
+    }
+    const state = getOrInitState(tx, ty);
+    if (state.remaining <= 0) {
+        addLog("此地灵机已枯竭");
+        return;
+    }
+
+    const seed = getOrCreateSeed(tx, ty);
+    if (!acquireReservation(tx, ty)) {
+        addLog("目标地块已被其他化身占用，重新择点");
+        markTargetBackoff(tx, ty);
+        exploreTarget = null;
+        return;
+    }
+    const resourceKey = resourceKeyFromSeed(seed);
+    const unitWeight = resourceUnitWeight(resourceKey);
+    const capacityLeft = avatarBagCap - totalInventoryLoad();
+    if (capacityLeft < unitWeight) {
+        addLog("化身背包已满，切换返城优先");
+        releaseReservation(tx, ty);
+        autoObjective = "return_home";
+        exploreTarget = null;
+        return;
+    }
+    isGathering = true;
+    gatheringTarget = { x: tx, y: ty };
+    exploreTarget = { x: tx, y: ty };
+    gatherTotalMs = getGatherDurationMs(seed);
+    gatherRemainingMs = gatherTotalMs;
+    gatheringProgress = 0;
+    addLog(`开始采集 ${RESOURCE_META[resourceKeyFromSeed(seed)].label}，预计 ${Math.ceil(gatherTotalMs / 1000)} 秒`);
+    updateGatheringRing();
+}
+
+function finishGathering() {
+    if (!gatheringTarget) return;
+
+    const { x, y } = gatheringTarget;
+    const state = getOrInitState(x, y);
+    const seed = getOrCreateSeed(x, y);
+    const harvestRoll = simpleHash(x + gatherCount * 17, y + dayCount * 29);
+    const baseAmount = Math.min(2 + (harvestRoll % 5), state.remaining);
+    const resourceKey = resourceKeyFromSeed(seed);
+    const heat = getChunkHeatAt(x, y);
+    const heatMultiplier = Math.max(0.35, 1 - heat * 0.06);
+    const amountByHeat = Math.max(1, Math.floor(baseAmount * heatMultiplier));
+    const unitWeight = resourceUnitWeight(resourceKey);
+    const capacityLeft = Math.max(0, avatarBagCap - totalInventoryLoad());
+    const maxByCap = Math.floor(capacityLeft / unitWeight);
+    const amount = Math.max(0, Math.min(amountByHeat, maxByCap, state.remaining));
+
+    if (amount > 0) {
+        state.remaining -= amount;
+        state.depletion += amount;
+        avatarInventory[resourceKey] += amount;
+        dayGatherUnits += amount;
+        addChunkHeatAt(x, y, 1 + amount * 0.6);
+        updateSidePanels();
+        updateStatus();
+        updateMovementStatus();
+    } else {
+        addLog("化身背包容量不足，本次未能采集");
+    }
+
+    gatherCount += 1;
+    isGathering = false;
+    gatherRemainingMs = 0;
+    gatherTotalMs = 0;
+    gatheringProgress = 0;
+    gatheringTarget = null;
+    releaseReservation(x, y);
+    exploreTarget = null;
+    document.querySelectorAll(".gathering").forEach((el) => el.remove());
+
+    if (amount > 0) {
+        addLog(`采集完成，获得 ${RESOURCE_META[resourceKey].label} ×${amount}（热度${heat.toFixed(1)}）`);
+    }
+    if (shouldReturnHome()) {
+        autoObjective = "return_home";
+    }
+}
+
+function tryRefineAtHome(autoTriggered = false) {
+    if (dayRefineCount >= town.refinementLevel) {
+        if (!autoTriggered) {
+            addLog(`今日炼化次数已达上限（${town.refinementLevel}）`);
+        }
+        return false;
+    }
+
+    const spiritNeed = 20 + cultivationLevel * 8;
+    const herbNeed = 8 + cultivationLevel * 2;
+    const woodNeed = 6 + cultivationLevel * 2;
+    const rareNeed = cultivationLevel >= 3 ? 1 : 0;
+    const useCoreElixir = (homeInventory.coreElixir || 0) > 0;
+    const useStarShard = (homeInventory.starShard || 0) > 0 && cultivationLevel >= 4;
+    const spiritNeedAdj = Math.max(0, spiritNeed - (useCoreElixir ? 8 : 0) - (useStarShard ? 12 : 0));
+    const herbNeedAdj = Math.max(0, herbNeed - (useCoreElixir ? 2 : 0));
+    const woodNeedAdj = Math.max(0, woodNeed - (useStarShard ? 2 : 0));
+
+    if (
+        homeInventory.spiritStone < spiritNeedAdj ||
+        homeInventory.herb < herbNeedAdj ||
+        homeInventory.wood < woodNeedAdj ||
+        homeInventory.rareCrystal < rareNeed
+    ) {
+        if (!autoTriggered) {
+            addLog(`炼化材料不足，需要 灵石${spiritNeedAdj}/灵草${herbNeedAdj}/灵木${woodNeedAdj}${rareNeed ? `/异晶${rareNeed}` : ""}`);
+        }
+        return false;
+    }
+
+    homeInventory.spiritStone -= spiritNeedAdj;
+    homeInventory.herb -= herbNeedAdj;
+    homeInventory.wood -= woodNeedAdj;
+    homeInventory.rareCrystal -= rareNeed;
+    if (useCoreElixir) homeInventory.coreElixir -= 1;
+    if (useStarShard) homeInventory.starShard -= 1;
+    cultivationLevel += 1;
+    dayRefineCount += 1;
+    town.refinementLevel += 1;
+    town.prosperity += 1;
+    town.storageCap += 18;
+    sharedStats.level += 1;
+    sharedStats.spirit += 1;
+    sharedStats.fortune += 1;
+    sharedStats.freePoints += 1;
+    addLog(`洞府炼化成功，境界提升至 ${getRealmName()}，仓储上限 ${town.storageCap}`);
+    return true;
+}
+
+function autoExploreStep() {
+    if (isGathering) return;
+    if (battleState) {
+        resolveBattleStep();
+        return;
+    }
+
+    if (autoObjective === "return_home") {
+        releaseExploreTargetReservation();
+        exploreTarget = null;
+        if (isAtHome()) {
+            addLog("已返回洞府，开始整备");
+            depositAvatarInventoryToHome();
+            tryRefineAtHome(true);
+            avatarHp = getAvatarMaxHp();
+            avatarMp = getAvatarMaxMp();
+            autoObjective = "explore";
+            return;
+        }
+        moveOneStep(HOME_X, HOME_Y);
+        return;
+    }
+
+    if (shouldReturnHome()) {
+        releaseExploreTargetReservation();
+        exploreTarget = null;
+        autoObjective = "return_home";
+        addLog("背包偏重，切换为返城优先");
+        return;
+    }
+
+    if (!hasValidExploreTarget()) {
+        releaseExploreTargetReservation();
+        const pool = chooseResourceTargets(TARGET_POOL_SIZE);
+        exploreTarget = null;
+        for (const candidate of pool) {
+            if (acquireReservation(candidate.x, candidate.y)) {
+                exploreTarget = candidate;
+                break;
+            }
+            markTargetBackoff(candidate.x, candidate.y);
+        }
+    } else if (exploreTarget) {
+        if (!acquireReservation(exploreTarget.x, exploreTarget.y)) {
+            markTargetBackoff(exploreTarget.x, exploreTarget.y);
+            exploreTarget = null;
+        }
+    }
+
+    const target = exploreTarget;
+    if (!target) {
+        addLog("附近暂未发现值得采集的资源点，返城待命");
+        autoObjective = "return_home";
+        return;
+    }
+
+    if (avatarX === target.x && avatarY === target.y) {
+        startGathering(target.x, target.y);
+        return;
+    }
+
+    moveOneStep(target.x, target.y);
+    const encountered = getMonsterAt(avatarX, avatarY);
+    if (encountered) {
+        startBattleWith(encountered);
+    }
+}
+
+function formatCostLine(cost) {
+    if (!cost) return "无";
+    const parts = [];
+    if (cost.spiritStone) parts.push(`灵石 ${cost.spiritStone}`);
+    if (cost.wood) parts.push(`灵木 ${cost.wood}`);
+    if (cost.herb) parts.push(`灵草 ${cost.herb}`);
+    if (cost.rareCrystal) parts.push(`异晶 ${cost.rareCrystal}`);
+    return parts.join(" / ");
+}
+
+function formatCostStockLine(cost) {
+    if (!cost) return '<div class="mat-line"><span class="mat-item mat-ok">无消耗</span></div>';
+    const specs = [
+        { key: "spiritStone", label: "灵石" },
+        { key: "wood", label: "灵木" },
+        { key: "herb", label: "灵草" },
+        { key: "rareCrystal", label: "异晶" }
+    ];
+    const parts = [];
+    for (const spec of specs) {
+        const need = cost[spec.key] || 0;
+        if (need <= 0) continue;
+        const have = homeInventory[spec.key] || 0;
+        const ok = have >= need;
+        parts.push(`<span class="mat-item ${ok ? "mat-ok" : "mat-bad"}">${spec.label} ${have}/${need}</span>`);
+    }
+    return `<div class="mat-line">${parts.join("")}</div>`;
+}
+
+function canAffordCost(cost) {
+    if (!cost) return true;
+    return (
+        homeInventory.spiritStone >= (cost.spiritStone || 0) &&
+        homeInventory.wood >= (cost.wood || 0) &&
+        homeInventory.herb >= (cost.herb || 0) &&
+        homeInventory.rareCrystal >= (cost.rareCrystal || 0)
+    );
+}
+
+function closeBuildPanel() {
+    buildPanel.classList.add("hidden");
+    buildPanel.innerHTML = "";
+    buildPanelTile = null;
+    if (isBuildFocus) {
+        isBuildFocus = false;
+        addLog("已退出洞府建设视图");
+        renderAll();
+    }
+}
+
+function performHomeBuildAction(wx, wy, action, targetType = null) {
+    if (!isHomeBuildTile(wx, wy)) {
+        addLog("只能在洞府 5x5 范围内建设");
+        return false;
+    }
+    if (isGathering || isMeditating) {
+        addLog("当前行为进行中，暂不能建设");
+        return false;
+    }
+
+    const current = getHomeBuilding(wx, wy);
+    if (action === "inspect") {
+        if (current) {
+            const conf = getBuildingConfig(current.type);
+            addLog(`该地块：${conf ? conf.label : current.type} Lv.${current.level}`);
+        } else {
+            addLog("该地块为空地");
+        }
+        return true;
+    }
+    if (action === "remove") {
+        if (!current) {
+            addLog("该地块没有建筑可拆除");
+            return false;
+        }
+        const refundStone = 10 * current.level;
+        homeInventory.spiritStone += refundStone;
+        setHomeBuilding(wx, wy, null);
+        addLog(`拆除完成，返还灵石 ${refundStone}`);
+        return true;
+    }
+    if (action === "upgrade") {
+        if (!current) {
+            addLog("该地块为空，无法升级");
+            return false;
+        }
+        const conf = getBuildingConfig(current.type);
+        const upgradeCost = conf ? conf.upgradeCost : null;
+        if (!applyCost(upgradeCost)) {
+            addLog("升级材料不足");
+            return false;
+        }
+        current.level += 1;
+        setHomeBuilding(wx, wy, current);
+        addLog(`${conf ? conf.label : current.type} 升级到 Lv.${current.level}`);
+        return true;
+    }
+
+    if (action !== "build") return false;
+    const conf = getBuildingConfig(targetType);
+    if (!conf || conf.id === "none") return false;
+    if (current) {
+        addLog("该地块已有建筑，请先拆除或切换升级模式");
+        return false;
+    }
+    if (!applyCost(conf.buildCost)) {
+        addLog(`建造 ${conf.label} 材料不足`);
+        return false;
+    }
+    setHomeBuilding(wx, wy, { type: conf.id, level: 1 });
+    addLog(`建造完成：${conf.label} Lv.1`);
+    return true;
+}
+
+function openBuildPanel(wx, wy) {
+    if (!isHomeBuildTile(wx, wy)) return;
+    if (zoomLevel > 1) zoomLevel = 1;
+    isBuildFocus = true;
+    buildPanelTile = { x: wx, y: wy };
+
+    const current = getHomeBuilding(wx, wy);
+    const currentTitle = current
+        ? `${getBuildingConfig(current.type)?.label || current.type} Lv.${current.level}`
+        : "空地";
+
+    let html = `<div style="font-weight:700; margin-bottom:6px;">洞府建设面板</div>`;
+    html += `<div class="build-meta">主角驻守洞府执事中，支持远程建设（化身可在外探索）</div>`;
+    html += `<div class="build-meta">目标瓦片: (${wx}, ${wy}) · 当前建筑: ${currentTitle}</div>`;
+    html += `<div class="build-meta" style="margin:6px 0 10px;">洞府库存: 灵石 ${homeInventory.spiritStone} / 灵木 ${homeInventory.wood} / 灵草 ${homeInventory.herb} / 异晶 ${homeInventory.rareCrystal}</div>`;
+
+    if (current) {
+        const conf = getBuildingConfig(current.type);
+        const canUpgrade = canAffordCost(conf?.upgradeCost);
+        html += `
+            <div class="build-row">
+                <div>
+                    <div><strong>升级 ${conf ? conf.label : current.type}</strong></div>
+                    <div class="build-meta">需求: ${formatCostLine(conf?.upgradeCost)}</div>
+                    ${formatCostStockLine(conf?.upgradeCost)}
+                    <div class="build-meta ${canUpgrade ? "" : "mini-meta-warn"}">${canUpgrade ? "库存满足" : "材料不足，点击可查看提示"}</div>
+                    <div class="build-meta">效果: ${conf?.effect || "-"}</div>
+                </div>
+                <button class="mini-btn" data-build-action="upgrade">升级</button>
+            </div>
+            <div class="build-row">
+                <div>
+                    <div><strong>拆除建筑</strong></div>
+                    <div class="build-meta">返还: 灵石 ${10 * current.level}</div>
+                </div>
+                <button class="mini-btn" data-build-action="remove">拆除</button>
+            </div>
+        `;
+    } else {
+        for (const conf of BUILDING_TYPES.filter((item) => item.id !== "none")) {
+            const canBuild = canAffordCost(conf.buildCost);
+            html += `
+                <div class="build-row">
+                    <div>
+                        <div><strong>${conf.icon} ${conf.label}</strong></div>
+                        <div class="build-meta">需求: ${formatCostLine(conf.buildCost)}</div>
+                        ${formatCostStockLine(conf.buildCost)}
+                        <div class="build-meta ${canBuild ? "" : "mini-meta-warn"}">${canBuild ? "库存满足" : "材料不足，点击可查看提示"}</div>
+                        <div class="build-meta">效果: ${conf.effect}</div>
+                    </div>
+                    <button class="mini-btn" data-build-action="build" data-build-type="${conf.id}">建造</button>
+                </div>
+            `;
+        }
+    }
+    html += `<div style="display:flex; gap:8px; margin-top:10px;"><button class="mini-btn" data-build-action="inspect">查看</button><button class="mini-btn" data-build-action="close">关闭</button></div>`;
+
+    buildPanel.innerHTML = html;
+    buildPanel.classList.remove("hidden");
+
+    buildPanel.querySelectorAll("button[data-build-action]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const action = btn.dataset.buildAction;
+            const type = btn.dataset.buildType || null;
+            if (!buildPanelTile) return;
+            if (action === "close") {
+                closeBuildPanel();
+                return;
+            }
+            const ok = performHomeBuildAction(buildPanelTile.x, buildPanelTile.y, action, type);
+            if (ok || action === "inspect") {
+                openBuildPanel(buildPanelTile.x, buildPanelTile.y);
+                renderAll();
+            }
+        });
+    });
+}
+
+function getChunkInfo(cx, cy, span) {
+    const terrain = getTerrainClass(cx, cy);
+    const seed = getOrCreateSeed(cx, cy);
+    const state = getOrInitState(cx, cy);
+    const includesHome = Math.abs(cx - HOME_X) <= Math.floor(span / 2) && Math.abs(cy - HOME_Y) <= Math.floor(span / 2);
+    return { terrain, seed, state, includesHome };
+}
+
+function formatChunkTooltip(wx, wy, span) {
+    const info = getChunkInfo(wx, wy, span);
+    const terrainLabel = TERRAIN_RULES[info.terrain].label;
+    const resourceKey = resourceKeyFromSeed(info.seed);
+    const heat = getChunkHeatAt(wx, wy);
+    let text = span === 1 ? `坐标: (${wx}, ${wy})\n` : `地块中心: (${wx}, ${wy})\n覆盖范围: ${span}x${span}\n`;
+    text += `地形: ${terrainLabel}\n`;
+    text += `主资源: ${RESOURCE_META[resourceKey].label}\n`;
+    text += `剩余: ${info.state.remaining}/${info.seed.maxCapacity}`;
+    text += `\n区域热度: ${heat.toFixed(1)}`;
+    if (!TERRAIN_RULES[info.terrain].passable) {
+        text += `\n此地不可通行`;
+    } else {
+        text += `\n移动消耗: ${TERRAIN_RULES[info.terrain].moveCost}`;
+    }
+    if (info.includesHome) {
+        text += `\n此区域包含洞府`;
+    }
+    if (span === 1 && isHomeBuildTile(wx, wy)) {
+        const building = getHomeBuilding(wx, wy);
+        if (building) {
+            const conf = getBuildingConfig(building.type);
+            text += `\n洞府建筑: ${conf ? conf.label : building.type} Lv.${building.level}`;
+        } else {
+            text += `\n洞府建筑: 空地`;
+        }
+    }
+    if (span === 1) {
+        const reservation = getReservationAt(wx, wy);
+        if (reservation) {
+            text += `\n占位状态: ${reservation.owner === PLAYER_ID ? "本地占用" : "他人占用"}`;
+        }
+        const monster = getMonsterAt(wx, wy);
+        if (monster) {
+            text += `\n妖物: ${monster.type} Lv.${monster.level} HP ${monster.hp}/${monster.maxHp}`;
+            const profile = getMonsterDropProfile(monster.type);
+            if (profile) {
+                text += `\n掉落率: ${profile.drops.map((d) => `${ITEM_DEFS[d.id]?.label || d.id} ${d.chance}`).join(" / ")}`;
+            }
+        }
+    }
+    return text;
+}
+
+function updateHeader() {
+    document.getElementById("coord-x").textContent = avatarX;
+    document.getElementById("coord-y").textContent = avatarY;
+    document.getElementById("zoom-label").textContent = ZOOM_LEVELS[zoomLevel].label;
+    document.getElementById("day-count").textContent = dayCount;
+    document.getElementById("realm-name").textContent = getRealmName();
+}
+
+function renderMap() {
+    const cfg = ZOOM_LEVELS[zoomLevel];
+    const half = Math.floor(cfg.size / 2);
+    const centerX = isBuildFocus ? HOME_X : avatarX;
+    const centerY = isBuildFocus ? HOME_Y : avatarY;
+    grid.style.gridTemplateColumns = `repeat(${cfg.size}, ${cfg.cellPx}px)`;
+    grid.style.gridTemplateRows = `repeat(${cfg.size}, ${cfg.cellPx}px)`;
+    grid.innerHTML = "";
+
+    for (let gy = -half; gy <= half; gy++) {
+        for (let gx = -half; gx <= half; gx++) {
+            const wx = centerX + gx * cfg.span;
+            const wy = centerY + gy * cfg.span;
+            const info = getChunkInfo(wx, wy, cfg.span);
+            const resourceKey = resourceKeyFromSeed(info.seed);
+
+            const cell = document.createElement("div");
+            cell.className = `cell ${info.terrain}${TERRAIN_RULES[info.terrain].passable ? "" : " impassable"}`;
+            cell.dataset.wx = wx;
+            cell.dataset.wy = wy;
+            cell.dataset.span = cfg.span;
+            if (cfg.span === 1 && isHomeBuildTile(wx, wy)) {
+                cell.classList.add("home-build-zone");
+                if (wy === HOME_Y - HOME_BUILD_RADIUS) cell.classList.add("home-edge-top");
+                if (wy === HOME_Y + HOME_BUILD_RADIUS) cell.classList.add("home-edge-bottom");
+                if (wx === HOME_X - HOME_BUILD_RADIUS) cell.classList.add("home-edge-left");
+                if (wx === HOME_X + HOME_BUILD_RADIUS) cell.classList.add("home-edge-right");
+            }
+
+            if (wx === avatarX && wy === avatarY) {
+                if (gx === 0 && gy === 0) cell.dataset.center = "true";
+                const visual = getAvatarVisualState();
+                const av = document.createElement("div");
+                av.className = `avatar ${visual.css}`;
+                av.innerHTML = `<span class="avatar-main">${cfg.span <= 2 ? "🧍" : "◉"}</span><span class="avatar-badge">${visual.badge}</span>`;
+                cell.appendChild(av);
+            }
+
+            if (wx === HOME_X && wy === HOME_Y) {
+                const host = document.createElement("div");
+                host.className = "home-tag";
+                host.textContent = "主";
+                cell.appendChild(host);
+            }
+
+            if (cfg.span >= 4 && cfg.span < 16) {
+                const chunkTag = document.createElement("div");
+                chunkTag.className = "chunk-tag";
+                chunkTag.textContent = cfg.span >= 16 ? "群" : "区";
+                cell.appendChild(chunkTag);
+            }
+
+            if (info.includesHome) {
+                const homeTag = document.createElement("div");
+                homeTag.className = "home-tag";
+                homeTag.textContent = "⌂";
+                cell.appendChild(homeTag);
+            }
+
+            if (cfg.span === 1 && isHomeBuildTile(wx, wy)) {
+                const building = getHomeBuilding(wx, wy);
+                if (building) {
+                    const conf = getBuildingConfig(building.type);
+                    const tag = document.createElement("div");
+                    tag.className = "chunk-tag";
+                    tag.textContent = `${conf ? conf.icon : "□"}${building.level}`;
+                    tag.style.left = "auto";
+                    tag.style.right = "2px";
+                    tag.style.top = "2px";
+                    cell.appendChild(tag);
+                }
+            }
+
+            if (info.state.remaining > 0 && cfg.span < 16) {
+                const tag = document.createElement("div");
+                tag.className = "resource-tag";
+                tag.textContent = RESOURCE_META[resourceKey].icon;
+                tag.style.opacity = String(Math.max(0.35, info.state.remaining / info.seed.maxCapacity));
+                cell.appendChild(tag);
+            }
+
+            if (autoObjective === "return_home" && info.includesHome) {
+                const targetTag = document.createElement("div");
+                targetTag.className = "target-tag";
+                targetTag.textContent = "归";
+                cell.appendChild(targetTag);
+            } else if (exploreTarget && exploreTarget.x === wx && exploreTarget.y === wy && cfg.span === 1) {
+                const targetTag = document.createElement("div");
+                targetTag.className = "target-tag";
+                targetTag.textContent = "采";
+                cell.appendChild(targetTag);
+            } else if (cfg.span === 1) {
+                const monster = getMonsterAt(wx, wy);
+                if (monster) {
+                    cell.classList.add("monster-cell");
+                    if (monster.type === "精英妖将") cell.classList.add("monster-elite");
+                    if (monster.type === "天劫妖王") cell.classList.add("monster-boss");
+                    const targetTag = document.createElement("div");
+                    targetTag.className = "target-tag";
+                    targetTag.textContent = monster.type === "天劫妖王" ? "王" : monster.type === "精英妖将" ? "精" : "妖";
+                    cell.appendChild(targetTag);
+                } else {
+                    const reservation = getReservationAt(wx, wy);
+                    if (reservation) {
+                        const targetTag = document.createElement("div");
+                        targetTag.className = "target-tag";
+                        targetTag.textContent = reservation.owner === PLAYER_ID ? "占" : "锁";
+                        cell.appendChild(targetTag);
+                    }
+                }
+            }
+
+            grid.appendChild(cell);
+        }
+    }
+
+    updateHeader();
+    updateGatheringRing();
+}
+
+function updateStatus() {
+    const terrain = getTerrainClass(avatarX, avatarY);
+    const terrainRule = TERRAIN_RULES[terrain];
+    const strategy = currentStrategy();
+    const homeDist = distanceToHome();
+
+    statusEl.innerHTML = `
+        化身位置: (${avatarX}, ${avatarY})<br>
+        主角状态: ${hasAscended ? "已飞升，可外出" : "肉身驻守洞府（绝对安全）"}<br>
+        肉身修炼: 每20秒打坐修炼结算（当前效率 x${getCultivationRateMultiplier().toFixed(1)}）<br>
+        当前地形: ${terrainRule.label}<br>
+        行动状态: ${battleState ? `战斗中(${battleState.type} Lv.${battleState.level})` : isGathering ? "采集中" : isMeditating ? "打坐中" : isAutoMode ? (autoObjective === "return_home" ? "返城优先" : "自动探索") : "待机"}<br>
+        探索策略: ${strategy.label}<br>
+        当前目标: ${autoObjective === "return_home" ? "洞府" : exploreTarget ? `(${exploreTarget.x}, ${exploreTarget.y})` : "待选点"}<br>
+        距离洞府: ${homeDist} 格<br>
+        风险收益加成: +${Math.round(getRiskRewardBonusAt(avatarX, avatarY) * 100)}%<br>
+        化身血量: ${avatarHp}/${getAvatarMaxHp()}<br>
+        化身灵力: ${Math.floor(avatarMp)}/${getAvatarMaxMp()}<br>
+        金币: ${goldCoins}<br>
+        天地精华: ${heavenlyEssence}<br>
+        战斗胜场: ${dayCombatWins}<br>
+        战斗策略: ${currentBattleTactic().label}（聚灵丹阈值 ${Math.round(autoUsePillRatio * 100)}% / 回春散阈值 ${Math.round(autoUseSalveRatio * 100)}%）<br>
+        伤势状态: ${simulationTimeMs < injuryDebuffUntilMs ? `重伤恢复中（剩余 ${Math.ceil((injuryDebuffUntilMs - simulationTimeMs) / 1000)}s）` : "正常"}<br>
+        共用属性: 体${sharedStats.body} 灵${sharedStats.spirit} 识${sharedStats.mind} 御${sharedStats.control} 运${sharedStats.fortune}<br>
+        属性等级: Lv.${sharedStats.level}（待分配 ${sharedStats.freePoints}）<br>
+        修炼境界: ${getRealmName()}（修为 ${bodyCultivationExp}/${getBodyCultivationExpNeed(cultivationLevel)}）<br>
+        突破需求: 天地精华 ${heavenlyEssence}/${getBreakthroughEssenceNeed()}<br>
+        洞府炼化等级: ${town.refinementLevel}（今日 ${dayRefineCount}/${town.refinementLevel}）<br>
+        仓储上限: ${town.storageCap}<br>
+        背包上限: ${avatarBagCap}（回城阈值 ${Math.floor(avatarBagCap * bagReturnRatio)}）<br>
+        建设状态: ${isBuildFocus ? `建设中 (${buildPanelTile ? `${buildPanelTile.x},${buildPanelTile.y}` : "选中瓦片"})` : "未进入"}<br>
+        速度规则: 化身每秒 1 格；每日相对起点活动半径 <= ${DAILY_MOVE_RADIUS} 格<br>
+        模拟倍速: ${timeScale}x
+    `;
+}
+
+function updateCultivationPanel() {
+    const tickProgress = Math.max(0, Math.min(1, bodyCultivationAccumMs / BODY_CULTIVATION_TICK_MS));
+    if (cultivationTickRingEl) {
+        cultivationTickRingEl.style.strokeDashoffset = String(138.2 * (1 - tickProgress));
+        cultivationTickRingEl.style.stroke = bodyCultivationExp >= getBodyCultivationExpNeed(cultivationLevel) && heavenlyEssence >= getBreakthroughEssenceNeed()
+            ? "#ffd36f"
+            : "#8fd9ff";
+    }
+    if (cultivationMetaEl) {
+        cultivationMetaEl.innerHTML = `
+            境界 ${getRealmName()} · 修为 ${bodyCultivationExp}/${getBodyCultivationExpNeed(cultivationLevel)}<br>
+            打坐 ${isMeditating ? `进行中 ${Math.ceil(meditateRemainingMs / 1000)}s` : "待机"} · 下次修炼结算 ${Math.max(1, Math.ceil((BODY_CULTIVATION_TICK_MS - bodyCultivationAccumMs) / 1000))}s<br>
+            突破需求：天地精华 ${heavenlyEssence}/${getBreakthroughEssenceNeed()} · 效率 x${getCultivationRateMultiplier().toFixed(1)}
+        `;
+    }
+    if (breakthroughBtn) {
+        const canBreak = bodyCultivationExp >= getBodyCultivationExpNeed(cultivationLevel) && heavenlyEssence >= getBreakthroughEssenceNeed();
+        breakthroughBtn.disabled = !canBreak;
+    }
+    if (autoBreakthroughToggle) {
+        autoBreakthroughToggle.checked = autoBreakthrough;
+    }
+}
+
+function updateMovementStatus() {
+    movementStatusEl.innerHTML = `
+        化身: ${battleState ? `战斗中(${battleState.type})` : isGathering ? "采集中" : autoObjective === "return_home" ? "返城中" : isAutoMode ? "探索中" : "待命"}<br>
+        ${movementStatusText}<br>
+        每秒 1 格，日活动半径 ≤ ${DAILY_MOVE_RADIUS}
+    `;
+}
+
+function updateBattlePanel() {
+    if (!battleState) {
+        battlePanelEl.classList.add("hidden");
+        return;
+    }
+    const profile = getMonsterDropProfile(battleState.type);
+    const dropPreview = profile ? profile.drops.map((d) => `${ITEM_DEFS[d.id]?.label || d.id} ${d.chance}`).join(" / ") : "灵石 100%";
+    const enemyPct = Math.max(0, Math.round((battleState.hp / Math.max(1, battleState.maxHp)) * 100));
+    const selfPct = Math.max(0, Math.round((avatarHp / Math.max(1, getAvatarMaxHp())) * 100));
+    const detail = lastBattleFrame
+        ? `R${lastBattleFrame.round} ${lastBattleFrame.tactic}｜我方${lastBattleFrame.avatarHit ? "命中" : "未中"}${lastBattleFrame.crit ? "(暴击)" : ""} ${lastBattleFrame.avatarDmg}｜敌方${lastBattleFrame.monsterHit ? "命中" : "未中"} ${lastBattleFrame.monsterDmg}｜命中检定 ${lastBattleFrame.hitRoll} / 闪避检定 ${lastBattleFrame.dodgeRoll}`
+        : "等待首回合结算...";
+    battleSummaryEl.innerHTML = `⚔ ${battleState.type} Lv.${battleState.level} · 回合 ${battleState.rounds}<br>
+        敌HP ${battleState.hp}/${battleState.maxHp}（${enemyPct}%） · 我方HP ${avatarHp}/${getAvatarMaxHp()}（${selfPct}%）<br>
+        <span class="small-note">战术：${currentBattleTactic().label}｜${detail}</span><br>
+        <span class="small-note">掉落预览：${dropPreview} / 宝箱：小/中/大（概率受距离与怪物阶级影响）</span>`;
+    battleLogListEl.innerHTML = battleRoundLogs.map((line) => `<div>${line}</div>`).join("");
+    battlePanelEl.classList.remove("hidden");
+}
+
+function updateSidePanels() {
+    const elapsedMinutes = Math.max(1 / 60, (simulationTimeMs - dayStartMs) / 60000);
+    const gatherPerMin = (dayGatherUnits / elapsedMinutes).toFixed(1);
+    const renderSlots = (items, source) => `
+        <div class="inv-grid">
+            ${items.map((item) => `
+                <div class="inv-slot rarity-${item.rarity || "common"}" title="${item.label}" data-item-id="${item.id || ""}" data-item-source="${source || ""}" data-item-count="${item.count}">
+                    <span>${item.icon}</span>
+                    <span class="qty">${item.count}</span>
+                </div>
+            `).join("")}
+        </div>
+    `;
+    const bagSlots = [
+        { id: "spiritStone", ...ITEM_DEFS.spiritStone, count: avatarInventory.spiritStone },
+        { id: "herb", ...ITEM_DEFS.herb, count: avatarInventory.herb },
+        { id: "wood", ...ITEM_DEFS.wood, count: avatarInventory.wood },
+        { id: "demonCore", ...ITEM_DEFS.demonCore, count: avatarInventory.demonCore },
+        { id: "rareCrystal", ...ITEM_DEFS.rareCrystal, count: avatarInventory.rareCrystal }
+    ];
+    const bagConsumables = [
+        { id: "spiritPill", ...ITEM_DEFS.spiritPill, count: avatarInventory.spiritPill },
+        { id: "healingSalve", ...ITEM_DEFS.healingSalve, count: avatarInventory.healingSalve },
+        { id: "wardCharm", ...ITEM_DEFS.wardCharm, count: avatarInventory.wardCharm },
+        { id: "focusCharm", ...ITEM_DEFS.focusCharm, count: avatarInventory.focusCharm },
+        { id: "baitFlag", ...ITEM_DEFS.baitFlag, count: avatarInventory.baitFlag }
+    ];
+    const chestSlots = [
+        { id: "chestSmall", ...ITEM_DEFS.chestSmall, count: avatarInventory.chestSmall },
+        { id: "chestMedium", ...ITEM_DEFS.chestMedium, count: avatarInventory.chestMedium },
+        { id: "chestLarge", ...ITEM_DEFS.chestLarge, count: avatarInventory.chestLarge }
+    ];
+    const homeSlots = [
+        { id: "spiritStone", ...ITEM_DEFS.spiritStone, count: homeInventory.spiritStone },
+        { id: "herb", ...ITEM_DEFS.herb, count: homeInventory.herb },
+        { id: "wood", ...ITEM_DEFS.wood, count: homeInventory.wood },
+        { id: "demonCore", ...ITEM_DEFS.demonCore, count: homeInventory.demonCore },
+        { id: "rareCrystal", ...ITEM_DEFS.rareCrystal, count: homeInventory.rareCrystal }
+    ];
+    const equipSlots = [
+        { id: "sword", ...ITEM_DEFS.sword, count: equipmentInventory.sword },
+        { id: "bow", ...ITEM_DEFS.bow, count: equipmentInventory.bow },
+        { id: "shield", ...ITEM_DEFS.shield, count: equipmentInventory.shield },
+        { id: "artifact", ...ITEM_DEFS.artifact, count: equipmentInventory.artifact },
+        { id: "thunderBlade", ...ITEM_DEFS.thunderBlade, count: equipmentInventory.thunderBlade },
+        { id: "phoenixBow", ...ITEM_DEFS.phoenixBow, count: equipmentInventory.phoenixBow },
+        { id: "voidArmor", ...ITEM_DEFS.voidArmor, count: equipmentInventory.voidArmor },
+        { id: "dragonRelic", ...ITEM_DEFS.dragonRelic, count: equipmentInventory.dragonRelic }
+    ];
+    const rareBagEquipSlots = [
+        { id: "thunderBlade", ...ITEM_DEFS.thunderBlade, count: avatarInventory.thunderBlade },
+        { id: "phoenixBow", ...ITEM_DEFS.phoenixBow, count: avatarInventory.phoenixBow },
+        { id: "voidArmor", ...ITEM_DEFS.voidArmor, count: avatarInventory.voidArmor },
+        { id: "dragonRelic", ...ITEM_DEFS.dragonRelic, count: avatarInventory.dragonRelic }
+    ];
+    const materialSlots = [
+        { id: "spiritStone", label: "灵石库存", icon: "🪨", rarity: ITEM_DEFS.spiritStone.rarity, count: homeInventory.spiritStone },
+        { id: "herb", label: "灵草库存", icon: "🧪", rarity: ITEM_DEFS.herb.rarity, count: homeInventory.herb },
+        { id: "wood", label: "灵木库存", icon: "🪵", rarity: ITEM_DEFS.wood.rarity, count: homeInventory.wood },
+        { id: "demonCore", label: "妖丹库存", icon: "◈", rarity: ITEM_DEFS.demonCore.rarity, count: homeInventory.demonCore },
+        { id: "rareCrystal", label: "异晶库存", icon: "🔷", rarity: ITEM_DEFS.rareCrystal.rarity, count: homeInventory.rareCrystal }
+    ];
+    const advancedSlots = [
+        { id: "coreElixir", ...ITEM_DEFS.coreElixir, count: homeInventory.coreElixir },
+        { id: "starShard", ...ITEM_DEFS.starShard, count: homeInventory.starShard },
+        { id: "ascendSeal", ...ITEM_DEFS.ascendSeal, count: homeInventory.ascendSeal }
+    ];
+    Object.entries({ ...avatarInventory, ...homeInventory, ...equipmentInventory }).forEach(([id, amount]) => {
+        if (amount > 0) discoveredItemSet.add(id);
+    });
+    resourceSummaryEl.innerHTML = `
+        <div class="inv-block">
+            <div class="inv-title"><strong>化身背包</strong></div>
+            ${renderSlots(bagSlots, "avatar")}
+        </div>
+        <div class="inv-block">
+            <div class="inv-title"><strong>洞府库存</strong></div>
+            ${renderSlots(homeSlots, "home")}
+        </div>
+        <div class="inv-block">
+            <div class="inv-title"><strong>道具</strong></div>
+            ${renderSlots(bagConsumables, "avatar")}
+        </div>
+        <div class="inv-block">
+            <div class="inv-title"><strong>宝箱</strong></div>
+            ${renderSlots(chestSlots, "avatar")}
+            <div class="small-note" style="margin-top:4px;">战斗可掉落宝箱，开箱可获得稀有材料。</div>
+            <div class="small-note">点击宝箱格后可在物品菜单中“使用”开启。</div>
+        </div>
+        <div class="inv-block">
+            <div class="inv-title"><strong>稀有战利品</strong></div>
+            ${renderSlots(rareBagEquipSlots, "avatar")}
+        </div>
+        <div class="inv-block">
+            <div class="inv-title"><strong>装备</strong></div>
+            ${renderSlots(equipSlots, "equipment")}
+        </div>
+        <div class="inv-block">
+            <div class="inv-title"><strong>资源</strong></div>
+            ${renderSlots(materialSlots, "home")}
+        </div>
+        <div class="inv-block">
+            <div class="inv-title"><strong>高阶材料</strong></div>
+            ${renderSlots(advancedSlots, "home")}
+        </div>
+        <div class="pill-row">
+            <span class="pill">金币 ${goldCoins}</span>
+            <span class="pill">天地精华 ${heavenlyEssence}</span>
+            <span class="pill">修炼效率 x${getCultivationRateMultiplier().toFixed(1)}</span>
+            <span class="pill">境界 ${getRealmName()}</span>
+            <span class="pill">洞府 ${town.prosperity} 级</span>
+            <span class="pill">背包 ${totalInventoryLoad()}/${avatarBagCap}</span>
+            <span class="pill">仓储 ${town.storageCap}</span>
+            <span class="pill">采集效率 ${gatherPerMin}/分</span>
+            <span class="pill">今日采集 ${dayGatherUnits}</span>
+            <span class="pill">血量 ${avatarHp}/${getAvatarMaxHp()}</span>
+            <span class="pill">今日战斗 ${dayCombatWins}</span>
+            <span class="pill">战术 ${currentBattleTactic().label}</span>
+            <span class="pill">宝箱 小${avatarInventory.chestSmall}/中${avatarInventory.chestMedium}/大${avatarInventory.chestLarge}</span>
+            <span class="pill">属性Lv.${sharedStats.level}</span>
+            <span class="pill">灵草圃 ${countBuildingsByType("herbGarden")}</span>
+            <span class="pill">悟道室 ${countBuildingsByType("trainingRoom")}</span>
+        </div>
+    `;
+
+    const statRows = [
+        { key: "body", label: "体魄" },
+        { key: "spirit", label: "灵力" },
+        { key: "mind", label: "神识" },
+        { key: "control", label: "统御" },
+        { key: "fortune", label: "气运" }
+    ];
+    const combat = getAvatarCombatSnapshot();
+    attributeSummaryEl.innerHTML = `
+        <div style="margin-bottom:8px;"><strong>共用属性（主角/化身）</strong></div>
+        <div class="small-note">属性等级 Lv.${sharedStats.level}，待分配点 ${sharedStats.freePoints}</div>
+        ${statRows.map((row) => `
+            <div class="attr-row">
+                <span>${row.label}</span>
+                <div class="attr-ops">
+                    <strong>${sharedStats[row.key]}</strong>
+                    <button class="mini-btn" data-attr-add="${row.key}" ${sharedStats.freePoints > 0 ? "" : "disabled"}>+</button>
+                </div>
+            </div>
+        `).join("")}
+        <div class="pill-row">
+            <span class="pill">战力评分 ${getSharedPowerScore()}</span>
+            <span class="pill">化身HP ${getAvatarMaxHp()}</span>
+            <span class="pill">采集加速 ${Math.floor((sharedStats.spirit + sharedStats.control) * 2)}%</span>
+            <span class="pill">稀有率 +${Math.min(45, 12 + sharedStats.fortune)}%</span>
+        </div>
+        <div style="margin:12px 0 8px;"><strong>化身战斗属性面板</strong></div>
+        <div class="small-note">HP ${combat.hp}/${combat.maxHp} · MP ${Math.floor(combat.mp)}/${combat.maxMp}</div>
+        <div class="pill-row">
+            <span class="pill">攻击 ${combat.atk}</span>
+            <span class="pill">防御 ${combat.def}</span>
+            <span class="pill">命中 ${(combat.hit * 100).toFixed(1)}%</span>
+            <span class="pill">闪避 ${(combat.dodge * 100).toFixed(1)}%</span>
+            <span class="pill">暴击 ${(combat.critRate * 100).toFixed(1)}%</span>
+            <span class="pill">战斗策略 ${currentBattleTactic().label}</span>
+        </div>
+    `;
+    attributeSummaryEl.querySelectorAll("button[data-attr-add]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const ok = allocSharedStat(btn.dataset.attrAdd);
+            if (ok) {
+                addLog(`属性提升：${btn.dataset.attrAdd} +1`);
+                renderAll();
+            }
+        });
+    });
+
+    const codexItems = Object.entries(ITEM_DEFS).map(([id, def]) => {
+        const owned = (avatarInventory[id] || 0) + (homeInventory[id] || 0) + (equipmentInventory[id] || 0);
+        const discovered = discoveredItemSet.has(id);
+        return { id, ...def, owned, discovered };
+    });
+    codexSummaryEl.innerHTML = `
+        <div style="margin-bottom:8px;"><strong>物品图鉴</strong></div>
+        <div class="small-note">已发现 ${codexItems.filter((i) => i.discovered).length}/${codexItems.length}</div>
+        <div class="codex-grid" style="margin-top:8px;">
+            ${codexItems.map((item) => `
+                <div class="codex-item rarity-${item.rarity} ${item.discovered ? "" : "locked"}" data-item-id="${item.id}" data-item-count="${item.owned}">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div><strong>${item.icon} ${item.discovered ? item.label : "？？？"}</strong></div>
+                        <div class="small-note">${item.rarity.toUpperCase()}</div>
+                    </div>
+                    <div class="small-note" style="margin-top:4px;">类别：${item.category}</div>
+                    <div class="small-note">来源：${item.discovered ? item.source : "未解锁"}</div>
+                    <div class="small-note">持有：${item.owned}</div>
+                </div>
+            `).join("")}
+        </div>
+        <div style="margin:12px 0 6px;"><strong>怪物图鉴（掉落几率）</strong></div>
+        <div class="codex-grid">
+            ${MONSTER_CODEX.map((m) => `
+                <div class="codex-item">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>👾 ${m.type}</strong>
+                        <span class="small-note">${m.levelRange}</span>
+                    </div>
+                    <div class="small-note" style="margin-top:4px;">掉落：</div>
+                    <div class="small-note">${m.drops.map((d) => `${ITEM_DEFS[d.id]?.label || d.id} ${d.chance}`).join(" / ")}</div>
+                </div>
+            `).join("")}
+        </div>
+    `;
+    craftSummaryEl.innerHTML = `
+        <div class="small-note" style="margin-bottom:8px;">当前工坊：${getWorkbenchTier()} 阶（炼化Lv.${town.refinementLevel} / 聚灵井${countBuildingsByType("spiritWell")} / 悟道室${countBuildingsByType("trainingRoom")}）</div>
+        <div class="small-note" style="margin-bottom:8px;">洞府库存：灵石 ${homeInventory.spiritStone} / 灵草 ${homeInventory.herb} / 灵木 ${homeInventory.wood} / 妖丹 ${homeInventory.demonCore} / 异晶 ${homeInventory.rareCrystal}</div>
+        <div class="codex-grid">
+            ${CRAFT_RECIPES.map((recipe) => {
+                const canCraft = canCraftRecipe(recipe);
+                const costLine = Object.entries(recipe.cost).map(([k, v]) => `${ITEM_DEFS[k]?.label || k} ${v}`).join(" / ");
+                const outLine = Object.entries(recipe.out).map(([k, v]) => `${ITEM_DEFS[k]?.label || k} x${v}`).join(" / ");
+                const unlock = BALANCE_CONFIG.crafting.tierUnlock[recipe.tier || 1];
+                return `
+                    <div class="codex-item ${canCraft ? "" : "locked"}">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <strong>${recipe.label} · ${recipe.tier || 1}阶</strong>
+                            <button class="mini-btn" data-craft-id="${recipe.id}" ${canCraft ? "" : "disabled"}>合成</button>
+                        </div>
+                        <div class="small-note" style="margin-top:4px;">产出：${outLine}</div>
+                        <div class="small-note">消耗：${costLine}</div>
+                        <div class="small-note">用途：${recipe.use}</div>
+                        <div class="small-note">解锁：炼化Lv.${unlock.refinementLevel} / 聚灵井${unlock.spiritWell} / 悟道室${unlock.trainingRoom}</div>
+                    </div>
+                `;
+            }).join("")}
+        </div>
+    `;
+    craftSummaryEl.querySelectorAll("button[data-craft-id]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const rid = btn.dataset.craftId;
+            const ok = craftItem(rid);
+            if (ok && rid === "baitFlag" && homeInventory.baitFlag > 0 && !devForceMonster) {
+                homeInventory.baitFlag -= 1;
+                baitBoostUntilMs = simulationTimeMs + 120000;
+                addLog("已使用引妖旗：120秒内刷怪率提升");
+            }
+            if (ok) renderAll();
+        });
+    });
+    shopSummaryEl.innerHTML = `
+        <div class="small-note" style="margin-bottom:8px;">当前金币：${goldCoins}</div>
+        <div class="codex-grid">
+            <div class="codex-item">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong>${ITEM_DEFS.spiritPill.icon} ${ITEM_DEFS.spiritPill.label}</strong>
+                    <button class="mini-btn" data-shop-buy="spiritPill" data-cost="36">购买 36</button>
+                </div>
+                <div class="small-note">战斗回血；非战斗可用于提升打坐修炼效率</div>
+            </div>
+            <div class="codex-item">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong>${ITEM_DEFS.healingSalve.icon} ${ITEM_DEFS.healingSalve.label}</strong>
+                    <button class="mini-btn" data-shop-buy="healingSalve" data-cost="24">购买 24</button>
+                </div>
+                <div class="small-note">战斗稳定伤势，低血自动触发</div>
+            </div>
+            <div class="codex-item">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong>${ITEM_DEFS.wardCharm.icon} ${ITEM_DEFS.wardCharm.label}</strong>
+                    <button class="mini-btn" data-shop-buy="wardCharm" data-cost="48">购买 48</button>
+                </div>
+                <div class="small-note">强化防御，适合远行探索</div>
+            </div>
+            <div class="codex-item">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong>${ITEM_DEFS.focusCharm.icon} ${ITEM_DEFS.focusCharm.label}</strong>
+                    <button class="mini-btn" data-shop-buy="focusCharm" data-cost="52">购买 52</button>
+                </div>
+                <div class="small-note">提升命中和稀有掉率</div>
+            </div>
+        </div>
+    `;
+    shopSummaryEl.querySelectorAll("button[data-shop-buy]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const id = btn.dataset.shopBuy;
+            const cost = Number(btn.dataset.cost || 0);
+            if (!id || cost <= 0) return;
+            if (buyFromShop(id, cost, 1)) renderAll();
+        });
+    });
+    const equipRows = Object.keys(equipmentInventory).filter((id) => (equipmentInventory[id] || 0) > 0).map((id) => {
+        const level = equipmentEnhanceLevels[id] || 0;
+        const cost = getEnhanceCost(id);
+        return `
+            <div class="codex-item">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong>${ITEM_DEFS[id]?.icon || "?"} ${ITEM_DEFS[id]?.label || id} +${level}</strong>
+                    <button class="mini-btn" data-enhance-item="${id}" ${level >= 10 ? "disabled" : ""}>强化 ${cost}</button>
+                </div>
+                <div class="small-note">每级提升该装备加成 12%（上限 +10）</div>
+            </div>
+        `;
+    }).join("");
+    enhanceSummaryEl.innerHTML = `
+        <div class="small-note" style="margin-bottom:8px;">当前金币：${goldCoins}</div>
+        <div class="codex-grid">${equipRows || `<div class="small-note">暂无可强化装备</div>`}</div>
+    `;
+    enhanceSummaryEl.querySelectorAll("button[data-enhance-item]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const id = btn.dataset.enhanceItem;
+            if (!id) return;
+            if (enhanceEquipment(id)) renderAll();
+        });
+    });
+    bindItemHover(resourceSummaryEl);
+    resourceSummaryEl.querySelectorAll(".inv-slot[data-item-id]").forEach((el) => {
+        el.addEventListener("click", (evt) => {
+            evt.stopPropagation();
+            const itemId = el.dataset.itemId;
+            const source = el.dataset.itemSource || "avatar";
+            openItemMenu(itemId, source, evt);
+        });
+    });
+    bindItemHover(codexSummaryEl);
+
+    resourceSummaryEl.classList.toggle("hidden", rightPanelTab !== "resource");
+    attributeSummaryEl.classList.toggle("hidden", rightPanelTab !== "attributes");
+    rightTabButtonsEl.querySelectorAll("button[data-right-tab]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.rightTab === rightPanelTab);
+    });
+
+    const cfg = ZOOM_LEVELS[zoomLevel];
+    const centerSeed = getOrCreateSeed(avatarX, avatarY);
+    const centerResource = RESOURCE_META[resourceKeyFromSeed(centerSeed)].label;
+    const centerHeat = getChunkHeatAt(avatarX, avatarY).toFixed(1);
+    worldSummaryEl.innerHTML = `
+        <div>当前缩放: <strong>${cfg.label}</strong>，单格代表 <strong>${cfg.span}</strong> 单位地块。</div>
+        <div style="margin-top:8px;">中心资源倾向: <strong>${centerResource}</strong></div>
+        <div style="margin-top:8px;">中心区域热度: <strong>${centerHeat}</strong>（热度越高产出越低）</div>
+        <div style="margin-top:8px;">洞府循环: 每 ${BALANCE_CONFIG.timing.buildingTickMs / 1000}s 结算一次建筑产出/消耗</div>
+        <div style="margin-top:8px;">洞府位置固定于 (${HOME_X}, ${HOME_Y})，高缩放用于判断山脉、水域和林地的大范围分布。</div>
+        <div style="margin-top:8px;" class="small-note">${inspectText || "悬停地图可查看区域细节。"}</div>
+    `;
+}
+
+function addLog(msg) {
+    const div = document.createElement("div");
+    div.className = "log";
+    div.textContent = `[Day ${dayCount}] ${msg}`;
+    logContainer.prepend(div);
+    while (logContainer.children.length > MAX_LOGS) {
+        logContainer.removeChild(logContainer.lastChild);
+    }
+}
+
+function renderAll() {
+    renderMap();
+    updateCultivationPanel();
+    updateStatus();
+    updateMovementStatus();
+    updateBattlePanel();
+    updateSidePanels();
+    renderButtons();
+}
+
+function renderButtons() {
+    strategyButtonsEl.innerHTML = "";
+    for (const strategy of STRATEGIES) {
+        const btn = document.createElement("button");
+        btn.className = `mode-btn${strategy.id === strategyId ? " active" : ""}`;
+        btn.textContent = `${strategy.label} · ${strategy.hint}`;
+        btn.addEventListener("click", () => {
+            strategyId = strategy.id;
+            addLog(`探索策略切换为：${strategy.label}`);
+            renderAll();
+        });
+        strategyButtonsEl.appendChild(btn);
+    }
+
+    tacticButtonsEl.innerHTML = "";
+    for (const tactic of BATTLE_TACTICS) {
+        const btn = document.createElement("button");
+        btn.className = `mode-btn${tactic.id === battleTacticId ? " active" : ""}`;
+        btn.textContent = `${tactic.label} · ${tactic.hint}`;
+        btn.addEventListener("click", () => {
+            battleTacticId = tactic.id;
+            addLog(`战斗策略切换为：${tactic.label}`);
+            renderAll();
+        });
+        tacticButtonsEl.appendChild(btn);
+    }
+
+    zoomButtonsEl.className = "compact-row";
+    zoomButtonsEl.style.gridTemplateColumns = "repeat(4,minmax(0,1fr))";
+    zoomButtonsEl.innerHTML = "";
+    ZOOM_LEVELS.forEach((cfg, index) => {
+        const btn = document.createElement("button");
+        btn.className = `mode-btn speed-btn${index === zoomLevel ? " active" : ""}`;
+        btn.textContent = cfg.label;
+        btn.title = cfg.span === 1 ? "单格视野" : `${cfg.span}x 采样`;
+        btn.addEventListener("click", () => {
+            zoomLevel = index;
+            renderAll();
+        });
+        zoomButtonsEl.appendChild(btn);
+    });
+
+    speedButtonsEl.className = "compact-row";
+    speedButtonsEl.innerHTML = "";
+    for (let i = 1; i <= 10; i++) {
+        const btn = document.createElement("button");
+        btn.className = `mode-btn speed-btn${timeScale === i ? " active" : ""}`;
+        btn.textContent = `${i}x`;
+        btn.addEventListener("click", () => {
+            timeScale = i;
+            addLog(`模拟倍速切换为 ${i}x`);
+            renderAll();
+        });
+        speedButtonsEl.appendChild(btn);
+    }
+
+    autoBtn.classList.toggle("active", isAutoMode);
+    autoBtn.textContent = isAutoMode ? "■ 停止自动探索" : "▶ 开始自动探索";
+    returnBtn.classList.toggle("active", autoObjective === "return_home");
+    meditateBtn.classList.toggle("active", isMeditating);
+    meditateBtn.textContent = isMeditating ? `🧘 打坐中 ${Math.ceil(meditateRemainingMs / 1000)}s` : "🧘 开始打坐";
+
+}
+
+function updateSimulation(ms) {
+    const scaledMs = ms * timeScale;
+    simulationTimeMs += scaledMs;
+    bodyCultivationAccumMs += scaledMs;
+    updateCultivationPanel();
+    while (bodyCultivationAccumMs >= BODY_CULTIVATION_TICK_MS) {
+        bodyCultivationAccumMs -= BODY_CULTIVATION_TICK_MS;
+        applyBodyCultivationTick();
+        renderAll();
+    }
+    cleanupReservations();
+    buildingProductionAccumMs += scaledMs;
+    while (buildingProductionAccumMs >= BALANCE_CONFIG.timing.buildingTickMs) {
+        buildingProductionAccumMs -= BALANCE_CONFIG.timing.buildingTickMs;
+        runBuildingProductionTick();
+        renderAll();
+    }
+
+    if (isMeditating) {
+        meditateRemainingMs = Math.max(0, meditateRemainingMs - scaledMs);
+        if (meditateRemainingMs <= 0) {
+            finishMeditation();
+            renderAll();
+        }
+    }
+
+    if (isGathering) {
+        gatherRemainingMs = Math.max(0, gatherRemainingMs - scaledMs);
+        gatheringProgress = gatherTotalMs === 0 ? 0 : 1 - gatherRemainingMs / gatherTotalMs;
+        updateGatheringRing();
+        if (gatherRemainingMs <= 0) {
+            finishGathering();
+            renderAll();
+        }
+    }
+
+    if (!battleState) {
+        avatarMp = Math.min(getAvatarMaxMp(), avatarMp + scaledMs * 0.0032);
+    }
+
+    if (isAutoMode && !isGathering) {
+        autoAccumulatorMs += scaledMs;
+        const stepMs = battleState ? BALANCE_CONFIG.timing.battleStepMs : BALANCE_CONFIG.timing.autoStepMs;
+        while (autoAccumulatorMs >= stepMs) {
+            autoAccumulatorMs -= stepMs;
+            autoExploreStep();
+            renderAll();
+            if (isGathering) break;
+        }
+    }
+}
+
+function renderGameToText() {
+    const cfg = ZOOM_LEVELS[zoomLevel];
+    const visible = [];
+    const sampleRadius = cfg.span === 1 ? 2 : 1;
+    for (let dy = -sampleRadius; dy <= sampleRadius; dy++) {
+        for (let dx = -sampleRadius; dx <= sampleRadius; dx++) {
+            const x = avatarX + dx * cfg.span;
+            const y = avatarY + dy * cfg.span;
+            const seed = getOrCreateSeed(x, y);
+            const state = getOrInitState(x, y);
+            const monster = getMonsterAt(x, y);
+            visible.push({
+                x,
+                y,
+                terrain: getTerrainClass(x, y),
+                resource: seed.mainType,
+                remaining: state.remaining,
+                monster: monster ? { type: monster.type, level: monster.level, hp: monster.hp, maxHp: monster.maxHp } : null
+            });
+        }
+    }
+
+    const reservations = reservationBackend.list();
+    const backoffTargets = [];
+    targetBackoffMap.forEach((entry, key) => {
+        const [x, y] = key.split(",").map(Number);
+        backoffTargets.push({ x, y, ttlMs: Math.max(0, Math.floor(entry.untilMs - simulationTimeMs)), failCount: entry.failCount });
+    });
+    const homeBuildings = [];
+    homeBuildingMap.forEach((building, key) => {
+        const [x, y] = key.split(",").map(Number);
+        homeBuildings.push({ x, y, type: building.type, level: building.level });
+    });
+
+    return JSON.stringify({
+        coordinateSystem: "origin at world tile (0,0); x increases east/right, y increases south/down",
+        mode: battleState ? "battle" : isGathering ? "gathering" : isAutoMode ? autoObjective : "idle",
+        day: dayCount,
+        timeScale,
+        zoom: { label: cfg.label, span: cfg.span, size: cfg.size },
+        player: {
+            x: avatarX,
+            y: avatarY,
+            hp: avatarHp,
+            maxHp: getAvatarMaxHp(),
+            mp: Math.floor(avatarMp),
+            maxMp: getAvatarMaxMp(),
+            realm: getRealmName(),
+            strategy: strategyId,
+            distanceToHome: distanceToHome(),
+            sharedStats: { ...sharedStats },
+            battleTacticId,
+            autoBreakthrough,
+            autoUsePillRatio,
+            autoUseSalveRatio,
+            injuryDebuffRemainMs: Math.max(0, Math.floor(injuryDebuffUntilMs - simulationTimeMs)),
+            bodyCultivationExp,
+            bodyCultivationExpNeed: getBodyCultivationExpNeed(cultivationLevel),
+            cultivationRateMultiplier: getCultivationRateMultiplier(),
+            heavenlyEssence
+        },
+        town,
+        currencies: { goldCoins },
+        avatarInventory,
+        homeInventory,
+        equipmentInventory,
+        equipmentEnhanceLevels,
+        equipmentBonus: getEquipmentBonus(),
+        combatStats: getAvatarCombatSnapshot(),
+        devFlags: { forceMonster: devForceMonster, fixedDrops: devFixedDrops, baitBoostRemainingMs: Math.max(0, Math.floor(baitBoostUntilMs - simulationTimeMs)) },
+        monsterCodex: MONSTER_CODEX,
+        craftRecipes: CRAFT_RECIPES,
+        economy: {
+            totalLoad: totalInventoryLoad(),
+            avatarBagCap,
+            bagReturnThreshold: Math.floor(avatarBagCap * bagReturnRatio),
+            storageCap: town.storageCap,
+            dayGatherUnits,
+            gatherPerMinute: Number((dayGatherUnits / Math.max(1 / 60, (simulationTimeMs - dayStartMs) / 60000)).toFixed(2)),
+            dayRefineCount,
+            dayRefineLimit: town.refinementLevel,
+            buildingTickMs: BALANCE_CONFIG.timing.buildingTickMs
+        },
+        reservationBackend: { mode: reservationBackend.mode },
+        reservations,
+        backoffTargets,
+        homeBuildings,
+        buildFocus: isBuildFocus,
+        buildTile: buildPanelTile,
+        battle: battleState ? { ...battleState } : null,
+        battleDetail: lastBattleFrame,
+        meditating: isMeditating ? { remainingMs: meditateRemainingMs, totalMs: meditateTotalMs } : null,
+        gathering: gatheringTarget ? { x: gatheringTarget.x, y: gatheringTarget.y, remainingMs: gatherRemainingMs } : null,
+        visible
+    });
+}
+
+function buildSavePayload() {
+    return {
+        v: 2,
+        ts: Date.now(),
+        avatar: { x: avatarX, y: avatarY, hp: avatarHp, mp: avatarMp },
+        day: { dayCount, dayOriginX, dayOriginY, dayMoveCount, dayMoveLogBatch, dayGatherUnits, dayStartMs, dayRefineCount },
+        runtime: { zoomLevel, strategyId, autoObjective, isAutoMode, timeScale, simulationTimeMs, buildingProductionAccumMs },
+        combat: { battleTacticId, autoUsePillRatio, autoUseSalveRatio, injuryDebuffUntilMs, lastBattleFrame },
+        flags: { devForceMonster, devFixedDrops, baitBoostUntilMs },
+        progression: {
+            cultivationLevel,
+            meditationLevel,
+            meditationExp,
+            sharedStats: { ...sharedStats },
+            goldCoins,
+            bodyCultivationExp,
+            bodyCultivationAccumMs,
+            heavenlyEssence,
+            cultivationBuffUntilMs,
+            autoBreakthrough,
+            equipmentEnhanceLevels: { ...equipmentEnhanceLevels }
+        },
+        inventories: { avatar: { ...avatarInventory }, home: { ...homeInventory }, equipment: { ...equipmentInventory } },
+        town: { ...town },
+        ui: { rightPanelTab, inspectText },
+        maps: {
+            reservations: reservationBackend.list(),
+            homeBuildings: Array.from(homeBuildingMap.entries()),
+            seedEntries: Array.from(seedMap.entries()),
+            stateEntries: Array.from(stateMap.entries()),
+            heatEntries: Array.from(chunkHeatMap.entries()),
+            monsterEntries: Array.from(monsterStateMap.entries()),
+            backoffEntries: Array.from(targetBackoffMap.entries())
+        },
+        discoveredItems: Array.from(discoveredItemSet)
+    };
+}
+
+function applySavePayload(payload) {
+    if (!payload || (payload.v && ![1, 2].includes(payload.v))) return false;
+    avatarX = payload.avatar?.x ?? avatarX;
+    avatarY = payload.avatar?.y ?? avatarY;
+    avatarHp = payload.avatar?.hp ?? avatarHp;
+    avatarMp = payload.avatar?.mp ?? avatarMp;
+    dayCount = payload.day?.dayCount ?? dayCount;
+    dayOriginX = payload.day?.dayOriginX ?? dayOriginX;
+    dayOriginY = payload.day?.dayOriginY ?? dayOriginY;
+    dayMoveCount = payload.day?.dayMoveCount ?? dayMoveCount;
+    dayMoveLogBatch = payload.day?.dayMoveLogBatch ?? dayMoveLogBatch;
+    dayGatherUnits = payload.day?.dayGatherUnits ?? dayGatherUnits;
+    dayStartMs = payload.day?.dayStartMs ?? dayStartMs;
+    dayRefineCount = payload.day?.dayRefineCount ?? dayRefineCount;
+    zoomLevel = payload.runtime?.zoomLevel ?? zoomLevel;
+    strategyId = payload.runtime?.strategyId ?? strategyId;
+    autoObjective = payload.runtime?.autoObjective ?? autoObjective;
+    isAutoMode = payload.runtime?.isAutoMode ?? isAutoMode;
+    timeScale = payload.runtime?.timeScale ?? timeScale;
+    simulationTimeMs = payload.runtime?.simulationTimeMs ?? simulationTimeMs;
+    buildingProductionAccumMs = payload.runtime?.buildingProductionAccumMs ?? buildingProductionAccumMs;
+    battleTacticId = payload.combat?.battleTacticId ?? battleTacticId;
+    autoUsePillRatio = payload.combat?.autoUsePillRatio ?? autoUsePillRatio;
+    autoUseSalveRatio = payload.combat?.autoUseSalveRatio ?? autoUseSalveRatio;
+    injuryDebuffUntilMs = payload.combat?.injuryDebuffUntilMs ?? injuryDebuffUntilMs;
+    lastBattleFrame = payload.combat?.lastBattleFrame ?? lastBattleFrame;
+    devForceMonster = payload.flags?.devForceMonster ?? devForceMonster;
+    devFixedDrops = payload.flags?.devFixedDrops ?? devFixedDrops;
+    baitBoostUntilMs = payload.flags?.baitBoostUntilMs ?? baitBoostUntilMs;
+    cultivationLevel = payload.progression?.cultivationLevel ?? cultivationLevel;
+    meditationLevel = payload.progression?.meditationLevel ?? meditationLevel;
+    meditationExp = payload.progression?.meditationExp ?? meditationExp;
+    goldCoins = payload.progression?.goldCoins ?? goldCoins;
+    bodyCultivationExp = payload.progression?.bodyCultivationExp ?? bodyCultivationExp;
+    bodyCultivationAccumMs = payload.progression?.bodyCultivationAccumMs ?? bodyCultivationAccumMs;
+    heavenlyEssence = payload.progression?.heavenlyEssence ?? heavenlyEssence;
+    cultivationBuffUntilMs = payload.progression?.cultivationBuffUntilMs ?? cultivationBuffUntilMs;
+    autoBreakthrough = payload.progression?.autoBreakthrough ?? autoBreakthrough;
+    Object.assign(equipmentEnhanceLevels, payload.progression?.equipmentEnhanceLevels || {});
+    Object.assign(sharedStats, payload.progression?.sharedStats || {});
+    Object.keys(avatarInventory).forEach((k) => { avatarInventory[k] = 0; });
+    Object.keys(homeInventory).forEach((k) => { homeInventory[k] = 0; });
+    Object.keys(equipmentInventory).forEach((k) => { equipmentInventory[k] = 0; });
+    Object.assign(avatarInventory, payload.inventories?.avatar || {});
+    Object.assign(homeInventory, payload.inventories?.home || {});
+    Object.assign(equipmentInventory, payload.inventories?.equipment || {});
+    Object.assign(town, payload.town || {});
+    rightPanelTab = payload.ui?.rightPanelTab || rightPanelTab;
+    inspectText = payload.ui?.inspectText || "";
+    reservationMap.clear();
+    homeBuildingMap.clear();
+    seedMap.clear();
+    stateMap.clear();
+    chunkHeatMap.clear();
+    monsterStateMap.clear();
+    targetBackoffMap.clear();
+    (payload.maps?.reservations || []).forEach((r) => reservationBackend.acquire(r.x, r.y, r.owner || PLAYER_ID, Math.max(1, r.ttlMs || RESERVATION_TTL_MS)));
+    (payload.maps?.homeBuildings || []).forEach(([k, v]) => homeBuildingMap.set(k, v));
+    (payload.maps?.seedEntries || []).forEach(([k, v]) => seedMap.set(k, v));
+    (payload.maps?.stateEntries || []).forEach(([k, v]) => stateMap.set(k, v));
+    (payload.maps?.heatEntries || []).forEach(([k, v]) => chunkHeatMap.set(k, v));
+    (payload.maps?.monsterEntries || []).forEach(([k, v]) => monsterStateMap.set(k, v));
+    (payload.maps?.backoffEntries || []).forEach(([k, v]) => targetBackoffMap.set(k, v));
+    discoveredItemSet.clear();
+    (payload.discoveredItems || []).forEach((id) => discoveredItemSet.add(id));
+    forceMonsterToggle.checked = devForceMonster;
+    fixedDropToggle.checked = devFixedDrops;
+    pillThresholdInput.value = String(Math.round(autoUsePillRatio * 100));
+    salveThresholdInput.value = String(Math.round(autoUseSalveRatio * 100));
+    pillThresholdLabel.textContent = String(Math.round(autoUsePillRatio * 100));
+    salveThresholdLabel.textContent = String(Math.round(autoUseSalveRatio * 100));
+    return true;
+}
+
+function saveToLocal() {
+    try {
+        localStorage.setItem(SAVE_KEY, JSON.stringify(buildSavePayload()));
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function loadFromLocal() {
+    try {
+        const candidates = [SAVE_KEY, "simpleworld_save_v1"];
+        for (const key of candidates) {
+            const raw = localStorage.getItem(key);
+            if (!raw) continue;
+            const payload = JSON.parse(raw);
+            if (applySavePayload(payload)) {
+                if (key !== SAVE_KEY) saveToLocal();
+                return true;
+            }
+        }
+        return false;
+    } catch {
+        return false;
+    }
+}
+
+function advanceTime(ms) {
+    const step = 100;
+    let remaining = ms;
+    while (remaining > 0) {
+        const delta = Math.min(step, remaining);
+        updateSimulation(delta);
+        remaining -= delta;
+    }
+    renderAll();
+}
+
+autoBtn.addEventListener("click", () => {
+    if (isBuildFocus) closeBuildPanel();
+    isAutoMode = !isAutoMode;
+    if (!isAutoMode) {
+        releaseExploreTargetReservation();
+        exploreTarget = null;
+    }
+    addLog(isAutoMode ? "自动探索已启动" : "自动探索已停止");
+    renderAll();
+});
+
+returnBtn.addEventListener("click", () => {
+    if (isBuildFocus) closeBuildPanel();
+    releaseExploreTargetReservation();
+    exploreTarget = null;
+    autoObjective = "return_home";
+    isAutoMode = true;
+    addLog("切换为返城优先，化身将沿路返回洞府");
+    renderAll();
+});
+
+refineBtn.addEventListener("click", () => {
+    tryRefineAtHome(false);
+    renderAll();
+});
+
+meditateBtn.addEventListener("click", () => {
+    if (isMeditating) {
+        isMeditating = false;
+        meditateRemainingMs = 0;
+        meditateTotalMs = 0;
+        addLog("已中止打坐");
+    } else {
+        startMeditation();
+    }
+    renderAll();
+});
+
+breakthroughBtn.addEventListener("click", () => {
+    tryBreakthrough(false);
+    renderAll();
+});
+
+autoBreakthroughToggle.addEventListener("change", () => {
+    autoBreakthrough = autoBreakthroughToggle.checked;
+    addLog(`自动突破 ${autoBreakthrough ? "已开启" : "已关闭"}`);
+    if (autoBreakthrough) {
+        while (tryBreakthrough(true)) {}
+    }
+    renderAll();
+});
+
+helpBtn.addEventListener("click", () => {
+    window.open("GAME_HELP.md", "_blank", "noopener,noreferrer");
+});
+
+changelogBtn.addEventListener("click", () => {
+    window.open("CHANGELOG.md", "_blank", "noopener,noreferrer");
+});
+
+craftBtn.addEventListener("click", () => {
+    craftPanelEl.classList.remove("hidden");
+});
+
+craftCloseBtn.addEventListener("click", () => {
+    craftPanelEl.classList.add("hidden");
+});
+
+shopBtn.addEventListener("click", () => {
+    shopPanelEl.classList.remove("hidden");
+});
+
+shopCloseBtn.addEventListener("click", () => {
+    shopPanelEl.classList.add("hidden");
+});
+
+enhanceBtn.addEventListener("click", () => {
+    enhancePanelEl.classList.remove("hidden");
+});
+
+enhanceCloseBtn.addEventListener("click", () => {
+    enhancePanelEl.classList.add("hidden");
+});
+
+if (bagCapInput && bagCapLabel) {
+    bagCapInput.addEventListener("input", () => {
+        avatarBagCap = Number(bagCapInput.value);
+        bagCapLabel.textContent = String(avatarBagCap);
+        renderAll();
+    });
+}
+
+if (bagReturnInput && bagReturnLabel) {
+    bagReturnInput.addEventListener("input", () => {
+        bagReturnRatio = Number(bagReturnInput.value) / 100;
+        bagReturnLabel.textContent = String(Math.round(bagReturnRatio * 100));
+        renderAll();
+    });
+}
+
+pillThresholdInput.addEventListener("input", () => {
+    autoUsePillRatio = Number(pillThresholdInput.value) / 100;
+    pillThresholdLabel.textContent = String(Math.round(autoUsePillRatio * 100));
+    if (autoUseSalveRatio >= autoUsePillRatio) {
+        autoUseSalveRatio = Math.max(0.1, autoUsePillRatio - 0.08);
+        salveThresholdInput.value = String(Math.round(autoUseSalveRatio * 100));
+        salveThresholdLabel.textContent = String(Math.round(autoUseSalveRatio * 100));
+    }
+    renderAll();
+});
+
+salveThresholdInput.addEventListener("input", () => {
+    autoUseSalveRatio = Number(salveThresholdInput.value) / 100;
+    salveThresholdLabel.textContent = String(Math.round(autoUseSalveRatio * 100));
+    if (autoUseSalveRatio >= autoUsePillRatio) {
+        autoUsePillRatio = Math.min(0.9, autoUseSalveRatio + 0.08);
+        pillThresholdInput.value = String(Math.round(autoUsePillRatio * 100));
+        pillThresholdLabel.textContent = String(Math.round(autoUsePillRatio * 100));
+    }
+    renderAll();
+});
+
+forceMonsterToggle.addEventListener("change", () => {
+    devForceMonster = forceMonsterToggle.checked;
+    addLog(`测试开关：强制刷怪 ${devForceMonster ? "开启" : "关闭"}`);
+    renderAll();
+});
+
+fixedDropToggle.addEventListener("change", () => {
+    devFixedDrops = fixedDropToggle.checked;
+    addLog(`测试开关：固定掉落 ${devFixedDrops ? "开启" : "关闭"}`);
+});
+
+debugBattleBtn.addEventListener("click", () => {
+    if (isGathering) return;
+    const testMonster = getMonsterAt(avatarX, avatarY) || { x: avatarX, y: avatarY, type: "妖兽", level: 2, hp: 72, maxHp: 72, atk: 14, def: 5 };
+    startBattleWith(testMonster);
+    isAutoMode = true;
+    addLog("测试：已触发即时战斗");
+    renderAll();
+});
+
+saveBtn.addEventListener("click", () => {
+    const ok = saveToLocal();
+    addLog(ok ? "手动存档成功" : "手动存档失败");
+});
+
+loadBtn.addEventListener("click", () => {
+    const ok = loadFromLocal();
+    addLog(ok ? "读取存档成功" : "读取存档失败");
+    if (ok) renderAll();
+});
+
+itemMenuEl.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const btn = e.target.closest("button[data-item-action]");
+    if (!btn || !itemMenuState) return;
+    const { itemId, source } = itemMenuState;
+    let ok = false;
+    if (btn.dataset.itemAction === "use") ok = useItemFrom(source, itemId);
+    if (btn.dataset.itemAction === "equip") ok = equipItemFrom(source, itemId);
+    if (btn.dataset.itemAction === "recycle") ok = recycleItemFrom(source, itemId);
+    closeItemMenu();
+    if (ok) renderAll();
+});
+
+document.addEventListener("click", () => {
+    closeItemMenu();
+});
+
+window.addEventListener("resize", () => {
+    closeItemMenu();
+});
+
+rightTabButtonsEl.querySelectorAll("button[data-right-tab]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+        rightPanelTab = btn.dataset.rightTab;
+        renderAll();
+    });
+});
+
+codexBtn.addEventListener("click", () => {
+    codexPanelEl.classList.remove("hidden");
+});
+
+codexCloseBtn.addEventListener("click", () => {
+    codexPanelEl.classList.add("hidden");
+    itemDetailEl.classList.add("hidden");
+});
+
+grid.addEventListener("mousemove", (e) => {
+    const cell = e.target.closest(".cell");
+    if (!cell) {
+        tooltip.style.display = "none";
+        return;
+    }
+
+    const wx = Number(cell.dataset.wx);
+    const wy = Number(cell.dataset.wy);
+    const span = Number(cell.dataset.span);
+    inspectText = formatChunkTooltip(wx, wy, span);
+    tooltip.textContent = inspectText;
+    tooltip.style.display = "block";
+    tooltip.style.left = `${e.clientX + 16}px`;
+    tooltip.style.top = `${e.clientY + 16}px`;
+    updateSidePanels();
+});
+
+grid.addEventListener("mouseleave", () => {
+    tooltip.style.display = "none";
+    inspectText = "";
+    updateSidePanels();
+});
+
+grid.addEventListener("click", (e) => {
+    const cell = e.target.closest(".cell");
+    if (!cell) return;
+    const wx = Number(cell.dataset.wx);
+    const wy = Number(cell.dataset.wy);
+    const span = Number(cell.dataset.span);
+    if (span !== 1) {
+        if (isHomeBuildTile(wx, wy)) {
+            zoomLevel = 1;
+            openBuildPanel(wx, wy);
+            renderAll();
+        } else {
+            closeBuildPanel();
+        }
+        return;
+    }
+    if (!isHomeBuildTile(wx, wy)) {
+        closeBuildPanel();
+        return;
+    }
+    openBuildPanel(wx, wy);
+    renderAll();
+});
+
+document.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 1 : -1;
+    const nextLevel = Math.max(0, Math.min(ZOOM_LEVELS.length - 1, zoomLevel + delta));
+    if (nextLevel !== zoomLevel) {
+        zoomLevel = nextLevel;
+        renderAll();
+    }
+}, { passive: false });
+
+window.render_game_to_text = renderGameToText;
+window.advanceTime = advanceTime;
+window.getReservationSnapshot = () => reservationBackend.exportSnapshot();
+window.applyReservationSnapshot = (snapshot, options = {}) => reservationBackend.importSnapshot(snapshot, options);
+window.saveGame = () => saveToLocal();
+window.loadGame = () => loadFromLocal();
+
+setInterval(() => updateSimulation(100), 100);
+setInterval(() => saveToLocal(), 15000);
+
+avatarHp = getAvatarMaxHp();
+avatarMp = getAvatarMaxMp();
+if (loadFromLocal()) {
+    addLog("已自动读取本地存档");
+}
+pillThresholdInput.value = String(Math.round(autoUsePillRatio * 100));
+salveThresholdInput.value = String(Math.round(autoUseSalveRatio * 100));
+pillThresholdLabel.textContent = String(Math.round(autoUsePillRatio * 100));
+salveThresholdLabel.textContent = String(Math.round(autoUseSalveRatio * 100));
+renderAll();
+addLog("系统就绪：自动探索、妖物遭遇战、返城整备与多级缩放已启用");
+</script>
+</body>
+</html>
