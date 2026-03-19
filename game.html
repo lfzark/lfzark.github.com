@@ -78,6 +78,10 @@
             linear-gradient(180deg, #0d131b 0%, #091018 100%);
         overflow: hidden;
     }
+    .map-container.dragging {
+        cursor: grabbing;
+        user-select: none;
+    }
 
     .section-title {
         margin: 0 0 10px;
@@ -295,6 +299,13 @@
     .combat-fx.damage { color: #ff7777; }
     .combat-fx.heal { color: #7eff95; }
     .combat-fx.info { color: #ffe08a; }
+    .combat-fx.crit {
+        color: #ffd24a;
+        font-size: 19px;
+        letter-spacing: 0.4px;
+        text-shadow: 0 0 10px rgba(255, 204, 95, 0.95), 0 1px 5px rgba(0, 0, 0, 0.9);
+        animation-duration: 980ms;
+    }
 
     @keyframes combat-float {
         0% {
@@ -567,20 +578,31 @@
 
     .inv-grid {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 4px;
+        grid-template-columns: repeat(auto-fill, 40px);
+        justify-content: flex-start;
+        gap: 6px;
     }
 
     .inv-slot {
         position: relative;
-        min-height: 48px;
+        width: 40px;
+        height: 40px;
         border-radius: 6px;
         border: 1px solid rgba(95, 120, 155, 0.18);
-        background: rgba(17, 24, 36, 0.92);
+        background: rgba(34, 38, 58, 0.9);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 20px;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+    }
+    .inv-slot:hover {
+        transform: translateY(-1px);
+        border-color: rgba(175, 205, 255, 0.92);
+        box-shadow: 0 0 0 1px rgba(175, 205, 255, 0.3), 0 6px 14px rgba(18, 35, 66, 0.45);
     }
 
     .inv-slot.rarity-common {
@@ -606,6 +628,89 @@
         font-size: 12px;
         color: #eaf4ff;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
+    .inv-slot .icon-wrap {
+        width: 22px;
+        height: 22px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .inv-slot svg {
+        width: 20px;
+        height: 20px;
+        display: block;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+    }
+    .bag-tabs {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+    .equip-board {
+        display: grid;
+        grid-template-columns: repeat(4, 56px);
+        gap: 6px;
+        align-content: start;
+    }
+    .equip-slot {
+        width: 56px;
+        height: 56px;
+        border: 1px dashed rgba(162, 174, 232, 0.55);
+        border-radius: 6px;
+        background: rgba(25, 30, 49, 0.9);
+        position: relative;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+        -webkit-user-select: none;
+        transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+    }
+    .equip-slot:hover {
+        transform: translateY(-1px);
+        border-color: rgba(175, 205, 255, 0.92);
+        box-shadow: 0 0 0 1px rgba(175, 205, 255, 0.25), 0 6px 14px rgba(18, 35, 66, 0.45);
+    }
+    .equip-slot .icon-wrap {
+        width: 24px;
+        height: 24px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .equip-slot .icon-wrap svg {
+        width: 22px;
+        height: 22px;
+        display: block;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+    }
+    .equip-slot .slot-label {
+        position: absolute;
+        top: 2px;
+        left: 3px;
+        font-size: 10px;
+        color: #d8dff8;
+    }
+    .equip-slot .slot-item-count {
+        position: absolute;
+        right: 3px;
+        top: 2px;
+        font-size: 10px;
+        color: #ffe08f;
+    }
+    #equip-slot-menu {
+        position: fixed;
+        z-index: 86;
+        min-width: 240px;
+        max-width: 320px;
+        background: rgba(12, 18, 30, 0.98);
+        border: 1px solid rgba(145, 160, 220, 0.6);
+        border-radius: 8px;
+        padding: 8px;
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.55);
     }
 
     .codex-grid {
@@ -648,7 +753,7 @@
 
     #item-detail {
         position: fixed;
-        z-index: 70;
+        z-index: 96;
         max-width: 260px;
         pointer-events: none;
         background: rgba(10, 16, 24, 0.96);
@@ -663,7 +768,7 @@
     #item-menu {
         position: fixed;
         z-index: 75;
-        min-width: 180px;
+        min-width: 168px;
         background: rgba(9, 15, 22, 0.97);
         border: 1px solid rgba(110, 140, 180, 0.35);
         border-radius: 8px;
@@ -675,12 +780,113 @@
         font-size: 12px;
         color: #c9d9ea;
         margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
     }
 
     #item-menu .menu-actions {
         display: grid;
         grid-template-columns: 1fr;
         gap: 6px;
+    }
+    #item-menu .qty-row {
+        display: grid;
+        grid-template-columns: 28px 24px 1fr 24px 34px;
+        gap: 6px;
+        margin-bottom: 8px;
+        align-items: center;
+    }
+    #item-menu .qty-tag {
+        font-size: 12px;
+        color: #d7e2ff;
+        text-align: center;
+        opacity: 0.92;
+    }
+    #item-menu .qty-input {
+        width: 100%;
+        background: rgba(245, 248, 255, 0.96);
+        border: 1px solid rgba(120, 140, 188, 0.72);
+        border-radius: 6px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 600;
+        height: 28px;
+        color: #1a2740;
+        padding: 0;
+    }
+    #item-menu .qty-input::-webkit-outer-spin-button,
+    #item-menu .qty-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    #item-menu .qty-input[type=number] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+    #item-menu .menu-actions .mode-btn {
+        padding: 5px 8px;
+    }
+    #item-menu .icon-wrap {
+        width: 18px;
+        height: 18px;
+    }
+    #item-menu .icon-wrap svg {
+        width: 16px;
+        height: 16px;
+    }
+    #chest-modal,
+    #item-codex-modal {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 85;
+        width: min(430px, calc(100vw - 24px));
+        background: rgba(45, 45, 66, 0.96);
+        border: 1px solid rgba(162, 174, 232, 0.6);
+        border-radius: 8px;
+        padding: 14px;
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.55);
+    }
+    #chest-modal .loot-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 6px;
+        margin: 10px 0;
+    }
+    #chest-modal .chest-preview {
+        display: inline-flex;
+        width: 128px;
+        height: 128px;
+        align-items: center;
+        justify-content: center;
+        margin-top: 8px;
+    }
+    #chest-modal .chest-preview .icon-wrap {
+        width: 108px;
+        height: 108px;
+    }
+    #chest-modal .chest-preview .icon-wrap svg {
+        width: 102px;
+        height: 102px;
+    }
+    #item-codex-modal {
+        width: min(920px, calc(100vw - 30px));
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+    }
+    .codex-detail-columns {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+    .codex-col {
+        background: rgba(23, 26, 44, 0.7);
+        border: 1px solid rgba(112, 122, 182, 0.4);
+        border-radius: 6px;
+        padding: 8px;
+        font-size: 12px;
     }
 
     #battle-panel {
@@ -697,12 +903,74 @@
         box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
     }
 
+    #battle-panel.shake {
+        animation: battle-panel-shake 140ms ease-out 1;
+    }
+
+    #battleRoundResult {
+        margin: 2px 0 8px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: 0.4px;
+        color: #fff3c8;
+        background: linear-gradient(90deg, rgba(255, 166, 74, 0.2), rgba(255, 206, 108, 0.32), rgba(255, 166, 74, 0.2));
+        text-shadow: 0 0 8px rgba(255, 206, 108, 0.9), 0 1px 4px rgba(0, 0, 0, 0.8);
+        border: 1px solid rgba(255, 203, 120, 0.4);
+    }
+
+    #battleRoundResult.minor {
+        font-size: 18px;
+        color: #dbe6f3;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+        background: linear-gradient(90deg, rgba(122, 156, 198, 0.16), rgba(122, 156, 198, 0.26), rgba(122, 156, 198, 0.16));
+        border-color: rgba(122, 156, 198, 0.35);
+    }
+
     #battleLogList {
         max-height: 110px;
         overflow-y: auto;
         font-size: 12px;
         color: #cfe1f7;
         line-height: 1.45;
+    }
+
+    .battle-log-line {
+        padding: 3px 2px;
+        border-bottom: 1px dashed rgba(110, 142, 182, 0.2);
+    }
+
+    .battle-log-line.fade {
+        opacity: 0.56;
+    }
+
+    #battle-hit-flash {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 81;
+        opacity: 0;
+        background: radial-gradient(circle at center, rgba(255, 240, 196, 0.2) 0%, rgba(255, 225, 160, 0.1) 35%, rgba(0, 0, 0, 0) 72%);
+    }
+
+    #battle-hit-flash.active {
+        animation: battle-hit-flash 160ms ease-out 1;
+    }
+
+    @keyframes battle-hit-flash {
+        0% { opacity: 0; }
+        35% { opacity: 1; }
+        100% { opacity: 0; }
+    }
+
+    @keyframes battle-panel-shake {
+        0% { transform: translateX(-50%) translateY(0); }
+        25% { transform: translateX(calc(-50% - 3px)) translateY(0); }
+        50% { transform: translateX(calc(-50% + 3px)) translateY(0); }
+        75% { transform: translateX(calc(-50% - 2px)) translateY(0); }
+        100% { transform: translateX(-50%) translateY(0); }
     }
 
     #craft-panel,
@@ -784,6 +1052,24 @@
         font-size: 22px;
     }
 
+    .realm-style-low {
+        color: #9fd1ff;
+        text-shadow: 0 0 4px rgba(120, 185, 255, 0.35);
+    }
+
+    .realm-style-mid {
+        color: #8dffcf;
+        text-shadow: 0 0 6px rgba(114, 255, 198, 0.45);
+        font-weight: 600;
+    }
+
+    .realm-style-high {
+        color: #ffd77f;
+        text-shadow: 0 0 8px rgba(255, 206, 110, 0.55);
+        font-weight: 700;
+        letter-spacing: 0.3px;
+    }
+
     @media (max-width: 1280px) {
         .container {
             grid-template-columns: 280px minmax(420px, 1fr) 250px;
@@ -799,8 +1085,9 @@
         <span>境界 <span id="realm-name">练气中期</span></span>
         <span>第 <span id="day-count">1</span> 天</span>
         <span>坐标 (<span id="coord-x">5000</span>, <span id="coord-y">5000</span>)</span>
+        <span>视角 <span id="camera-mode-label">跟随</span></span>
+        <span>观察 (<span id="camera-x">5000</span>, <span id="camera-y">5000</span>)</span>
         <span>缩放 <span id="zoom-label">巡视</span></span>
-        <span>行动模式 无行动力限制</span>
     </div>
 </header>
 
@@ -820,13 +1107,9 @@
                 </div>
             </div>
             <div id="cultivationMeta" class="small-note">境界与修为载入中...</div>
-            <div class="compact-row" style="grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:8px;">
+            <div class="compact-row" style="grid-template-columns:repeat(1,minmax(0,1fr)); margin-top:8px;">
                 <button id="meditateBtn" class="mode-btn speed-btn">🧘 开始打坐</button>
-                <button id="breakthroughBtn" class="mode-btn speed-btn">⛰ 突破</button>
             </div>
-            <label class="small-note" style="display:block; margin-top:6px;">
-                <input id="autoBreakthroughToggle" type="checkbox"> 自动突破
-            </label>
         </div>
 
         <div class="card">
@@ -847,12 +1130,20 @@
             <input id="pillThresholdInput" type="range" min="30" max="85" step="5" value="50" style="width:100%; margin-top:6px;">
             <input id="salveThresholdInput" type="range" min="15" max="65" step="5" value="32" style="width:100%; margin-top:6px;">
         </div>
+        <div class="card" style="margin:8px 0 0;">
+            <div class="small-note">回血丹补给：目标 <span id="bloodPillCarryTargetLabel">10</span> / 回城阈值 <span id="bloodPillReturnThresholdLabel">3</span></div>
+            <input id="bloodPillCarryTargetInput" type="range" min="0" max="40" step="1" value="10" style="width:100%; margin-top:6px;">
+            <input id="bloodPillReturnThresholdInput" type="range" min="0" max="20" step="1" value="3" style="width:100%; margin-top:6px;">
+            <label class="small-note" style="display:block; margin-top:6px;">
+                <input id="autoBuyBloodPillToggle" type="checkbox" checked> 库存不足时自动金币购买
+            </label>
+        </div>
 
         <div class="section-title" style="margin-top:10px;">地图缩放</div>
         <div id="zoomButtons"></div>
+        <button id="cameraResetBtn" class="control-btn">🎯 回到化身</button>
 
         <div class="section-title" style="margin-top:8px;">洞府建设</div>
-        <button id="refineBtn" class="control-btn">⚗ 洞府炼化</button>
 
         <div class="section-title" style="margin-top:10px;">功能</div>
         <div class="compact-row" style="grid-template-columns:repeat(2,minmax(0,1fr));">
@@ -872,6 +1163,12 @@
         <label class="small-note" style="display:block; margin:6px 0;">
             <input id="fixedDropToggle" type="checkbox"> 固定掉落结果
         </label>
+        <select id="debugMonsterSelect" class="mode-btn" style="width:100%; margin-bottom:6px;">
+            <option value="normal">调试怪：妖兽</option>
+            <option value="elite">调试怪：精英妖将</option>
+            <option value="boss">调试怪：天劫妖王</option>
+            <option value="nearby">调试怪：当前位置怪物</option>
+        </select>
         <button id="debugBattleBtn" class="control-btn">⚔ 一键触发战斗</button>
 
         <div class="section-title" style="margin-top:16px;">当前状态</div>
@@ -897,8 +1194,11 @@
         <div id="resourceSummary" class="card tab-pane"></div>
         <div id="attributeSummary" class="card tab-pane hidden"></div>
 
-        <div class="section-title">地图解读</div>
-        <div id="worldSummary" class="card"></div>
+        <div class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>地图解读</span>
+            <button id="worldSummaryToggleBtn" class="mini-btn">展开</button>
+        </div>
+        <div id="worldSummary" class="card hidden"></div>
 
         <div class="section-title">活动日志</div>
         <div id="log-container" style="max-height:380px; overflow-y:auto;"></div>
@@ -913,10 +1213,15 @@
 </div>
 <div id="item-detail" class="hidden"></div>
 <div id="item-menu" class="hidden"></div>
+<div id="chest-modal" class="hidden"></div>
+<div id="item-codex-modal" class="hidden"></div>
+<div id="equip-slot-menu" class="hidden"></div>
 <div id="battle-panel" class="hidden">
     <div id="battleSummary" style="font-size:13px; margin-bottom:6px;"></div>
+    <div id="battleRoundResult" class="minor">等待回合结算...</div>
     <div id="battleLogList"></div>
 </div>
+<div id="battle-hit-flash"></div>
 <div id="craft-panel" class="hidden">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
         <strong>🧪 合成配置清单</strong>
@@ -955,9 +1260,13 @@ const CHUNK_HEAT_DECAY_PER_SEC = 0.025;
 const HOME_BUILD_RADIUS = 2;
 const MEDITATE_BASE_MS = 12000;
 const BODY_CULTIVATION_TICK_MS = 20000;
+const AVATAR_MAX_ONLINE_MS = 12 * 60 * 60 * 1000;
 const DAILY_MOVE_RADIUS = 15;
+const BOSS_SPAWN_MAX_HOME_DISTANCE = 12;
+const CULTIVATION_MAX_LEVEL = 10;
 const BUILDING_PRODUCTION_TICK_MS = 5000;
 const MONSTER_RESPAWN_MS = 45000;
+const AVATAR_REVIVE_COOLDOWN_MS = 600000;
 const SAVE_KEY = "simpleworld_save_v2";
 
 const BALANCE_CONFIG = {
@@ -973,7 +1282,7 @@ const BALANCE_CONFIG = {
         lowHpReturnRatio: 0.42,
         monsterHpScale: 1.8,
         playerDamageScale: 0.54,
-        monsterDamageScale: 0.9,
+        monsterDamageScale: 1.18,
         injuryDebuffRatio: 0.85,
         injuryDurationMs: 120000
     },
@@ -986,9 +1295,9 @@ const BALANCE_CONFIG = {
     },
     crafting: {
         tierUnlock: {
-            1: { refinementLevel: 1, spiritWell: 0, trainingRoom: 0 },
-            2: { refinementLevel: 2, spiritWell: 1, trainingRoom: 0 },
-            3: { refinementLevel: 3, spiritWell: 1, trainingRoom: 1 }
+            1: { cultivationLevel: 1, spiritWell: 0, trainingRoom: 0 },
+            2: { cultivationLevel: 4, spiritWell: 1, trainingRoom: 0 },
+            3: { cultivationLevel: 7, spiritWell: 1, trainingRoom: 1 }
         }
     }
 };
@@ -1029,6 +1338,7 @@ const ITEM_DEFS = {
     demonCore: { label: "妖丹", icon: "◈", rarity: "rare", category: "资源", source: "怪物掉落", sellValue: 12 },
     spiritPill: { label: "聚灵丹", icon: "◉", rarity: "rare", category: "消耗品", source: "合成配置", bonus: { def: 1 }, sellValue: 18, usable: true },
     healingSalve: { label: "回春散", icon: "✚", rarity: "uncommon", category: "消耗品", source: "合成配置", sellValue: 12, usable: true },
+    bloodPill: { label: "回血丹", icon: "❤", rarity: "rare", category: "消耗品", source: "炼制配方", sellValue: 28, usable: true },
     wardCharm: { label: "护体符", icon: "☉", rarity: "rare", category: "符咒", source: "合成配置", bonus: { def: 2 }, sellValue: 22, usable: true },
     focusCharm: { label: "凝神符", icon: "✶", rarity: "rare", category: "符咒", source: "合成配置", bonus: { hit: 0.02, luck: 2 }, sellValue: 24, usable: true },
     baitFlag: { label: "引妖旗", icon: "⚑", rarity: "uncommon", category: "道具", source: "合成配置", sellValue: 16, usable: true },
@@ -1047,6 +1357,59 @@ const ITEM_DEFS = {
     voidArmor: { label: "太虚战铠", icon: "🛡️✨", rarity: "epic", category: "装备", source: "精英/BOSS掉落", bonus: { def: 14, dodge: 0.05 }, sellValue: 252 },
     dragonRelic: { label: "天龙遗宝", icon: "🐉", rarity: "epic", category: "关键道具", source: "BOSS稀有掉落", bonus: { atk: 4, def: 4, luck: 6 }, sellValue: 360 }
 };
+
+const EQUIP_SLOT_DEFS = [
+    { id: "weaponMain", label: "主手" },
+    { id: "weaponOff", label: "副手" },
+    { id: "armor", label: "衣甲" },
+    { id: "artifact", label: "法器" },
+    { id: "trinket", label: "饰件" }
+];
+
+const ITEM_EQUIP_SLOT = {
+    sword: "weaponMain",
+    thunderBlade: "weaponMain",
+    bow: "weaponOff",
+    phoenixBow: "weaponOff",
+    shield: "armor",
+    voidArmor: "armor",
+    artifact: "artifact",
+    dragonRelic: "trinket"
+};
+
+const ITEM_ICON_SVG = {
+    spiritStone: `<svg viewBox="0 0 32 32"><polygon points="16,4 26,14 16,28 6,14" fill="#d9e3f8"/><polygon points="16,8 22,14 16,24 10,14" fill="#90a7d8"/></svg>`,
+    herb: `<svg viewBox="0 0 32 32"><path d="M16 27c-1-8 1-14 8-20 1 8-1 14-8 20Z" fill="#74cf7e"/><path d="M16 27c1-8-1-14-8-20-1 8 1 14 8 20Z" fill="#5bb36b"/><rect x="15" y="11" width="2" height="16" fill="#3f8f4a"/></svg>`,
+    wood: `<svg viewBox="0 0 32 32"><rect x="7" y="10" width="18" height="12" rx="3" fill="#9b6c46"/><rect x="9" y="12" width="14" height="8" rx="2" fill="#b88358"/><path d="M11 12v8M16 12v8M21 12v8" stroke="#7a4f33" stroke-width="1.4"/></svg>`,
+    rareCrystal: `<svg viewBox="0 0 32 32"><polygon points="16,2 27,12 23,27 9,27 5,12" fill="#8c77f3"/><polygon points="16,6 23,12 20,23 12,23 9,12" fill="#c7bbff"/></svg>`,
+    demonCore: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="10" fill="#63c8b8"/><circle cx="16" cy="16" r="5" fill="#2b8479"/><circle cx="16" cy="16" r="2" fill="#d8fff8"/></svg>`,
+    spiritPill: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="10" fill="#ece9ff"/><path d="M6 16h20" stroke="#9a8df2" stroke-width="2"/></svg>`,
+    healingSalve: `<svg viewBox="0 0 32 32"><rect x="10" y="7" width="12" height="18" rx="3" fill="#f4f4fb"/><rect x="12" y="4" width="8" height="4" rx="2" fill="#b8c2d8"/><path d="M16 11v10M11 16h10" stroke="#dd6a6a" stroke-width="2"/></svg>`,
+    bloodPill: `<svg viewBox="0 0 32 32"><path d="M16 27C7 20 6 13 10 9c2-2 5-2 6 1 1-3 4-3 6-1 4 4 3 11-6 18z" fill="#ef6a7a"/></svg>`,
+    wardCharm: `<svg viewBox="0 0 32 32"><path d="M16 4l10 4v8c0 6-4 10-10 12C10 26 6 22 6 16V8l10-4Z" fill="#8fb9ff"/><path d="M12 16h8M16 12v8" stroke="#f3f7ff" stroke-width="1.8"/></svg>`,
+    focusCharm: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="10" fill="#ffce6a"/><circle cx="16" cy="16" r="4" fill="#7f5a1f"/><path d="M16 4v6M16 22v6M4 16h6M22 16h6" stroke="#ffd98b" stroke-width="1.5"/></svg>`,
+    baitFlag: `<svg viewBox="0 0 32 32"><rect x="7" y="5" width="2" height="22" fill="#c7d0e8"/><path d="M9 7h14l-4 4 4 4H9Z" fill="#e55a63"/></svg>`,
+    chestSmall: `<svg viewBox="0 0 32 32"><rect x="7" y="11" width="18" height="13" rx="2" fill="#b4814a"/><rect x="7" y="11" width="18" height="5" rx="2" fill="#d8a96a"/><rect x="14" y="11" width="4" height="13" fill="#f4db9b"/></svg>`,
+    chestMedium: `<svg viewBox="0 0 32 32"><rect x="6" y="10" width="20" height="14" rx="2" fill="#8a6be0"/><rect x="6" y="10" width="20" height="5" rx="2" fill="#aa8cff"/><rect x="14" y="10" width="4" height="14" fill="#e6d6ff"/></svg>`,
+    chestLarge: `<svg viewBox="0 0 32 32"><rect x="5" y="9" width="22" height="15" rx="2" fill="#5f8cff"/><rect x="5" y="9" width="22" height="5" rx="2" fill="#9eb7ff"/><rect x="14" y="9" width="4" height="15" fill="#e9f0ff"/></svg>`,
+    coreElixir: `<svg viewBox="0 0 32 32"><polygon points="16,4 25,11 22,24 10,24 7,11" fill="#6fc6ff"/><circle cx="16" cy="16" r="4" fill="#d6f2ff"/></svg>`,
+    starShard: `<svg viewBox="0 0 32 32"><polygon points="16,4 19,12 28,16 19,20 16,28 13,20 4,16 13,12" fill="#f7f2ff"/><circle cx="16" cy="16" r="3" fill="#9b8ff1"/></svg>`,
+    ascendSeal: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="10" fill="#262f49"/><circle cx="16" cy="16" r="7" fill="#7b85a7"/><path d="M16 9l5 7-5 7-5-7Z" fill="#eef4ff"/></svg>`,
+    sword: `<svg viewBox="0 0 32 32"><path d="M7 24l3 3 8-8-3-3z" fill="#d9e6ff"/><path d="M17 8l7-3-3 7-5 5-4-4z" fill="#9cb0d8"/><rect x="5" y="25" width="8" height="2" fill="#d6b774"/></svg>`,
+    bow: `<svg viewBox="0 0 32 32"><path d="M8 6c8 3 8 17 0 20" stroke="#bb8a53" stroke-width="2.2" fill="none"/><path d="M8 16h16" stroke="#c6d4ef" stroke-width="1.4"/><circle cx="24" cy="16" r="2" fill="#e67d64"/></svg>`,
+    shield: `<svg viewBox="0 0 32 32"><path d="M16 4l9 4v8c0 6-3.5 10-9 12-5.5-2-9-6-9-12V8l9-4Z" fill="#a3bbd8"/><path d="M16 7v17" stroke="#e9f2ff" stroke-width="1.5"/></svg>`,
+    artifact: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="8" fill="#d69ae8"/><circle cx="16" cy="16" r="4" fill="#7f3b95"/><path d="M6 22c4-2 16-2 20 0" stroke="#e8c6f2" stroke-width="2"/></svg>`,
+    thunderBlade: `<svg viewBox="0 0 32 32"><path d="M8 24l3 3 8-8-3-3z" fill="#d9e6ff"/><path d="M17 8l7-3-3 7-5 5-4-4z" fill="#9cb0d8"/><polygon points="23,3 19,11 24,11 20,19 28,9 23,9" fill="#ffd34d"/></svg>`,
+    phoenixBow: `<svg viewBox="0 0 32 32"><path d="M8 6c8 3 8 17 0 20" stroke="#bb8a53" stroke-width="2.2" fill="none"/><path d="M8 16h16" stroke="#c6d4ef" stroke-width="1.4"/><path d="M20 7l4 4-4 4-3-4z" fill="#ff875c"/></svg>`,
+    voidArmor: `<svg viewBox="0 0 32 32"><path d="M16 4l9 4v8c0 6-3.5 10-9 12-5.5-2-9-6-9-12V8l9-4Z" fill="#8ea0d8"/><circle cx="16" cy="16" r="3" fill="#f4f6ff"/></svg>`,
+    dragonRelic: `<svg viewBox="0 0 32 32"><path d="M8 20c0-6 7-11 12-8 3 2 4 6 2 9-3 4-8 5-14 3z" fill="#5bcf87"/><circle cx="19" cy="13" r="1.6" fill="#f2ffd7"/></svg>`,
+    default: `<svg viewBox="0 0 32 32"><rect x="8" y="8" width="16" height="16" rx="4" fill="#98a7c8"/></svg>`
+};
+
+function getItemIconMarkup(itemId) {
+    const svg = ITEM_ICON_SVG[itemId] || ITEM_ICON_SVG.default;
+    return `<span class="icon-wrap" aria-hidden="true">${svg}</span>`;
+}
 
 const MONSTER_CODEX = [
     {
@@ -1101,6 +1464,12 @@ const MONSTER_CODEX = [
     }
 ];
 
+const WORLD_EVENT_DEFS = [
+    { id: "spirit_tide", label: "灵潮涌动", durationMs: 180000, effects: { cultivationMul: 0.35, dropMul: 0.12 } },
+    { id: "beast_rush", label: "兽潮躁动", durationMs: 150000, effects: { monsterSpawnAdd: 0.15, monsterDamageMul: 0.12, dropMul: 0.2 } },
+    { id: "market_fair", label: "云集坊市", durationMs: 180000, effects: { shopDiscount: 0.2, dropMul: 0.08 } }
+];
+
 const CRAFT_RECIPES = [
     {
         id: "spiritPill",
@@ -1117,6 +1486,14 @@ const CRAFT_RECIPES = [
         out: { healingSalve: 1 },
         cost: { herb: 3, wood: 2 },
         use: "返城后额外恢复"
+    },
+    {
+        id: "bloodPill",
+        label: "回血丹",
+        tier: 1,
+        out: { bloodPill: 1 },
+        cost: { herb: 2, spiritStone: 14, demonCore: 1 },
+        use: "化身携带，快速补充血量"
     },
     {
         id: "wardCharm",
@@ -1208,7 +1585,7 @@ const CHEST_LOOT_TABLES = {
     ]
 };
 
-const REALM_NAMES = ["练气初期", "练气中期", "练气后期", "筑基初期", "筑基中期", "筑基后期"];
+const REALM_NAMES = ["练气初期", "练气中期", "练气后期", "筑基初期", "筑基中期", "筑基后期", "金丹初期", "金丹中期", "金丹后期", "元婴初期"];
 const BUILDING_TYPES = [
     { id: "none", label: "查看模式", icon: "·", buildCost: null, upgradeCost: null, effect: "不操作，仅查看" },
     { id: "herbGarden", label: "灵草圃", icon: "🌿", buildCost: { spiritStone: 28, wood: 6, herb: 4 }, upgradeCost: { spiritStone: 20, wood: 4, herb: 3 }, effect: "每周期产出灵草，且打坐效率 +4%/级" },
@@ -1235,7 +1612,6 @@ let cultivationLevel = 1;
 let gatherCount = 0;
 let inspectText = "";
 let exploreTarget = null;
-let dayRefineCount = 0;
 let isMeditating = false;
 let meditateRemainingMs = 0;
 let meditateTotalMs = 0;
@@ -1259,6 +1635,9 @@ let avatarMp = 120;
 let battleState = null;
 let dayCombatWins = 0;
 let rightPanelTab = "resource";
+let resourcePanelTab = "inventory";
+let showEquipAttrDetail = false;
+let showWorldSummary = false;
 let battleRoundLogs = [];
 let devForceMonster = false;
 let devFixedDrops = false;
@@ -1267,31 +1646,48 @@ let lastMoveAtMs = -99999;
 let battleTacticId = "balanced";
 let autoUsePillRatio = 0.5;
 let autoUseSalveRatio = 0.32;
+let bloodPillCarryTarget = 10;
+let bloodPillReturnThreshold = 3;
+let autoBuyBloodPill = true;
 let injuryDebuffUntilMs = 0;
+let avatarReviveUntilMs = 0;
 let lastBattleFrame = null;
 let goldCoins = 0;
 let itemMenuState = null;
 let bodyCultivationExp = 0;
 let bodyCultivationAccumMs = 0;
-let heavenlyEssence = 0;
 let cultivationBuffUntilMs = 0;
-let autoBreakthrough = false;
+let avatarOnlineAccumMs = 0;
+let avatarSessionExpired = false;
+let worldEventId = "";
+let worldEventUntilMs = 0;
+let nextWorldEventRollMs = 90000;
+let cameraMode = "follow";
+let cameraX = HOME_X;
+let cameraY = HOME_Y;
+let isMapDragging = false;
+let dragStartClientX = 0;
+let dragStartClientY = 0;
+let dragStartCameraX = HOME_X;
+let dragStartCameraY = HOME_Y;
+let suppressNextMapClick = false;
 const equipmentEnhanceLevels = { sword: 0, bow: 0, shield: 0, artifact: 0, thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0 };
 
 const avatarInventory = {
     spiritStone: 0, herb: 0, wood: 0, rareCrystal: 0, demonCore: 0,
-    spiritPill: 0, healingSalve: 0, wardCharm: 0, focusCharm: 0, baitFlag: 0, coreElixir: 0, starShard: 0, ascendSeal: 0,
+    spiritPill: 0, healingSalve: 0, bloodPill: 0, wardCharm: 0, focusCharm: 0, baitFlag: 0, coreElixir: 0, starShard: 0, ascendSeal: 0,
     chestSmall: 0, chestMedium: 0, chestLarge: 0,
     thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0
 };
 const homeInventory = {
     spiritStone: 156, herb: 11, wood: 0, rareCrystal: 0, demonCore: 0,
-    spiritPill: 0, healingSalve: 0, wardCharm: 0, focusCharm: 0, baitFlag: 0, coreElixir: 0, starShard: 0, ascendSeal: 0,
+    spiritPill: 0, healingSalve: 0, bloodPill: 0, wardCharm: 0, focusCharm: 0, baitFlag: 0, coreElixir: 0, starShard: 0, ascendSeal: 0,
     chestSmall: 0, chestMedium: 0, chestLarge: 0,
     thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0
 };
-const equipmentInventory = { sword: 1, bow: 1, shield: 1, artifact: 1, thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0 };
-const town = { prosperity: 1, refinementLevel: 1, storageCap: 260 };
+const equipmentInventory = { sword: 0, bow: 0, shield: 0, artifact: 0, thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0 };
+const equippedSlots = { weaponMain: "sword", weaponOff: "bow", armor: "shield", artifact: "artifact", trinket: null };
+const town = { prosperity: 1, storageCap: 260 };
 const sharedStats = {
     body: 10,
     spirit: 10,
@@ -1398,15 +1794,13 @@ const reservationBackend = {
 };
 
 const grid = document.getElementById("map-grid");
+const mapContainerEl = document.querySelector(".map-container");
 const combatFxLayerEl = document.getElementById("combat-fx-layer");
 const tooltip = document.getElementById("tooltip");
 const logContainer = document.getElementById("log-container");
 const autoBtn = document.getElementById("autoBtn");
 const returnBtn = document.getElementById("returnBtn");
-const refineBtn = document.getElementById("refineBtn");
 const meditateBtn = document.getElementById("meditateBtn");
-const breakthroughBtn = document.getElementById("breakthroughBtn");
-const autoBreakthroughToggle = document.getElementById("autoBreakthroughToggle");
 const cultivationMetaEl = document.getElementById("cultivationMeta");
 const cultivationTickRingEl = document.getElementById("cultivationTickRing");
 const helpBtn = document.getElementById("helpBtn");
@@ -1417,10 +1811,15 @@ const bagCapInput = document.getElementById("bagCapInput");
 const bagReturnInput = document.getElementById("bagReturnInput");
 const pillThresholdInput = document.getElementById("pillThresholdInput");
 const salveThresholdInput = document.getElementById("salveThresholdInput");
+const bloodPillCarryTargetInput = document.getElementById("bloodPillCarryTargetInput");
+const bloodPillReturnThresholdInput = document.getElementById("bloodPillReturnThresholdInput");
+const autoBuyBloodPillToggle = document.getElementById("autoBuyBloodPillToggle");
 const bagCapLabel = document.getElementById("bagCapLabel");
 const bagReturnLabel = document.getElementById("bagReturnLabel");
 const pillThresholdLabel = document.getElementById("pillThresholdLabel");
 const salveThresholdLabel = document.getElementById("salveThresholdLabel");
+const bloodPillCarryTargetLabel = document.getElementById("bloodPillCarryTargetLabel");
+const bloodPillReturnThresholdLabel = document.getElementById("bloodPillReturnThresholdLabel");
 const buildPanel = document.getElementById("build-panel");
 const statusEl = document.getElementById("avatarStatus");
 const resourceSummaryEl = document.getElementById("resourceSummary");
@@ -1429,9 +1828,14 @@ const codexSummaryEl = document.getElementById("codexSummary");
 const codexPanelEl = document.getElementById("codex-panel");
 const itemDetailEl = document.getElementById("item-detail");
 const itemMenuEl = document.getElementById("item-menu");
+const chestModalEl = document.getElementById("chest-modal");
+const itemCodexModalEl = document.getElementById("item-codex-modal");
+const equipSlotMenuEl = document.getElementById("equip-slot-menu");
 const battlePanelEl = document.getElementById("battle-panel");
 const battleSummaryEl = document.getElementById("battleSummary");
+const battleRoundResultEl = document.getElementById("battleRoundResult");
 const battleLogListEl = document.getElementById("battleLogList");
+const battleHitFlashEl = document.getElementById("battle-hit-flash");
 const craftPanelEl = document.getElementById("craft-panel");
 const craftSummaryEl = document.getElementById("craftSummary");
 const shopPanelEl = document.getElementById("shop-panel");
@@ -1439,10 +1843,12 @@ const shopSummaryEl = document.getElementById("shopSummary");
 const enhancePanelEl = document.getElementById("enhance-panel");
 const enhanceSummaryEl = document.getElementById("enhanceSummary");
 const worldSummaryEl = document.getElementById("worldSummary");
+const worldSummaryToggleBtn = document.getElementById("worldSummaryToggleBtn");
 const movementStatusEl = document.getElementById("movementStatus");
 const strategyButtonsEl = document.getElementById("strategyButtons");
 const tacticButtonsEl = document.getElementById("tacticButtons");
 const zoomButtonsEl = document.getElementById("zoomButtons");
+const cameraResetBtn = document.getElementById("cameraResetBtn");
 const speedButtonsEl = document.getElementById("speedButtons");
 const rightTabButtonsEl = document.getElementById("rightTabButtons");
 const codexBtn = document.getElementById("codexBtn");
@@ -1455,13 +1861,38 @@ const enhanceBtn = document.getElementById("enhanceBtn");
 const enhanceCloseBtn = document.getElementById("enhanceCloseBtn");
 const forceMonsterToggle = document.getElementById("forceMonsterToggle");
 const fixedDropToggle = document.getElementById("fixedDropToggle");
+const debugMonsterSelect = document.getElementById("debugMonsterSelect");
 const debugBattleBtn = document.getElementById("debugBattleBtn");
 let movementStatusText = "待命";
+let itemMenuQty = 1;
 
 function simpleHash(x, y) {
     let n = x * 374761393 + y * 668265263;
     n = (n ^ (n >> 13)) * 1274126177;
     return (n ^ (n >> 11)) >>> 0;
+}
+
+function clampCameraOffsetFromAvatar(nextX, nextY) {
+    const maxOffset = 120;
+    const dx = nextX - avatarX;
+    const dy = nextY - avatarY;
+    return {
+        x: Math.round(avatarX + Math.max(-maxOffset, Math.min(maxOffset, dx))),
+        y: Math.round(avatarY + Math.max(-maxOffset, Math.min(maxOffset, dy)))
+    };
+}
+
+function setCameraFreePosition(nextX, nextY) {
+    const clamped = clampCameraOffsetFromAvatar(nextX, nextY);
+    cameraMode = "free";
+    cameraX = clamped.x;
+    cameraY = clamped.y;
+}
+
+function resetCameraToAvatar() {
+    cameraMode = "follow";
+    cameraX = avatarX;
+    cameraY = avatarY;
 }
 
 function getElevation(x, y) {
@@ -1709,12 +2140,12 @@ function applyHomeGain(gain) {
 function getWorkbenchTier() {
     const spiritWell = countBuildingsByType("spiritWell");
     const trainingRoom = countBuildingsByType("trainingRoom");
-    if (town.refinementLevel >= BALANCE_CONFIG.crafting.tierUnlock[3].refinementLevel &&
+    if (cultivationLevel >= BALANCE_CONFIG.crafting.tierUnlock[3].cultivationLevel &&
         spiritWell >= BALANCE_CONFIG.crafting.tierUnlock[3].spiritWell &&
         trainingRoom >= BALANCE_CONFIG.crafting.tierUnlock[3].trainingRoom) {
         return 3;
     }
-    if (town.refinementLevel >= BALANCE_CONFIG.crafting.tierUnlock[2].refinementLevel &&
+    if (cultivationLevel >= BALANCE_CONFIG.crafting.tierUnlock[2].cultivationLevel &&
         spiritWell >= BALANCE_CONFIG.crafting.tierUnlock[2].spiritWell &&
         trainingRoom >= BALANCE_CONFIG.crafting.tierUnlock[2].trainingRoom) {
         return 2;
@@ -1753,44 +2184,30 @@ function getBodyCultivationExpNeed(level) {
 }
 
 function getCultivationRateMultiplier() {
-    return simulationTimeMs < cultivationBuffUntilMs ? 1.8 : 1;
+    const eventMul = getWorldEventEffects().cultivationMul || 0;
+    return (simulationTimeMs < cultivationBuffUntilMs ? 1.8 : 1) * (1 + eventMul);
 }
 
 function applyBodyCultivationTick() {
     const mult = getCultivationRateMultiplier();
-    const essenceGain = Math.max(1, Math.floor((2 + Math.floor(sharedStats.spirit / 4)) * mult));
     const expGain = Math.max(1, Math.floor((3 + Math.floor(sharedStats.mind / 4)) * mult));
-    heavenlyEssence += essenceGain;
     bodyCultivationExp += expGain;
-    addLog(`打坐修炼结算：天地精华 +${essenceGain}，修为 +${expGain}`);
-    if (autoBreakthrough) {
-        while (tryBreakthrough(true)) {}
+    addLog(`打坐修炼结算：修为 +${expGain}`);
+    while (cultivationLevel < CULTIVATION_MAX_LEVEL) {
+        const needExp = getBodyCultivationExpNeed(cultivationLevel);
+        if (bodyCultivationExp < needExp) break;
+        bodyCultivationExp -= needExp;
+        cultivationLevel += 1;
+        sharedStats.level += 1;
+        sharedStats.spirit += 1;
+        sharedStats.mind += 1;
+        sharedStats.body += 1;
+        sharedStats.freePoints += 3;
+        addLog(`修为提升：境界达到 Lv.${cultivationLevel} · ${getRealmName()}`);
     }
-}
-
-function getBreakthroughEssenceNeed() {
-    return 6 + cultivationLevel * 2;
-}
-
-function tryBreakthrough(autoTriggered = false) {
-    const needExp = getBodyCultivationExpNeed(cultivationLevel);
-    const needEssence = getBreakthroughEssenceNeed();
-    if (bodyCultivationExp < needExp || heavenlyEssence < needEssence) {
-        if (!autoTriggered) {
-            addLog(`突破条件不足：需修为 ${needExp} 与天地精华 ${needEssence}`);
-        }
-        return false;
+    if (cultivationLevel >= CULTIVATION_MAX_LEVEL) {
+        bodyCultivationExp = Math.min(bodyCultivationExp, getBodyCultivationExpNeed(cultivationLevel));
     }
-    bodyCultivationExp -= needExp;
-    heavenlyEssence -= needEssence;
-    cultivationLevel = Math.min(cultivationLevel + 1, REALM_NAMES.length - 1);
-    sharedStats.level += 1;
-    sharedStats.spirit += 1;
-    sharedStats.mind += 1;
-    sharedStats.body += 1;
-    sharedStats.freePoints += 3;
-    addLog(`突破成功：境界提升至 ${getRealmName()}`);
-    return true;
 }
 
 function startMeditation() {
@@ -1811,13 +2228,24 @@ function finishMeditation() {
     const mult = getCultivationRateMultiplier();
     const gain = Math.max(1, Math.floor((4 + Math.floor(sharedStats.mind / 4)) * bonuses.meditateExp * mult));
     bodyCultivationExp += gain;
-    heavenlyEssence += Math.max(1, Math.floor(1 * mult));
     isMeditating = false;
     meditateRemainingMs = 0;
     meditateTotalMs = 0;
     addLog(`打坐完成，获得修为 ${gain}`);
-    if (autoBreakthrough) {
-        while (tryBreakthrough(true)) {}
+    while (cultivationLevel < CULTIVATION_MAX_LEVEL) {
+        const needExp = getBodyCultivationExpNeed(cultivationLevel);
+        if (bodyCultivationExp < needExp) break;
+        bodyCultivationExp -= needExp;
+        cultivationLevel += 1;
+        sharedStats.level += 1;
+        sharedStats.spirit += 1;
+        sharedStats.mind += 1;
+        sharedStats.body += 1;
+        sharedStats.freePoints += 3;
+        addLog(`修为提升：境界达到 Lv.${cultivationLevel} · ${getRealmName()}`);
+    }
+    if (cultivationLevel >= CULTIVATION_MAX_LEVEL) {
+        bodyCultivationExp = Math.min(bodyCultivationExp, getBodyCultivationExpNeed(cultivationLevel));
     }
 }
 
@@ -1895,16 +2323,16 @@ function allocSharedStat(statKey) {
 
 function getEquipmentBonus() {
     const bonus = { atk: 0, def: 0, hit: 0, dodge: 0, luck: 0 };
-    Object.entries(equipmentInventory).forEach(([itemId, count]) => {
+    Object.values(equippedSlots).forEach((itemId) => {
         const def = ITEM_DEFS[itemId];
-        if (!def || count <= 0) return;
+        if (!def) return;
         const cfg = def.bonus || {};
         const enhanceMul = 1 + (equipmentEnhanceLevels[itemId] || 0) * 0.12;
-        bonus.atk += (cfg.atk || 0) * count * enhanceMul;
-        bonus.def += (cfg.def || 0) * count * enhanceMul;
-        bonus.hit += (cfg.hit || 0) * count * enhanceMul;
-        bonus.dodge += (cfg.dodge || 0) * count * enhanceMul;
-        bonus.luck += (cfg.luck || 0) * count * enhanceMul;
+        bonus.atk += (cfg.atk || 0) * enhanceMul;
+        bonus.def += (cfg.def || 0) * enhanceMul;
+        bonus.hit += (cfg.hit || 0) * enhanceMul;
+        bonus.dodge += (cfg.dodge || 0) * enhanceMul;
+        bonus.luck += (cfg.luck || 0) * enhanceMul;
     });
     if ((homeInventory.ascendSeal || 0) > 0) {
         bonus.luck += 6;
@@ -1921,7 +2349,8 @@ function getEnhanceCost(itemId) {
 }
 
 function enhanceEquipment(itemId) {
-    if ((equipmentInventory[itemId] || 0) <= 0) return false;
+    const ownedCount = (equipmentInventory[itemId] || 0) + (Object.values(equippedSlots).includes(itemId) ? 1 : 0);
+    if (ownedCount <= 0) return false;
     const level = equipmentEnhanceLevels[itemId] || 0;
     if (level >= 10) {
         addLog(`强化失败：${ITEM_DEFS[itemId]?.label || itemId} 已达 +10`);
@@ -1950,9 +2379,14 @@ function buyFromShop(itemId, cost, qty = 1) {
     return true;
 }
 
+function getShopPrice(basePrice) {
+    const discount = getWorldEventEffects().shopDiscount || 0;
+    return Math.max(1, Math.floor(basePrice * (1 - discount)));
+}
+
 function bindItemHover(containerEl) {
     if (!containerEl) return;
-    containerEl.querySelectorAll(".inv-slot[data-item-id], .codex-item[data-item-id]").forEach((el) => {
+    containerEl.querySelectorAll(".inv-slot[data-item-id], .codex-item[data-item-id], .equip-slot[data-item-id]").forEach((el) => {
         el.addEventListener("mousemove", (e) => {
             const itemId = el.dataset.itemId;
             const def = ITEM_DEFS[itemId];
@@ -1962,7 +2396,7 @@ function bindItemHover(containerEl) {
             const bonus = def.bonus
                 ? `加成: ${Object.entries(def.bonus).map(([k, v]) => `${k}+${v}`).join(" / ")}`
                 : "加成: 无";
-            itemDetailEl.innerHTML = `<strong>${def.icon} ${def.label}</strong><br>品质: ${rarity}<br>类别: ${def.category}<br>${bonus}<br>来源: ${def.source}<br>回收: ${def.sellValue || 0} 金币<br>持有: ${qty}`;
+            itemDetailEl.innerHTML = `<strong>${getItemIconMarkup(itemId)} ${def.label}</strong><br>品质: ${rarity}<br>类别: ${def.category}<br>${bonus}<br>来源: ${def.source}<br>回收: ${def.sellValue || 0} 金币<br>持有: ${qty}`;
             itemDetailEl.classList.remove("hidden");
             itemDetailEl.style.left = `${e.clientX + 12}px`;
             itemDetailEl.style.top = `${e.clientY + 12}px`;
@@ -2019,6 +2453,26 @@ function getRiskRewardBonusAt(x, y) {
     return Math.min(0.9, dist * 0.03);
 }
 
+function getWorldEventDef() {
+    if (worldEventId && worldEventUntilMs > 0 && simulationTimeMs >= worldEventUntilMs) return null;
+    return WORLD_EVENT_DEFS.find((e) => e.id === worldEventId) || null;
+}
+
+function getWorldEventEffects() {
+    const def = getWorldEventDef();
+    return def?.effects || {};
+}
+
+function rollWorldEvent() {
+    if (worldEventId && simulationTimeMs < worldEventUntilMs) return;
+    const roll = (simpleHash(dayCount + Math.floor(simulationTimeMs / 1000), gatherCount + dayCombatWins) % 1000) / 1000;
+    if (roll > 0.42) return;
+    const def = WORLD_EVENT_DEFS[simpleHash(dayCount + gatherCount, Math.floor(simulationTimeMs / 5000)) % WORLD_EVENT_DEFS.length];
+    worldEventId = def.id;
+    worldEventUntilMs = simulationTimeMs + def.durationMs;
+    addLog(`世界事件：${def.label}（持续 ${Math.floor(def.durationMs / 1000)} 秒）`);
+}
+
 function weightedPick(table, seedA, seedB) {
     const total = table.reduce((sum, row) => sum + row.weight, 0);
     if (total <= 0) return table[0];
@@ -2031,13 +2485,112 @@ function weightedPick(table, seedA, seedB) {
     return table[table.length - 1];
 }
 
-function openChest(chestId) {
+function showChestOpenModal(chestId, chestCount, rewards) {
+    if (!chestModalEl) return;
+    const rewardRows = Object.entries(rewards || {});
+    chestModalEl.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong>打开的战利品</strong>
+            <button class="mini-btn" data-chest-close>✕</button>
+        </div>
+        <div style="text-align:center; margin-top:8px;">
+            <div class="chest-preview inv-slot rarity-${ITEM_DEFS[chestId]?.rarity || "common"}" data-item-id="${chestId}" data-item-count="${chestCount}">
+                ${getItemIconMarkup(chestId)}
+            </div>
+            <div>${chestCount}</div>
+        </div>
+        <div style="margin-top:8px; text-align:center; color:#cfd8ff;">你找到了</div>
+        <div class="loot-grid">
+            ${rewardRows.map(([id, qty]) => `
+                <div class="inv-slot rarity-${ITEM_DEFS[id]?.rarity || "common"}" title="${ITEM_DEFS[id]?.label || id}" data-item-id="${id}" data-item-count="${qty}">
+                    ${getItemIconMarkup(id)}
+                    <span class="qty">${qty}</span>
+                </div>
+            `).join("")}
+        </div>
+        <div style="text-align:center;"><button class="mode-btn" data-chest-close>关闭</button></div>
+    `;
+    bindItemHover(chestModalEl);
+    chestModalEl.classList.remove("hidden");
+    chestModalEl.querySelectorAll("button[data-chest-close]").forEach((btn) => {
+        btn.addEventListener("click", () => chestModalEl.classList.add("hidden"));
+    });
+}
+
+function openItemCodexDetail(itemId) {
+    const def = ITEM_DEFS[itemId];
+    if (!def || !itemCodexModalEl) return;
+    const canCraft = CRAFT_RECIPES.filter((r) => r.out[itemId]);
+    const usedBy = CRAFT_RECIPES.filter((r) => r.cost[itemId]);
+    const dropBy = MONSTER_CODEX.filter((m) => m.drops.some((d) => d.id === itemId));
+    itemCodexModalEl.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong>${def.label}</strong>
+            <button class="mini-btn" data-codex-close>✕</button>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; margin:8px 0 12px;">
+            ${getItemIconMarkup(itemId)}
+            <div class="small-note">用于${def.category} · 来源 ${def.source}</div>
+        </div>
+        <div class="codex-detail-columns">
+            <div class="codex-col">
+                <strong>用于制作</strong>
+                <div style="margin-top:6px;">${usedBy.length ? usedBy.map((r) => `1个 ${r.label}`).join("<br>") : "暂无"}</div>
+            </div>
+            <div class="codex-col">
+                <strong>获取来源</strong>
+                <div style="margin-top:6px;">${dropBy.length ? dropBy.map((m) => `${m.type} ${m.levelRange}`).join("<br>") : "采集/商店/合成"}</div>
+            </div>
+            <div class="codex-col">
+                <strong>转化与产出</strong>
+                <div style="margin-top:6px;">回收金币：${def.sellValue || 0}<br>${canCraft.length ? `可直接合成：${canCraft.map((r) => r.label).join(" / ")}` : "非直接合成产出"}</div>
+            </div>
+        </div>
+    `;
+    itemCodexModalEl.classList.remove("hidden");
+    itemCodexModalEl.querySelectorAll("button[data-codex-close]").forEach((btn) => {
+        btn.addEventListener("click", () => itemCodexModalEl.classList.add("hidden"));
+    });
+}
+
+function closeEquipSlotMenu() {
+    if (!equipSlotMenuEl) return;
+    equipSlotMenuEl.classList.add("hidden");
+    equipSlotMenuEl.innerHTML = "";
+}
+
+function openEquipSlotMenu(slotId, anchorEvent) {
+    if (!equipSlotMenuEl) return;
+    const currentItemId = equippedSlots[slotId];
+    const candidates = [];
+    Object.keys(ITEM_DEFS).forEach((id) => {
+        if (slotForItem(id) !== slotId) return;
+        const bagCount = avatarInventory[id] || 0;
+        const homeCount = homeInventory[id] || 0;
+        if (bagCount > 0) candidates.push({ id, source: "avatar", count: bagCount, from: "背包" });
+        if (homeCount > 0) candidates.push({ id, source: "home", count: homeCount, from: "库存" });
+    });
+    equipSlotMenuEl.innerHTML = `
+        <div class="small-note" style="margin-bottom:6px;">${EQUIP_SLOT_DEFS.find((s) => s.id === slotId)?.label || slotId}</div>
+        ${currentItemId ? `<div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">${getItemIconMarkup(currentItemId)}<strong>${ITEM_DEFS[currentItemId]?.label || currentItemId}</strong></div>` : `<div class="small-note">当前未装备</div>`}
+        <div class="menu-actions">
+            ${currentItemId ? `<button class="mode-btn" data-equip-action="remove" data-slot-id="${slotId}">移除</button>` : ""}
+            ${candidates.map((c) => `<button class="mode-btn" data-equip-action="equip" data-slot-id="${slotId}" data-item-id="${c.id}" data-source="${c.source}">装备 ${ITEM_DEFS[c.id]?.label || c.id}（${c.from} ${c.count}）</button>`).join("") || `<div class="small-note">暂无可装备物品</div>`}
+        </div>
+    `;
+    equipSlotMenuEl.style.left = `${Math.min(window.innerWidth - 330, anchorEvent.clientX + 8)}px`;
+    equipSlotMenuEl.style.top = `${Math.min(window.innerHeight - 240, anchorEvent.clientY + 8)}px`;
+    equipSlotMenuEl.classList.remove("hidden");
+}
+
+function openChest(chestId, count = 1) {
     if (!Object.prototype.hasOwnProperty.call(avatarInventory, chestId)) return false;
-    if ((avatarInventory[chestId] || 0) <= 0) return false;
+    const openCount = Math.max(1, Math.min(count, avatarInventory[chestId] || 0));
+    if (openCount <= 0) return false;
     const table = CHEST_LOOT_TABLES[chestId];
     if (!table) return false;
-    avatarInventory[chestId] -= 1;
-    const rolls = chestId === "chestSmall" ? 1 : chestId === "chestMedium" ? 2 : 3;
+    avatarInventory[chestId] -= openCount;
+    const rolls = (chestId === "chestSmall" ? 1 : chestId === "chestMedium" ? 2 : 3) * openCount;
     const rewards = {};
     for (let i = 0; i < rolls; i++) {
         const pick = weightedPick(table, dayCount * 97 + i * 17 + gatherCount, simulationTimeMs + i * 113);
@@ -2048,7 +2601,8 @@ function openChest(chestId) {
         discoveredItemSet.add(pick.id);
     }
     const rewardText = Object.entries(rewards).map(([id, qty]) => `${ITEM_DEFS[id]?.label || id}×${qty}`).join(" / ");
-    addLog(`开启${ITEM_DEFS[chestId]?.label || "宝箱"}：${rewardText}`);
+    addLog(`开启${ITEM_DEFS[chestId]?.label || "宝箱"} x${openCount}：${rewardText}`);
+    showChestOpenModal(chestId, openCount, rewards);
     updateSidePanels();
     updateStatus();
     return true;
@@ -2065,85 +2619,116 @@ function isEquipItem(itemId) {
     return ITEM_DEFS[itemId]?.category === "装备";
 }
 
+function slotForItem(itemId) {
+    return ITEM_EQUIP_SLOT[itemId] || null;
+}
+
 function canUseItem(itemId) {
     return ITEM_DEFS[itemId]?.usable || itemId === "baitFlag" || itemId.startsWith("chest");
 }
 
-function useItemFrom(source, itemId) {
+function useItemFrom(source, itemId, count = 1) {
     const bag = getItemContainer(source);
     if (!bag || (bag[itemId] || 0) <= 0) return false;
+    const useCount = Math.max(1, Math.min(count, bag[itemId] || 0));
     if (itemId === "chestSmall" || itemId === "chestMedium" || itemId === "chestLarge") {
         if (source !== "avatar") return false;
-        return openChest(itemId);
+        return openChest(itemId, useCount);
     }
     if (itemId === "spiritPill") {
-        bag[itemId] -= 1;
+        bag[itemId] -= useCount;
         if (battleState || avatarHp < getAvatarMaxHp()) {
-            const heal = Math.floor(getAvatarMaxHp() * 0.28);
+            const heal = Math.floor(getAvatarMaxHp() * 0.28) * useCount;
             avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
-            addLog(`使用聚灵丹，恢复生命 ${heal}`);
+            addLog(`使用聚灵丹 x${useCount}，恢复生命 ${heal}`);
         } else {
-            cultivationBuffUntilMs = Math.max(cultivationBuffUntilMs, simulationTimeMs) + 180000;
-            addLog("服用聚灵丹：肉身修炼效率提升 180 秒");
+            cultivationBuffUntilMs = Math.max(cultivationBuffUntilMs, simulationTimeMs) + 180000 * useCount;
+            addLog(`服用聚灵丹 x${useCount}：肉身修炼效率提升 ${180 * useCount} 秒`);
         }
         return true;
     }
     if (itemId === "healingSalve") {
-        bag[itemId] -= 1;
-        const heal = Math.floor(getAvatarMaxHp() * 0.2);
+        bag[itemId] -= useCount;
+        const heal = Math.floor(getAvatarMaxHp() * 0.2) * useCount;
         avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
-        addLog(`使用回春散，恢复生命 ${heal}`);
+        addLog(`使用回春散 x${useCount}，恢复生命 ${heal}`);
+        return true;
+    }
+    if (itemId === "bloodPill") {
+        bag[itemId] -= useCount;
+        const heal = Math.floor(getAvatarMaxHp() * 0.36) * useCount;
+        avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
+        addLog(`使用回血丹 x${useCount}，恢复生命 ${heal}`);
         return true;
     }
     if (itemId === "baitFlag") {
         if (source !== "avatar") return false;
-        bag[itemId] -= 1;
-        baitBoostUntilMs = simulationTimeMs + 120000;
-        addLog("使用引妖旗：120秒内刷怪率提升");
+        bag[itemId] -= useCount;
+        baitBoostUntilMs = simulationTimeMs + 120000 * useCount;
+        addLog(`使用引妖旗 x${useCount}：刷怪率提升 ${120 * useCount} 秒`);
         return true;
     }
     if (itemId === "wardCharm") {
-        bag[itemId] -= 1;
-        homeInventory.wardCharm = (homeInventory.wardCharm || 0) + 1;
-        addLog("使用护体符：转化为洞府护持层数");
+        bag[itemId] -= useCount;
+        homeInventory.wardCharm = (homeInventory.wardCharm || 0) + useCount;
+        addLog(`使用护体符 x${useCount}：转化为洞府护持层数`);
         return true;
     }
     if (itemId === "focusCharm") {
-        bag[itemId] -= 1;
-        homeInventory.focusCharm = (homeInventory.focusCharm || 0) + 1;
-        addLog("使用凝神符：转化为洞府凝神层数");
+        bag[itemId] -= useCount;
+        homeInventory.focusCharm = (homeInventory.focusCharm || 0) + useCount;
+        addLog(`使用凝神符 x${useCount}：转化为洞府凝神层数`);
         return true;
     }
     return false;
 }
 
-function equipItemFrom(source, itemId) {
+function equipItemFrom(source, itemId, count = 1) {
     if (!isEquipItem(itemId)) return false;
     const bag = getItemContainer(source);
     if (!bag || (bag[itemId] || 0) <= 0) return false;
     if (source === "equipment") return false;
+    const slot = slotForItem(itemId);
+    if (!slot) return false;
+    if (equippedSlots[slot] === itemId) return false;
     bag[itemId] -= 1;
-    equipmentInventory[itemId] = (equipmentInventory[itemId] || 0) + 1;
-    addLog(`装备已激活：${ITEM_DEFS[itemId]?.label || itemId}`);
+    const prev = equippedSlots[slot];
+    equippedSlots[slot] = itemId;
+    if (prev) {
+        bag[prev] = (bag[prev] || 0) + 1;
+        addLog(`装备替换：${ITEM_DEFS[itemId]?.label || itemId}`);
+    } else {
+        addLog(`装备已激活：${ITEM_DEFS[itemId]?.label || itemId}`);
+    }
     return true;
 }
 
-function recycleItemFrom(source, itemId) {
+function recycleItemFrom(source, itemId, count = 1) {
     if (source === "equipment") return false;
     const bag = getItemContainer(source);
     if (!bag || (bag[itemId] || 0) <= 0) return false;
     if (itemId === "ascendSeal" || itemId === "dragonRelic") return false;
     const value = ITEM_DEFS[itemId]?.sellValue || 0;
     if (value <= 0) return false;
-    bag[itemId] -= 1;
-    goldCoins += value;
-    addLog(`回收 ${ITEM_DEFS[itemId]?.label || itemId}，获得金币 ${value}`);
+    const recycleCount = Math.max(1, Math.min(count, bag[itemId] || 0));
+    bag[itemId] -= recycleCount;
+    goldCoins += value * recycleCount;
+    addLog(`回收 ${ITEM_DEFS[itemId]?.label || itemId} x${recycleCount}，获得金币 ${value * recycleCount}`);
     return true;
 }
 
 function closeItemMenu() {
     itemMenuState = null;
+    itemMenuQty = 1;
     itemMenuEl.classList.add("hidden");
+}
+
+function syncItemMenuRecycleLabel(itemId, qty) {
+    if (!itemMenuEl) return;
+    const recycleBtn = itemMenuEl.querySelector('button[data-item-action="recycle"]');
+    if (!recycleBtn) return;
+    const unit = ITEM_DEFS[itemId]?.sellValue || 0;
+    recycleBtn.textContent = `商人回收 ${unit * qty} 金币`;
 }
 
 function openItemMenu(itemId, source, anchorEvent) {
@@ -2151,20 +2736,41 @@ function openItemMenu(itemId, source, anchorEvent) {
     const bag = getItemContainer(source);
     if (!def || !bag || (bag[itemId] || 0) <= 0) return;
     itemMenuState = { itemId, source };
+    itemMenuQty = 1;
     const canUse = canUseItem(itemId);
     const canEquip = isEquipItem(itemId) && source !== "equipment";
     const canRecycle = source !== "equipment" && (def.sellValue || 0) > 0 && itemId !== "ascendSeal" && itemId !== "dragonRelic";
+    const canBatch = !(isEquipItem(itemId));
+    const recycleTotal = (def.sellValue || 0) * itemMenuQty;
     itemMenuEl.innerHTML = `
-        <div class="menu-title">${def.icon} ${def.label} · 数量 ${bag[itemId] || 0}</div>
+        <div class="menu-title">${getItemIconMarkup(itemId)} ${def.label} · 数量 ${bag[itemId] || 0}</div>
+        <div class="qty-row" style="${canBatch ? "" : "display:none;"}">
+            <span class="qty-tag">数量</span>
+            <button class="mini-btn" data-item-action="qty-minus">-</button>
+            <input class="qty-input" type="number" min="1" max="${bag[itemId] || 1}" value="1" data-item-qty>
+            <button class="mini-btn" data-item-action="qty-plus">+</button>
+            <button class="mini-btn" data-item-action="qty-all">全部</button>
+        </div>
         <div class="menu-actions">
-            <button class="mini-btn" data-item-action="use" ${canUse ? "" : "disabled"}>使用</button>
-            <button class="mini-btn" data-item-action="equip" ${canEquip ? "" : "disabled"}>装备</button>
-            <button class="mini-btn" data-item-action="recycle" ${canRecycle ? "" : "disabled"}>回收为金币（${def.sellValue || 0}）</button>
+            <button class="mode-btn" data-item-action="use" ${canUse ? "" : "disabled"}>${itemId.startsWith("chest") ? "打开选中个" : "使用"}</button>
+            <button class="mode-btn" data-item-action="equip" ${canEquip ? "" : "disabled"}>一键装备</button>
+            <button class="mode-btn" data-item-action="recycle" ${canRecycle ? "" : "disabled"}>商人回收 ${recycleTotal} 金币</button>
+            <button class="mode-btn" data-item-action="codex">打开物品词典</button>
         </div>
     `;
     itemMenuEl.style.left = `${Math.min(window.innerWidth - 210, anchorEvent.clientX + 8)}px`;
     itemMenuEl.style.top = `${Math.min(window.innerHeight - 150, anchorEvent.clientY + 8)}px`;
     itemMenuEl.classList.remove("hidden");
+    const qtyInput = itemMenuEl.querySelector("input[data-item-qty]");
+    if (qtyInput) {
+        qtyInput.addEventListener("input", () => {
+            const maxQty = Math.max(1, bag[itemId] || 1);
+            const nextQty = Math.max(1, Math.min(maxQty, Number(qtyInput.value) || 1));
+            itemMenuQty = nextQty;
+            qtyInput.value = String(nextQty);
+            syncItemMenuRecycleLabel(itemId, nextQty);
+        });
+    }
 }
 
 function getAvatarVisualState() {
@@ -2185,6 +2791,19 @@ function spawnCombatFx(text, type = "damage", yOffset = 0) {
     fx.style.setProperty("--fx-top", `${baseTop + yOffset}%`);
     combatFxLayerEl.appendChild(fx);
     setTimeout(() => fx.remove(), 900);
+}
+
+function triggerBattleImpactFx(kind = "hit") {
+    if (battlePanelEl) {
+        battlePanelEl.classList.remove("shake");
+        void battlePanelEl.offsetWidth;
+        battlePanelEl.classList.add("shake");
+    }
+    if (kind === "crit" && battleHitFlashEl) {
+        battleHitFlashEl.classList.remove("active");
+        void battleHitFlashEl.offsetWidth;
+        battleHitFlashEl.classList.add("active");
+    }
 }
 
 function monsterLevelAt(x, y) {
@@ -2218,14 +2837,18 @@ function getMonsterSeed(x, y) {
         };
     }
     const baitBoost = simulationTimeMs < baitBoostUntilMs ? 0.2 : 0;
-    const spawnBase = (terrain === "mountain" ? 0.34 : terrain === "forest" ? 0.28 : terrain === "hill" ? 0.22 : 0.12) + baitBoost;
+    const spawnBase = (terrain === "mountain" ? 0.34 : terrain === "forest" ? 0.28 : terrain === "hill" ? 0.22 : 0.12) + baitBoost + (getWorldEventEffects().monsterSpawnAdd || 0);
     const spawnRoll = (h % 1000) / 1000;
     if (spawnRoll > spawnBase) return null;
     const level = monsterLevelAt(x, y);
+    const homeDist = Math.abs(x - HOME_X) + Math.abs(y - HOME_Y);
     const rareRoll = ((h >> 10) % 1000) / 1000;
     let type = rareRoll < 0.08 ? "妖将" : rareRoll < 0.28 ? "妖兽" : "邪祟";
     if (level >= 4 && rareRoll < 0.05) type = "精英妖将";
     if (level >= 4 && rareRoll < 0.01) type = "天劫妖王";
+    if (type === "天劫妖王" && homeDist > BOSS_SPAWN_MAX_HOME_DISTANCE) {
+        type = "精英妖将";
+    }
     const eliteMul = type === "精英妖将" ? 2.0 : type === "天劫妖王" ? 3.0 : 1;
     const maxHp = Math.floor((32 + level * 22 + (h % 9)) * BALANCE_CONFIG.combat.monsterHpScale * eliteMul);
     const atk = Math.floor((8 + level * 3 + (h % 4)) * (type === "天劫妖王" ? 2.4 : type === "精英妖将" ? 1.75 : 1));
@@ -2293,15 +2916,16 @@ function startBattleWith(monster) {
 
 function grantBattleLoot(monster) {
     const riskBonus = getRiskRewardBonusAt(monster.x, monster.y);
+    const eventDropMul = 1 + (getWorldEventEffects().dropMul || 0);
     const tierMul = monster.type === "天劫妖王" ? 3.2 : monster.type === "精英妖将" ? 2.2 : monster.type === "妖将" ? 1.5 : 1;
-    const gainStone = Math.floor((8 + monster.level * 4) * (1 + riskBonus * 0.9) * tierMul);
+    const gainStone = Math.floor((8 + monster.level * 4) * (1 + riskBonus * 0.9) * tierMul * eventDropMul);
     const gainHerb = monster.level >= 2 ? Math.max(1, Math.floor((riskBonus >= 0.35 ? 2 : 1) * tierMul)) : 0;
     const eq = getEquipmentBonus();
     const rareChance = Math.min(BALANCE_CONFIG.drops.rareMax, BALANCE_CONFIG.drops.rareBase + sharedStats.fortune + Math.floor(eq.luck * 0.8));
     const coreBase = monster.type === "妖将" ? 22 : monster.type === "妖兽" ? 14 : 8;
     const coreChance = Math.min(55, coreBase + Math.floor(sharedStats.fortune * 0.6));
-    const gainRare = monster.level >= 3 && (devFixedDrops || (simpleHash(monster.x + dayCount, monster.y + dayCombatWins) % 100 < (rareChance + Math.floor(riskBonus * 18) + (monster.type === "天劫妖王" ? 22 : monster.type === "精英妖将" ? 12 : 0)))) ? Math.max(1, Math.floor(tierMul / 1.5)) : 0;
-    const gainCore = devFixedDrops ? Math.max(1, Math.floor(tierMul)) : (simpleHash(monster.x + dayCount * 3, monster.y + dayCombatWins * 11) % 100 < coreChance ? Math.max(1, Math.floor(tierMul)) : 0);
+    const gainRare = monster.level >= 3 && (devFixedDrops || (simpleHash(monster.x + dayCount, monster.y + dayCombatWins) % 100 < (rareChance + Math.floor(riskBonus * 18) + (monster.type === "天劫妖王" ? 22 : monster.type === "精英妖将" ? 12 : 0)))) ? Math.max(1, Math.floor((tierMul / 1.5) * eventDropMul)) : 0;
+    const gainCore = devFixedDrops ? Math.max(1, Math.floor(tierMul * eventDropMul)) : (simpleHash(monster.x + dayCount * 3, monster.y + dayCombatWins * 11) % 100 < coreChance ? Math.max(1, Math.floor(tierMul * eventDropMul)) : 0);
     const chestSmallChance = Math.min(95, BALANCE_CONFIG.drops.chestSmallBase + Math.floor(riskBonus * 42) + monster.level * 7);
     const chestMediumChance = Math.min(75, BALANCE_CONFIG.drops.chestMediumBase + Math.floor(riskBonus * 36) + (monster.level >= 2 ? 14 : 0));
     const chestLargeChance = Math.min(55, BALANCE_CONFIG.drops.chestLargeBase + Math.floor(riskBonus * 20) + (monster.type === "妖将" ? 14 : monster.type === "精英妖将" ? 24 : monster.type === "天劫妖王" ? 40 : 0));
@@ -2347,6 +2971,7 @@ function grantBattleLoot(monster) {
 
 function resolveBattleStep() {
     if (!battleState) return;
+    if (avatarHp <= 0) return;
     const tactic = currentBattleTactic();
     const debuffActive = simulationTimeMs < injuryDebuffUntilMs;
     const meBase = getAvatarCombatPower();
@@ -2363,11 +2988,13 @@ function resolveBattleStep() {
     const avatarHit = rollA <= me.hit;
     const monsterHit = rollB > me.dodge;
     const avatarDmgBase = avatarHit ? Math.max(1, me.atk - battleState.def + (battleState.rounds % 3)) : 0;
-    const monsterDmgBase = monsterHit ? Math.max(1, battleState.atk - me.def) : 0;
+    const rawMonsterDmg = Math.floor(battleState.atk * 0.58) - Math.floor(me.def * 0.28);
+    const bossMul = battleState.type === "天劫妖王" ? 1.35 : battleState.type === "精英妖将" ? 1.18 : 1;
+    const monsterDmgBase = monsterHit ? Math.max(2, Math.floor(rawMonsterDmg * bossMul)) : 0;
     const critRoll = (simpleHash(battleState.x + battleState.rounds * 29, battleState.y + dayCount * 5) % 1000) / 1000;
     const didCrit = avatarHit && critRoll < (0.1 + tactic.critBonus);
     const avatarScaled = Math.max(0, Math.floor(avatarDmgBase * BALANCE_CONFIG.combat.playerDamageScale));
-    const monsterScaled = Math.max(0, Math.floor(monsterDmgBase * BALANCE_CONFIG.combat.monsterDamageScale * tactic.incomingMul));
+    const monsterScaled = Math.max(0, Math.floor(monsterDmgBase * BALANCE_CONFIG.combat.monsterDamageScale * tactic.incomingMul * (1 + (getWorldEventEffects().monsterDamageMul || 0))));
     const finalAvatarDmg = didCrit ? Math.max(1, Math.floor(avatarScaled * 1.6)) : avatarScaled;
     const hpBefore = { enemy: battleState.hp, self: avatarHp };
     battleState.hp = Math.max(0, battleState.hp - finalAvatarDmg);
@@ -2386,9 +3013,11 @@ function resolveBattleStep() {
         hpAfter: { enemy: battleState.hp, self: avatarHp }
     };
     if (didCrit) {
-        spawnCombatFx(`暴击 ${finalAvatarDmg}`, "info", -6);
+        spawnCombatFx(`暴击 ${finalAvatarDmg}`, "crit", -6);
+        triggerBattleImpactFx("crit");
     } else if (avatarHit) {
         spawnCombatFx(`-${finalAvatarDmg}`, "damage", -6);
+        triggerBattleImpactFx("hit");
     } else {
         spawnCombatFx("闪避", "info", -6);
     }
@@ -2413,6 +3042,12 @@ function resolveBattleStep() {
         avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
         spawnCombatFx(`+${heal}`, "heal", 12);
         battleRoundLogs.unshift("触发聚灵丹：回复生命");
+    } else if (avatarHp <= Math.floor(getAvatarMaxHp() * autoUsePillRatio) && (avatarInventory.bloodPill || 0) > 0) {
+        avatarInventory.bloodPill -= 1;
+        const heal = Math.floor(getAvatarMaxHp() * 0.42);
+        avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
+        spawnCombatFx(`+${heal}`, "heal", 12);
+        battleRoundLogs.unshift("触发回血丹：快速回复");
     }
     if (avatarHp <= Math.floor(getAvatarMaxHp() * autoUseSalveRatio) && (avatarInventory.healingSalve || 0) > 0) {
         avatarInventory.healingSalve -= 1;
@@ -2430,12 +3065,13 @@ function resolveBattleStep() {
         avatarInventory.demonCore = Math.max(0, avatarInventory.demonCore - lostCore);
         avatarX = HOME_X;
         avatarY = HOME_Y;
-        avatarHp = Math.floor(getAvatarMaxHp() * 0.6);
-        avatarMp = Math.floor(getAvatarMaxMp() * 0.6);
+        avatarHp = 0;
+        avatarMp = 0;
+        avatarReviveUntilMs = simulationTimeMs + AVATAR_REVIVE_COOLDOWN_MS;
         injuryDebuffUntilMs = simulationTimeMs + BALANCE_CONFIG.combat.injuryDurationMs;
         battleState = null;
-        autoObjective = "explore";
-        addLog(`化身重伤退回洞府，损失灵石 ${lostStone}${lostCore ? ` / 妖丹 ${lostCore}` : ""}，2分钟内战斗属性衰减`);
+        autoObjective = "return_home";
+        addLog(`化身陨落退回洞府，损失灵石 ${lostStone}${lostCore ? ` / 妖丹 ${lostCore}` : ""}，10分钟后复活`);
         return;
     }
     if (avatarHp <= Math.floor(getAvatarMaxHp() * BALANCE_CONFIG.combat.lowHpRetreatRatio)) {
@@ -2446,7 +3082,18 @@ function resolveBattleStep() {
 }
 
 function getRealmName() {
-    return REALM_NAMES[Math.min(cultivationLevel, REALM_NAMES.length - 1)];
+    const idx = Math.max(0, Math.min(cultivationLevel - 1, REALM_NAMES.length - 1));
+    return REALM_NAMES[idx];
+}
+
+function getRealmStyleClass(level = cultivationLevel) {
+    if (level >= 7) return "realm-style-high";
+    if (level >= 4) return "realm-style-mid";
+    return "realm-style-low";
+}
+
+function getRealmStyledText(level = cultivationLevel) {
+    return `<span class="${getRealmStyleClass(level)}">Lv.${level} ${getRealmName()}</span>`;
 }
 
 function totalInventoryLoad() {
@@ -2489,6 +3136,7 @@ function chooseResourceTargets(limit = TARGET_POOL_SIZE) {
             const ty = avatarY + dy;
             if (tx === avatarX && ty === avatarY) continue;
             if (!isPassable(tx, ty)) continue;
+            if (!isWithinDailyMoveRadius(tx, ty)) continue;
             if (isReservedByOther(tx, ty)) continue;
             if (!canUseTarget(tx, ty)) continue;
 
@@ -2518,8 +3166,37 @@ function shouldReturnHome() {
     const bagLoad = totalInventoryLoad();
     if (bagLoad >= bagThreshold) return true;
     if (avatarHp <= Math.floor(getAvatarMaxHp() * BALANCE_CONFIG.combat.lowHpReturnRatio)) return true;
+    if ((avatarInventory.bloodPill || 0) <= bloodPillReturnThreshold) {
+        const hasStock = (homeInventory.bloodPill || 0) > 0;
+        const canBuy = autoBuyBloodPill && goldCoins >= getShopPrice(42);
+        if (hasStock || canBuy) return true;
+    }
     if (avatarInventory.rareCrystal >= 3) return true;
     return false;
+}
+
+function handleBloodPillResupplyAtHome() {
+    const bagNow = avatarInventory.bloodPill || 0;
+    if (bagNow >= bloodPillCarryTarget) return;
+    const need = bloodPillCarryTarget - bagNow;
+    const stockTake = Math.min(need, homeInventory.bloodPill || 0);
+    if (stockTake > 0) {
+        homeInventory.bloodPill -= stockTake;
+        avatarInventory.bloodPill = (avatarInventory.bloodPill || 0) + stockTake;
+        addLog(`自动补给：回血丹 +${stockTake}（库存转移）`);
+    }
+    const remain = bloodPillCarryTarget - (avatarInventory.bloodPill || 0);
+    if (remain > 0 && autoBuyBloodPill) {
+        const price = getShopPrice(42);
+        const affordable = Math.floor(goldCoins / price);
+        const buyCount = Math.max(0, Math.min(remain, affordable));
+        if (buyCount > 0) {
+            buyFromShop("bloodPill", price * buyCount, buyCount);
+            homeInventory.bloodPill = Math.max(0, (homeInventory.bloodPill || 0) - buyCount);
+            avatarInventory.bloodPill = (avatarInventory.bloodPill || 0) + buyCount;
+            addLog(`自动补给：回血丹 +${buyCount}（金币购买）`);
+        }
+    }
 }
 
 function depositAvatarInventoryToHome() {
@@ -2551,6 +3228,7 @@ function isWithinDailyMoveRadius(x, y) {
 
 function hasValidExploreTarget() {
     if (!exploreTarget) return false;
+    if (!isWithinDailyMoveRadius(exploreTarget.x, exploreTarget.y)) return false;
     if (!isPassable(exploreTarget.x, exploreTarget.y)) return false;
     if (isReservedByOther(exploreTarget.x, exploreTarget.y)) return false;
     const seed = getOrCreateSeed(exploreTarget.x, exploreTarget.y);
@@ -2615,10 +3293,16 @@ function moveOneStep(targetX, targetY) {
     return true;
 }
 
+function getTargetReachability(target) {
+    if (!target) return "无目标";
+    return isWithinDailyMoveRadius(target.x, target.y) ? "可达" : "不可达";
+}
+
 function getGatherDurationMs(seed) {
     const terrainCost = seed.terrainClass === "mountain" ? 2200 : seed.terrainClass === "forest" ? 900 : 0;
-    const refinementBonus = town.refinementLevel * 320 + sharedStats.control * 110 + sharedStats.spirit * 120;
-    return Math.max(3800, BALANCE_CONFIG.timing.gatherBaseMs + terrainCost - refinementBonus);
+    const buildingBonus = countBuildingsByType("spiritWell") * 220 + countBuildingsByType("trainingRoom") * 180;
+    const speedBonus = buildingBonus + sharedStats.control * 110 + sharedStats.spirit * 120;
+    return Math.max(3800, BALANCE_CONFIG.timing.gatherBaseMs + terrainCost - speedBonus);
 }
 
 function updateGatheringRing() {
@@ -2666,7 +3350,7 @@ function startGathering(tx, ty) {
     const unitWeight = resourceUnitWeight(resourceKey);
     const capacityLeft = avatarBagCap - totalInventoryLoad();
     if (capacityLeft < unitWeight) {
-        addLog("化身背包已满，切换返城优先");
+        addLog("化身背包已满，切换为回城优先");
         releaseReservation(tx, ty);
         autoObjective = "return_home";
         exploreTarget = null;
@@ -2730,57 +3414,19 @@ function finishGathering() {
     }
 }
 
-function tryRefineAtHome(autoTriggered = false) {
-    if (dayRefineCount >= town.refinementLevel) {
-        if (!autoTriggered) {
-            addLog(`今日炼化次数已达上限（${town.refinementLevel}）`);
-        }
-        return false;
-    }
-
-    const spiritNeed = 20 + cultivationLevel * 8;
-    const herbNeed = 8 + cultivationLevel * 2;
-    const woodNeed = 6 + cultivationLevel * 2;
-    const rareNeed = cultivationLevel >= 3 ? 1 : 0;
-    const useCoreElixir = (homeInventory.coreElixir || 0) > 0;
-    const useStarShard = (homeInventory.starShard || 0) > 0 && cultivationLevel >= 4;
-    const spiritNeedAdj = Math.max(0, spiritNeed - (useCoreElixir ? 8 : 0) - (useStarShard ? 12 : 0));
-    const herbNeedAdj = Math.max(0, herbNeed - (useCoreElixir ? 2 : 0));
-    const woodNeedAdj = Math.max(0, woodNeed - (useStarShard ? 2 : 0));
-
-    if (
-        homeInventory.spiritStone < spiritNeedAdj ||
-        homeInventory.herb < herbNeedAdj ||
-        homeInventory.wood < woodNeedAdj ||
-        homeInventory.rareCrystal < rareNeed
-    ) {
-        if (!autoTriggered) {
-            addLog(`炼化材料不足，需要 灵石${spiritNeedAdj}/灵草${herbNeedAdj}/灵木${woodNeedAdj}${rareNeed ? `/异晶${rareNeed}` : ""}`);
-        }
-        return false;
-    }
-
-    homeInventory.spiritStone -= spiritNeedAdj;
-    homeInventory.herb -= herbNeedAdj;
-    homeInventory.wood -= woodNeedAdj;
-    homeInventory.rareCrystal -= rareNeed;
-    if (useCoreElixir) homeInventory.coreElixir -= 1;
-    if (useStarShard) homeInventory.starShard -= 1;
-    cultivationLevel += 1;
-    dayRefineCount += 1;
-    town.refinementLevel += 1;
-    town.prosperity += 1;
-    town.storageCap += 18;
-    sharedStats.level += 1;
-    sharedStats.spirit += 1;
-    sharedStats.fortune += 1;
-    sharedStats.freePoints += 1;
-    addLog(`洞府炼化成功，境界提升至 ${getRealmName()}，仓储上限 ${town.storageCap}`);
-    return true;
-}
-
 function autoExploreStep() {
     if (isGathering) return;
+    if (avatarSessionExpired) {
+        isAutoMode = false;
+        movementStatusText = "化身在线时长已达12小时，需重新登录";
+        return;
+    }
+    if (avatarHp <= 0) {
+        const remain = Math.max(0, Math.ceil((avatarReviveUntilMs - simulationTimeMs) / 1000));
+        movementStatusText = remain > 0 ? `化身复活冷却中，剩余 ${remain}s` : "化身待复活";
+        autoObjective = "return_home";
+        return;
+    }
     if (battleState) {
         resolveBattleStep();
         return;
@@ -2790,12 +3436,12 @@ function autoExploreStep() {
         releaseExploreTargetReservation();
         exploreTarget = null;
         if (isAtHome()) {
-            addLog("已返回洞府，开始整备");
             depositAvatarInventoryToHome();
-            tryRefineAtHome(true);
+            handleBloodPillResupplyAtHome();
             avatarHp = getAvatarMaxHp();
             avatarMp = getAvatarMaxMp();
             autoObjective = "explore";
+            addLog("已返回洞府，完成整备");
             return;
         }
         moveOneStep(HOME_X, HOME_Y);
@@ -2806,7 +3452,7 @@ function autoExploreStep() {
         releaseExploreTargetReservation();
         exploreTarget = null;
         autoObjective = "return_home";
-        addLog("背包偏重，切换为返城优先");
+        addLog("触发补给/整备条件，切换为回城优先");
         return;
     }
 
@@ -3082,6 +3728,7 @@ function formatChunkTooltip(wx, wy, span) {
         const monster = getMonsterAt(wx, wy);
         if (monster) {
             text += `\n妖物: ${monster.type} Lv.${monster.level} HP ${monster.hp}/${monster.maxHp}`;
+            text += `\n可达性: ${isWithinDailyMoveRadius(wx, wy) ? "可达" : "不可达（超出当日15格半径）"}`;
             const profile = getMonsterDropProfile(monster.type);
             if (profile) {
                 text += `\n掉落率: ${profile.drops.map((d) => `${ITEM_DEFS[d.id]?.label || d.id} ${d.chance}`).join(" / ")}`;
@@ -3094,16 +3741,25 @@ function formatChunkTooltip(wx, wy, span) {
 function updateHeader() {
     document.getElementById("coord-x").textContent = avatarX;
     document.getElementById("coord-y").textContent = avatarY;
+    document.getElementById("camera-mode-label").textContent = cameraMode === "follow" ? "跟随" : "自由";
+    document.getElementById("camera-x").textContent = cameraMode === "follow" ? avatarX : cameraX;
+    document.getElementById("camera-y").textContent = cameraMode === "follow" ? avatarY : cameraY;
     document.getElementById("zoom-label").textContent = ZOOM_LEVELS[zoomLevel].label;
     document.getElementById("day-count").textContent = dayCount;
-    document.getElementById("realm-name").textContent = getRealmName();
+    const realmNameEl = document.getElementById("realm-name");
+    realmNameEl.className = getRealmStyleClass();
+    realmNameEl.textContent = `Lv.${cultivationLevel} ${getRealmName()}`;
 }
 
 function renderMap() {
     const cfg = ZOOM_LEVELS[zoomLevel];
     const half = Math.floor(cfg.size / 2);
-    const centerX = isBuildFocus ? HOME_X : avatarX;
-    const centerY = isBuildFocus ? HOME_Y : avatarY;
+    if (!isBuildFocus && cameraMode === "follow") {
+        cameraX = avatarX;
+        cameraY = avatarY;
+    }
+    const centerX = isBuildFocus ? HOME_X : (cameraMode === "follow" ? avatarX : cameraX);
+    const centerY = isBuildFocus ? HOME_Y : (cameraMode === "follow" ? avatarY : cameraY);
     grid.style.gridTemplateColumns = `repeat(${cfg.size}, ${cfg.cellPx}px)`;
     grid.style.gridTemplateRows = `repeat(${cfg.size}, ${cfg.cellPx}px)`;
     grid.innerHTML = "";
@@ -3230,23 +3886,26 @@ function updateStatus() {
         主角状态: ${hasAscended ? "已飞升，可外出" : "肉身驻守洞府（绝对安全）"}<br>
         肉身修炼: 每20秒打坐修炼结算（当前效率 x${getCultivationRateMultiplier().toFixed(1)}）<br>
         当前地形: ${terrainRule.label}<br>
-        行动状态: ${battleState ? `战斗中(${battleState.type} Lv.${battleState.level})` : isGathering ? "采集中" : isMeditating ? "打坐中" : isAutoMode ? (autoObjective === "return_home" ? "返城优先" : "自动探索") : "待机"}<br>
+        行动状态: ${battleState ? `战斗中(${battleState.type} Lv.${battleState.level})` : isGathering ? "采集中" : isMeditating ? "打坐中" : isAutoMode ? (autoObjective === "return_home" ? "回城优先中" : "自动探索") : "待机"}<br>
+        视角模式: ${cameraMode === "follow" ? "跟随化身" : `自由观察（中心 ${cameraX}, ${cameraY}）`}<br>
         探索策略: ${strategy.label}<br>
-        当前目标: ${autoObjective === "return_home" ? "洞府" : exploreTarget ? `(${exploreTarget.x}, ${exploreTarget.y})` : "待选点"}<br>
+        当前目标: ${autoObjective === "return_home" ? "洞府" : exploreTarget ? `(${exploreTarget.x}, ${exploreTarget.y})` : "待选点"}（${autoObjective === "return_home" ? "可达" : getTargetReachability(exploreTarget)}）<br>
         距离洞府: ${homeDist} 格<br>
         风险收益加成: +${Math.round(getRiskRewardBonusAt(avatarX, avatarY) * 100)}%<br>
         化身血量: ${avatarHp}/${getAvatarMaxHp()}<br>
         化身灵力: ${Math.floor(avatarMp)}/${getAvatarMaxMp()}<br>
+        在线时长: ${Math.floor(avatarOnlineAccumMs / 3600000)}h ${Math.floor((avatarOnlineAccumMs % 3600000) / 60000)}m / 12h（${avatarSessionExpired ? "已到上限，需重新登录" : "正常"}）<br>
+        复活状态: ${avatarHp > 0 ? "正常" : `冷却中（剩余 ${Math.max(0, Math.ceil((avatarReviveUntilMs - simulationTimeMs) / 1000))}s）`}<br>
         金币: ${goldCoins}<br>
-        天地精华: ${heavenlyEssence}<br>
         战斗胜场: ${dayCombatWins}<br>
         战斗策略: ${currentBattleTactic().label}（聚灵丹阈值 ${Math.round(autoUsePillRatio * 100)}% / 回春散阈值 ${Math.round(autoUseSalveRatio * 100)}%）<br>
+        回血丹: 背包 ${avatarInventory.bloodPill || 0} / 库存 ${homeInventory.bloodPill || 0}（目标 ${bloodPillCarryTarget}，回城阈值 ${bloodPillReturnThreshold}）<br>
         伤势状态: ${simulationTimeMs < injuryDebuffUntilMs ? `重伤恢复中（剩余 ${Math.ceil((injuryDebuffUntilMs - simulationTimeMs) / 1000)}s）` : "正常"}<br>
+        世界事件: ${getWorldEventDef() ? `${getWorldEventDef().label}（剩余 ${Math.max(0, Math.ceil((worldEventUntilMs - simulationTimeMs) / 1000))}s）` : "无"}<br>
         共用属性: 体${sharedStats.body} 灵${sharedStats.spirit} 识${sharedStats.mind} 御${sharedStats.control} 运${sharedStats.fortune}<br>
         属性等级: Lv.${sharedStats.level}（待分配 ${sharedStats.freePoints}）<br>
-        修炼境界: ${getRealmName()}（修为 ${bodyCultivationExp}/${getBodyCultivationExpNeed(cultivationLevel)}）<br>
-        突破需求: 天地精华 ${heavenlyEssence}/${getBreakthroughEssenceNeed()}<br>
-        洞府炼化等级: ${town.refinementLevel}（今日 ${dayRefineCount}/${town.refinementLevel}）<br>
+        修炼境界: ${getRealmStyledText()}<br>
+        当前修为: ${bodyCultivationExp}/${getBodyCultivationExpNeed(cultivationLevel)}（距离下一级 ${Math.max(0, getBodyCultivationExpNeed(cultivationLevel) - bodyCultivationExp)}）<br>
         仓储上限: ${town.storageCap}<br>
         背包上限: ${avatarBagCap}（回城阈值 ${Math.floor(avatarBagCap * bagReturnRatio)}）<br>
         建设状态: ${isBuildFocus ? `建设中 (${buildPanelTile ? `${buildPanelTile.x},${buildPanelTile.y}` : "选中瓦片"})` : "未进入"}<br>
@@ -3259,29 +3918,24 @@ function updateCultivationPanel() {
     const tickProgress = Math.max(0, Math.min(1, bodyCultivationAccumMs / BODY_CULTIVATION_TICK_MS));
     if (cultivationTickRingEl) {
         cultivationTickRingEl.style.strokeDashoffset = String(138.2 * (1 - tickProgress));
-        cultivationTickRingEl.style.stroke = bodyCultivationExp >= getBodyCultivationExpNeed(cultivationLevel) && heavenlyEssence >= getBreakthroughEssenceNeed()
+        cultivationTickRingEl.style.stroke = bodyCultivationExp >= getBodyCultivationExpNeed(cultivationLevel)
             ? "#ffd36f"
             : "#8fd9ff";
     }
+    const curNeed = getBodyCultivationExpNeed(cultivationLevel);
+    const remain = Math.max(0, curNeed - bodyCultivationExp);
     if (cultivationMetaEl) {
         cultivationMetaEl.innerHTML = `
-            境界 ${getRealmName()} · 修为 ${bodyCultivationExp}/${getBodyCultivationExpNeed(cultivationLevel)}<br>
+            境界 ${getRealmStyledText()} · 修为 ${bodyCultivationExp}/${curNeed}<br>
             打坐 ${isMeditating ? `进行中 ${Math.ceil(meditateRemainingMs / 1000)}s` : "待机"} · 下次修炼结算 ${Math.max(1, Math.ceil((BODY_CULTIVATION_TICK_MS - bodyCultivationAccumMs) / 1000))}s<br>
-            突破需求：天地精华 ${heavenlyEssence}/${getBreakthroughEssenceNeed()} · 效率 x${getCultivationRateMultiplier().toFixed(1)}
+            距离下一级：${remain} 修为 · 效率 x${getCultivationRateMultiplier().toFixed(1)}
         `;
-    }
-    if (breakthroughBtn) {
-        const canBreak = bodyCultivationExp >= getBodyCultivationExpNeed(cultivationLevel) && heavenlyEssence >= getBreakthroughEssenceNeed();
-        breakthroughBtn.disabled = !canBreak;
-    }
-    if (autoBreakthroughToggle) {
-        autoBreakthroughToggle.checked = autoBreakthrough;
     }
 }
 
 function updateMovementStatus() {
     movementStatusEl.innerHTML = `
-        化身: ${battleState ? `战斗中(${battleState.type})` : isGathering ? "采集中" : autoObjective === "return_home" ? "返城中" : isAutoMode ? "探索中" : "待命"}<br>
+        化身: ${battleState ? `战斗中(${battleState.type})` : isGathering ? "采集中" : autoObjective === "return_home" ? "回城优先中" : isAutoMode ? "探索中" : "待命"}<br>
         ${movementStatusText}<br>
         每秒 1 格，日活动半径 ≤ ${DAILY_MOVE_RADIUS}
     `;
@@ -3297,13 +3951,37 @@ function updateBattlePanel() {
     const enemyPct = Math.max(0, Math.round((battleState.hp / Math.max(1, battleState.maxHp)) * 100));
     const selfPct = Math.max(0, Math.round((avatarHp / Math.max(1, getAvatarMaxHp())) * 100));
     const detail = lastBattleFrame
-        ? `R${lastBattleFrame.round} ${lastBattleFrame.tactic}｜我方${lastBattleFrame.avatarHit ? "命中" : "未中"}${lastBattleFrame.crit ? "(暴击)" : ""} ${lastBattleFrame.avatarDmg}｜敌方${lastBattleFrame.monsterHit ? "命中" : "未中"} ${lastBattleFrame.monsterDmg}｜命中检定 ${lastBattleFrame.hitRoll} / 闪避检定 ${lastBattleFrame.dodgeRoll}`
+        ? `R${lastBattleFrame.round}｜我方${lastBattleFrame.avatarHit ? "命中" : "未中"}${lastBattleFrame.crit ? "(暴击)" : ""} ${lastBattleFrame.avatarDmg}｜敌方${lastBattleFrame.monsterHit ? "命中" : "未中"} ${lastBattleFrame.monsterDmg}｜命中 ${lastBattleFrame.hitRoll} / 闪避 ${lastBattleFrame.dodgeRoll}`
         : "等待首回合结算...";
-    battleSummaryEl.innerHTML = `⚔ ${battleState.type} Lv.${battleState.level} · 回合 ${battleState.rounds}<br>
-        敌HP ${battleState.hp}/${battleState.maxHp}（${enemyPct}%） · 我方HP ${avatarHp}/${getAvatarMaxHp()}（${selfPct}%）<br>
-        <span class="small-note">战术：${currentBattleTactic().label}｜${detail}</span><br>
-        <span class="small-note">掉落预览：${dropPreview} / 宝箱：小/中/大（概率受距离与怪物阶级影响）</span>`;
-    battleLogListEl.innerHTML = battleRoundLogs.map((line) => `<div>${line}</div>`).join("");
+    const isBossTier = battleState.type === "天劫妖王" || battleState.type === "精英妖将";
+    const bossTag = battleState.type === "天劫妖王" ? "【BOSS】" : battleState.type === "精英妖将" ? "【精英】" : "";
+    battleSummaryEl.innerHTML = `⚔ ${bossTag} ${battleState.type} Lv.${battleState.level} · 回合 ${battleState.rounds}<br>
+        <span class="small-note">敌HP ${battleState.hp}/${battleState.maxHp}（${enemyPct}%） · 我方HP ${avatarHp}/${getAvatarMaxHp()}（${selfPct}%）</span><br>
+        <span class="small-note">敌方属性：攻击 ${battleState.atk} / 防御 ${battleState.def}${isBossTier ? "（高威胁目标）" : ""}</span><br>
+        <span class="small-note">战术：${currentBattleTactic().label}｜掉落预览：${dropPreview}</span>`;
+    let roundResult = "蓄势中...";
+    let minor = true;
+    if (lastBattleFrame) {
+        if (lastBattleFrame.crit) {
+            roundResult = `暴击 ${lastBattleFrame.avatarDmg} · 破势一击`;
+            minor = false;
+        } else if (lastBattleFrame.avatarHit) {
+            roundResult = `命中 ${lastBattleFrame.avatarDmg}`;
+            minor = false;
+        } else if (!lastBattleFrame.avatarHit) {
+            roundResult = "本回合未命中";
+            minor = true;
+        }
+        if (lastBattleFrame.monsterHit && lastBattleFrame.monsterDmg > 0) {
+            roundResult += ` ｜ 受击 -${lastBattleFrame.monsterDmg}`;
+        } else {
+            roundResult += " ｜ 敌方未命中";
+        }
+    }
+    battleRoundResultEl.textContent = roundResult;
+    battleRoundResultEl.classList.toggle("minor", minor);
+    const topLogs = battleRoundLogs.slice(0, 6);
+    battleLogListEl.innerHTML = topLogs.map((line, idx) => `<div class="battle-log-line${idx >= 4 ? " fade" : ""}">${line}</div>`).join("") + `<div class="battle-log-line fade">${detail}</div>`;
     battlePanelEl.classList.remove("hidden");
 }
 
@@ -3313,113 +3991,91 @@ function updateSidePanels() {
     const renderSlots = (items, source) => `
         <div class="inv-grid">
             ${items.map((item) => `
-                <div class="inv-slot rarity-${item.rarity || "common"}" title="${item.label}" data-item-id="${item.id || ""}" data-item-source="${source || ""}" data-item-count="${item.count}">
-                    <span>${item.icon}</span>
+                <div class="inv-slot rarity-${item.rarity || "common"}" title="${item.label}｜${item.detail || item.source || ""}｜数量 ${item.count}" data-item-id="${item.id || ""}" data-item-source="${source || ""}" data-item-count="${item.count}">
+                    ${getItemIconMarkup(item.id)}
                     <span class="qty">${item.count}</span>
                 </div>
             `).join("")}
         </div>
     `;
-    const bagSlots = [
-        { id: "spiritStone", ...ITEM_DEFS.spiritStone, count: avatarInventory.spiritStone },
-        { id: "herb", ...ITEM_DEFS.herb, count: avatarInventory.herb },
-        { id: "wood", ...ITEM_DEFS.wood, count: avatarInventory.wood },
-        { id: "demonCore", ...ITEM_DEFS.demonCore, count: avatarInventory.demonCore },
-        { id: "rareCrystal", ...ITEM_DEFS.rareCrystal, count: avatarInventory.rareCrystal }
-    ];
-    const bagConsumables = [
-        { id: "spiritPill", ...ITEM_DEFS.spiritPill, count: avatarInventory.spiritPill },
-        { id: "healingSalve", ...ITEM_DEFS.healingSalve, count: avatarInventory.healingSalve },
-        { id: "wardCharm", ...ITEM_DEFS.wardCharm, count: avatarInventory.wardCharm },
-        { id: "focusCharm", ...ITEM_DEFS.focusCharm, count: avatarInventory.focusCharm },
-        { id: "baitFlag", ...ITEM_DEFS.baitFlag, count: avatarInventory.baitFlag }
-    ];
-    const chestSlots = [
-        { id: "chestSmall", ...ITEM_DEFS.chestSmall, count: avatarInventory.chestSmall },
-        { id: "chestMedium", ...ITEM_DEFS.chestMedium, count: avatarInventory.chestMedium },
-        { id: "chestLarge", ...ITEM_DEFS.chestLarge, count: avatarInventory.chestLarge }
-    ];
-    const homeSlots = [
-        { id: "spiritStone", ...ITEM_DEFS.spiritStone, count: homeInventory.spiritStone },
-        { id: "herb", ...ITEM_DEFS.herb, count: homeInventory.herb },
-        { id: "wood", ...ITEM_DEFS.wood, count: homeInventory.wood },
-        { id: "demonCore", ...ITEM_DEFS.demonCore, count: homeInventory.demonCore },
-        { id: "rareCrystal", ...ITEM_DEFS.rareCrystal, count: homeInventory.rareCrystal }
-    ];
-    const equipSlots = [
-        { id: "sword", ...ITEM_DEFS.sword, count: equipmentInventory.sword },
-        { id: "bow", ...ITEM_DEFS.bow, count: equipmentInventory.bow },
-        { id: "shield", ...ITEM_DEFS.shield, count: equipmentInventory.shield },
-        { id: "artifact", ...ITEM_DEFS.artifact, count: equipmentInventory.artifact },
-        { id: "thunderBlade", ...ITEM_DEFS.thunderBlade, count: equipmentInventory.thunderBlade },
-        { id: "phoenixBow", ...ITEM_DEFS.phoenixBow, count: equipmentInventory.phoenixBow },
-        { id: "voidArmor", ...ITEM_DEFS.voidArmor, count: equipmentInventory.voidArmor },
-        { id: "dragonRelic", ...ITEM_DEFS.dragonRelic, count: equipmentInventory.dragonRelic }
-    ];
-    const rareBagEquipSlots = [
-        { id: "thunderBlade", ...ITEM_DEFS.thunderBlade, count: avatarInventory.thunderBlade },
-        { id: "phoenixBow", ...ITEM_DEFS.phoenixBow, count: avatarInventory.phoenixBow },
-        { id: "voidArmor", ...ITEM_DEFS.voidArmor, count: avatarInventory.voidArmor },
-        { id: "dragonRelic", ...ITEM_DEFS.dragonRelic, count: avatarInventory.dragonRelic }
-    ];
-    const materialSlots = [
-        { id: "spiritStone", label: "灵石库存", icon: "🪨", rarity: ITEM_DEFS.spiritStone.rarity, count: homeInventory.spiritStone },
-        { id: "herb", label: "灵草库存", icon: "🧪", rarity: ITEM_DEFS.herb.rarity, count: homeInventory.herb },
-        { id: "wood", label: "灵木库存", icon: "🪵", rarity: ITEM_DEFS.wood.rarity, count: homeInventory.wood },
-        { id: "demonCore", label: "妖丹库存", icon: "◈", rarity: ITEM_DEFS.demonCore.rarity, count: homeInventory.demonCore },
-        { id: "rareCrystal", label: "异晶库存", icon: "🔷", rarity: ITEM_DEFS.rareCrystal.rarity, count: homeInventory.rareCrystal }
-    ];
-    const advancedSlots = [
-        { id: "coreElixir", ...ITEM_DEFS.coreElixir, count: homeInventory.coreElixir },
-        { id: "starShard", ...ITEM_DEFS.starShard, count: homeInventory.starShard },
-        { id: "ascendSeal", ...ITEM_DEFS.ascendSeal, count: homeInventory.ascendSeal }
-    ];
+    const allBagSlots = [
+        ...Object.keys(avatarInventory).map((id) => ({ id, ...(ITEM_DEFS[id] || { label: id, rarity: "common", source: "未知" }), count: avatarInventory[id] || 0 }))
+    ].filter((item) => item.count > 0);
+    const allStorageSlots = [
+        ...Object.keys(homeInventory).map((id) => ({ id, ...(ITEM_DEFS[id] || { label: id, rarity: "common", source: "未知" }), count: homeInventory[id] || 0 }))
+    ].filter((item) => item.count > 0);
+    const equipSlots = EQUIP_SLOT_DEFS.map((slot) => {
+        const itemId = equippedSlots[slot.id];
+        return {
+            slotId: slot.id,
+            slotLabel: slot.label,
+            id: itemId,
+            count: itemId ? 1 : 0,
+            ...(itemId ? ITEM_DEFS[itemId] : { label: "空槽", rarity: "common", source: "未装备" })
+        };
+    });
     Object.entries({ ...avatarInventory, ...homeInventory, ...equipmentInventory }).forEach(([id, amount]) => {
         if (amount > 0) discoveredItemSet.add(id);
     });
+    Object.values(equippedSlots).forEach((id) => { if (id) discoveredItemSet.add(id); });
+    const totalLoad = totalInventoryLoad();
+    const storageLoad = Object.values(homeInventory).reduce((sum, value) => sum + (Number(value) || 0), 0);
+    const categorizedInventory = [
+        { key: "currency", label: "货币", ids: ["gold", "spiritStone", "demonCore"] },
+        { key: "food", label: "食物", ids: ["herb"] },
+        { key: "drink", label: "饮料", ids: ["spiritPill", "healingSalve", "bloodPill"] },
+        { key: "equip", label: "装备", ids: ["sword", "bow", "shield", "artifact", "thunderBlade", "phoenixBow", "voidArmor", "dragonRelic"] },
+        { key: "resource", label: "资源", ids: ["wood", "rareCrystal", "wardCharm", "focusCharm", "baitFlag", "coreElixir", "starShard", "ascendSeal", "chestSmall", "chestMedium", "chestLarge"] }
+    ];
+    const activeSlots = resourcePanelTab === "bag" ? allBagSlots : resourcePanelTab === "equip" ? [] : allStorageSlots;
+    const activeSource = resourcePanelTab === "bag" ? "avatar" : "home";
+    const activeEmptyText = resourcePanelTab === "bag" ? "背包暂无物品" : resourcePanelTab === "equip" ? "暂无已装备物品" : "库存暂无物品";
     resourceSummaryEl.innerHTML = `
-        <div class="inv-block">
-            <div class="inv-title"><strong>化身背包</strong></div>
-            ${renderSlots(bagSlots, "avatar")}
+        <div class="pill-row" style="margin-bottom:6px;">
+            <span class="pill">金币 ${goldCoins}</span>
+            <span class="pill">背包 ${totalLoad}/${avatarBagCap}</span>
+            <span class="pill">仓储 ${storageLoad}/${town.storageCap}</span>
+            <span class="pill">效率 x${getCultivationRateMultiplier().toFixed(1)}</span>
+        </div>
+        <div class="bag-tabs">
+            <button class="mode-btn ${resourcePanelTab === "inventory" ? "active" : ""}" data-res-tab="inventory">库存</button>
+            <button class="mode-btn ${resourcePanelTab === "bag" ? "active" : ""}" data-res-tab="bag">背包</button>
+            <button class="mode-btn ${resourcePanelTab === "equip" ? "active" : ""}" data-res-tab="equip">装备</button>
         </div>
         <div class="inv-block">
-            <div class="inv-title"><strong>洞府库存</strong></div>
-            ${renderSlots(homeSlots, "home")}
-        </div>
-        <div class="inv-block">
-            <div class="inv-title"><strong>道具</strong></div>
-            ${renderSlots(bagConsumables, "avatar")}
-        </div>
-        <div class="inv-block">
-            <div class="inv-title"><strong>宝箱</strong></div>
-            ${renderSlots(chestSlots, "avatar")}
-            <div class="small-note" style="margin-top:4px;">战斗可掉落宝箱，开箱可获得稀有材料。</div>
-            <div class="small-note">点击宝箱格后可在物品菜单中“使用”开启。</div>
-        </div>
-        <div class="inv-block">
-            <div class="inv-title"><strong>稀有战利品</strong></div>
-            ${renderSlots(rareBagEquipSlots, "avatar")}
-        </div>
-        <div class="inv-block">
-            <div class="inv-title"><strong>装备</strong></div>
-            ${renderSlots(equipSlots, "equipment")}
-        </div>
-        <div class="inv-block">
-            <div class="inv-title"><strong>资源</strong></div>
-            ${renderSlots(materialSlots, "home")}
-        </div>
-        <div class="inv-block">
-            <div class="inv-title"><strong>高阶材料</strong></div>
-            ${renderSlots(advancedSlots, "home")}
+            <div class="inv-title"><strong>${resourcePanelTab === "inventory" ? "库存物品" : resourcePanelTab === "bag" ? "背包物品" : "装备栏"}</strong></div>
+            ${resourcePanelTab === "equip"
+        ? `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <strong>装备</strong>
+                    <button class="mini-btn" data-equip-attr-toggle>${showEquipAttrDetail ? "收起属性" : "查看属性"}</button>
+                </div>
+                <div class="equip-board">
+                    ${equipSlots.map((slot) => `
+                        <div class="equip-slot rarity-${slot.rarity || "common"}" data-equip-slot="${slot.slotId}" ${slot.id ? `data-item-id="${slot.id}" data-item-count="1"` : ""}>
+                            <span class="slot-label">${slot.slotLabel}</span>
+                            ${slot.id ? getItemIconMarkup(slot.id) : ""}
+                            ${slot.id ? `<span class="slot-item-count">1</span>` : ""}
+                        </div>
+                    `).join("")}
+                </div>
+                ${showEquipAttrDetail ? (() => {
+            const eq = getEquipmentBonus();
+            const detail = Object.entries(equippedSlots).filter(([, id]) => id).map(([slotId, id]) => `${EQUIP_SLOT_DEFS.find((s) => s.id === slotId)?.label || slotId}: ${ITEM_DEFS[id]?.label || id}`).join(" / ");
+            return `<div class="small-note" style="margin-top:8px;">总加成：攻击 +${eq.atk.toFixed(1)} / 防御 +${eq.def.toFixed(1)} / 命中 +${(eq.hit * 100).toFixed(1)}% / 闪避 +${(eq.dodge * 100).toFixed(1)}% / 气运 +${eq.luck.toFixed(1)}<br>${detail || "当前无装备"}</div>`;
+        })() : ""}
+            `
+        : resourcePanelTab !== "inventory"
+            ? (activeSlots.length ? renderSlots(activeSlots, activeSource) : `<div class="small-note">${activeEmptyText}</div>`)
+        : categorizedInventory.map((group) => {
+            const groupSlots = allStorageSlots.filter((it) => group.ids.includes(it.id));
+            if (!groupSlots.length) return "";
+            return `<div style="margin-bottom:8px;"><div class="small-note" style="margin-bottom:4px;">${group.label}</div>${renderSlots(groupSlots, "home")}</div>`;
+        }).join("")}
         </div>
         <div class="pill-row">
-            <span class="pill">金币 ${goldCoins}</span>
-            <span class="pill">天地精华 ${heavenlyEssence}</span>
-            <span class="pill">修炼效率 x${getCultivationRateMultiplier().toFixed(1)}</span>
-            <span class="pill">境界 ${getRealmName()}</span>
+            <span class="pill">境界 Lv.${cultivationLevel}</span>
             <span class="pill">洞府 ${town.prosperity} 级</span>
-            <span class="pill">背包 ${totalInventoryLoad()}/${avatarBagCap}</span>
-            <span class="pill">仓储 ${town.storageCap}</span>
             <span class="pill">采集效率 ${gatherPerMin}/分</span>
             <span class="pill">今日采集 ${dayGatherUnits}</span>
             <span class="pill">血量 ${avatarHp}/${getAvatarMaxHp()}</span>
@@ -3431,6 +4087,27 @@ function updateSidePanels() {
             <span class="pill">悟道室 ${countBuildingsByType("trainingRoom")}</span>
         </div>
     `;
+    resourceSummaryEl.querySelectorAll("button[data-res-tab]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            resourcePanelTab = btn.dataset.resTab || "inventory";
+            closeEquipSlotMenu();
+            updateSidePanels();
+        });
+    });
+    resourceSummaryEl.querySelectorAll("button[data-equip-attr-toggle]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            showEquipAttrDetail = !showEquipAttrDetail;
+            updateSidePanels();
+        });
+    });
+    resourceSummaryEl.querySelectorAll(".equip-slot[data-equip-slot]").forEach((el) => {
+        el.addEventListener("click", (evt) => {
+            evt.stopPropagation();
+            const slotId = el.dataset.equipSlot;
+            if (!slotId) return;
+            openEquipSlotMenu(slotId, evt);
+        });
+    });
 
     const statRows = [
         { key: "body", label: "体魄" },
@@ -3480,7 +4157,7 @@ function updateSidePanels() {
     });
 
     const codexItems = Object.entries(ITEM_DEFS).map(([id, def]) => {
-        const owned = (avatarInventory[id] || 0) + (homeInventory[id] || 0) + (equipmentInventory[id] || 0);
+        const owned = (avatarInventory[id] || 0) + (homeInventory[id] || 0) + (equipmentInventory[id] || 0) + (Object.values(equippedSlots).includes(id) ? 1 : 0);
         const discovered = discoveredItemSet.has(id);
         return { id, ...def, owned, discovered };
     });
@@ -3491,7 +4168,7 @@ function updateSidePanels() {
             ${codexItems.map((item) => `
                 <div class="codex-item rarity-${item.rarity} ${item.discovered ? "" : "locked"}" data-item-id="${item.id}" data-item-count="${item.owned}">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div><strong>${item.icon} ${item.discovered ? item.label : "？？？"}</strong></div>
+                        <div><strong>${getItemIconMarkup(item.id)} ${item.discovered ? item.label : "？？？"}</strong></div>
                         <div class="small-note">${item.rarity.toUpperCase()}</div>
                     </div>
                     <div class="small-note" style="margin-top:4px;">类别：${item.category}</div>
@@ -3515,7 +4192,7 @@ function updateSidePanels() {
         </div>
     `;
     craftSummaryEl.innerHTML = `
-        <div class="small-note" style="margin-bottom:8px;">当前工坊：${getWorkbenchTier()} 阶（炼化Lv.${town.refinementLevel} / 聚灵井${countBuildingsByType("spiritWell")} / 悟道室${countBuildingsByType("trainingRoom")}）</div>
+        <div class="small-note" style="margin-bottom:8px;">当前工坊：${getWorkbenchTier()} 阶（境界Lv.${cultivationLevel} / 聚灵井${countBuildingsByType("spiritWell")} / 悟道室${countBuildingsByType("trainingRoom")}）</div>
         <div class="small-note" style="margin-bottom:8px;">洞府库存：灵石 ${homeInventory.spiritStone} / 灵草 ${homeInventory.herb} / 灵木 ${homeInventory.wood} / 妖丹 ${homeInventory.demonCore} / 异晶 ${homeInventory.rareCrystal}</div>
         <div class="codex-grid">
             ${CRAFT_RECIPES.map((recipe) => {
@@ -3532,7 +4209,7 @@ function updateSidePanels() {
                         <div class="small-note" style="margin-top:4px;">产出：${outLine}</div>
                         <div class="small-note">消耗：${costLine}</div>
                         <div class="small-note">用途：${recipe.use}</div>
-                        <div class="small-note">解锁：炼化Lv.${unlock.refinementLevel} / 聚灵井${unlock.spiritWell} / 悟道室${unlock.trainingRoom}</div>
+                        <div class="small-note">解锁：境界Lv.${unlock.cultivationLevel} / 聚灵井${unlock.spiritWell} / 悟道室${unlock.trainingRoom}</div>
                     </div>
                 `;
             }).join("")}
@@ -3550,34 +4227,46 @@ function updateSidePanels() {
             if (ok) renderAll();
         });
     });
+    const spiritPillPrice = getShopPrice(36);
+    const healingSalvePrice = getShopPrice(24);
+    const bloodPillPrice = getShopPrice(42);
+    const wardCharmPrice = getShopPrice(48);
+    const focusCharmPrice = getShopPrice(52);
     shopSummaryEl.innerHTML = `
         <div class="small-note" style="margin-bottom:8px;">当前金币：${goldCoins}</div>
         <div class="codex-grid">
             <div class="codex-item">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong>${ITEM_DEFS.spiritPill.icon} ${ITEM_DEFS.spiritPill.label}</strong>
-                    <button class="mini-btn" data-shop-buy="spiritPill" data-cost="36">购买 36</button>
+                    <strong>${getItemIconMarkup("spiritPill")} ${ITEM_DEFS.spiritPill.label}</strong>
+                    <button class="mini-btn" data-shop-buy="spiritPill" data-cost="${spiritPillPrice}">购买 ${spiritPillPrice}</button>
                 </div>
                 <div class="small-note">战斗回血；非战斗可用于提升打坐修炼效率</div>
             </div>
             <div class="codex-item">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong>${ITEM_DEFS.healingSalve.icon} ${ITEM_DEFS.healingSalve.label}</strong>
-                    <button class="mini-btn" data-shop-buy="healingSalve" data-cost="24">购买 24</button>
+                    <strong>${getItemIconMarkup("healingSalve")} ${ITEM_DEFS.healingSalve.label}</strong>
+                    <button class="mini-btn" data-shop-buy="healingSalve" data-cost="${healingSalvePrice}">购买 ${healingSalvePrice}</button>
                 </div>
                 <div class="small-note">战斗稳定伤势，低血自动触发</div>
             </div>
             <div class="codex-item">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong>${ITEM_DEFS.wardCharm.icon} ${ITEM_DEFS.wardCharm.label}</strong>
-                    <button class="mini-btn" data-shop-buy="wardCharm" data-cost="48">购买 48</button>
+                    <strong>${getItemIconMarkup("bloodPill")} ${ITEM_DEFS.bloodPill.label}</strong>
+                    <button class="mini-btn" data-shop-buy="bloodPill" data-cost="${bloodPillPrice}">购买 ${bloodPillPrice}</button>
+                </div>
+                <div class="small-note">高额回血丹药，适合化身远行携带</div>
+            </div>
+            <div class="codex-item">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong>${getItemIconMarkup("wardCharm")} ${ITEM_DEFS.wardCharm.label}</strong>
+                    <button class="mini-btn" data-shop-buy="wardCharm" data-cost="${wardCharmPrice}">购买 ${wardCharmPrice}</button>
                 </div>
                 <div class="small-note">强化防御，适合远行探索</div>
             </div>
             <div class="codex-item">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong>${ITEM_DEFS.focusCharm.icon} ${ITEM_DEFS.focusCharm.label}</strong>
-                    <button class="mini-btn" data-shop-buy="focusCharm" data-cost="52">购买 52</button>
+                    <strong>${getItemIconMarkup("focusCharm")} ${ITEM_DEFS.focusCharm.label}</strong>
+                    <button class="mini-btn" data-shop-buy="focusCharm" data-cost="${focusCharmPrice}">购买 ${focusCharmPrice}</button>
                 </div>
                 <div class="small-note">提升命中和稀有掉率</div>
             </div>
@@ -3591,13 +4280,13 @@ function updateSidePanels() {
             if (buyFromShop(id, cost, 1)) renderAll();
         });
     });
-    const equipRows = Object.keys(equipmentInventory).filter((id) => (equipmentInventory[id] || 0) > 0).map((id) => {
+    const equipRows = Object.keys(ITEM_EQUIP_SLOT).filter((id) => (equipmentInventory[id] || 0) > 0 || Object.values(equippedSlots).includes(id)).map((id) => {
         const level = equipmentEnhanceLevels[id] || 0;
         const cost = getEnhanceCost(id);
         return `
             <div class="codex-item">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong>${ITEM_DEFS[id]?.icon || "?"} ${ITEM_DEFS[id]?.label || id} +${level}</strong>
+                    <strong>${getItemIconMarkup(id)} ${ITEM_DEFS[id]?.label || id} +${level}</strong>
                     <button class="mini-btn" data-enhance-item="${id}" ${level >= 10 ? "disabled" : ""}>强化 ${cost}</button>
                 </div>
                 <div class="small-note">每级提升该装备加成 12%（上限 +10）</div>
@@ -3616,14 +4305,6 @@ function updateSidePanels() {
         });
     });
     bindItemHover(resourceSummaryEl);
-    resourceSummaryEl.querySelectorAll(".inv-slot[data-item-id]").forEach((el) => {
-        el.addEventListener("click", (evt) => {
-            evt.stopPropagation();
-            const itemId = el.dataset.itemId;
-            const source = el.dataset.itemSource || "avatar";
-            openItemMenu(itemId, source, evt);
-        });
-    });
     bindItemHover(codexSummaryEl);
 
     resourceSummaryEl.classList.toggle("hidden", rightPanelTab !== "resource");
@@ -3638,12 +4319,17 @@ function updateSidePanels() {
     const centerHeat = getChunkHeatAt(avatarX, avatarY).toFixed(1);
     worldSummaryEl.innerHTML = `
         <div>当前缩放: <strong>${cfg.label}</strong>，单格代表 <strong>${cfg.span}</strong> 单位地块。</div>
+        <div style="margin-top:8px;">世界事件: <strong>${getWorldEventDef() ? getWorldEventDef().label : "无"}</strong>${getWorldEventDef() ? `（剩余 ${Math.max(0, Math.ceil((worldEventUntilMs - simulationTimeMs) / 1000))}s）` : ""}</div>
         <div style="margin-top:8px;">中心资源倾向: <strong>${centerResource}</strong></div>
         <div style="margin-top:8px;">中心区域热度: <strong>${centerHeat}</strong>（热度越高产出越低）</div>
         <div style="margin-top:8px;">洞府循环: 每 ${BALANCE_CONFIG.timing.buildingTickMs / 1000}s 结算一次建筑产出/消耗</div>
         <div style="margin-top:8px;">洞府位置固定于 (${HOME_X}, ${HOME_Y})，高缩放用于判断山脉、水域和林地的大范围分布。</div>
         <div style="margin-top:8px;" class="small-note">${inspectText || "悬停地图可查看区域细节。"}</div>
     `;
+    worldSummaryEl.classList.toggle("hidden", !showWorldSummary);
+    if (worldSummaryToggleBtn) {
+        worldSummaryToggleBtn.textContent = showWorldSummary ? "隐藏" : "展开";
+    }
 }
 
 function addLog(msg) {
@@ -3723,8 +4409,10 @@ function renderButtons() {
     }
 
     autoBtn.classList.toggle("active", isAutoMode);
-    autoBtn.textContent = isAutoMode ? "■ 停止自动探索" : "▶ 开始自动探索";
+    autoBtn.textContent = avatarSessionExpired ? "⛔ 需重新登录" : (isAutoMode ? "■ 停止自动探索" : "▶ 开始自动探索");
     returnBtn.classList.toggle("active", autoObjective === "return_home");
+    cameraResetBtn.classList.toggle("active", cameraMode === "follow");
+    cameraResetBtn.textContent = cameraMode === "follow" ? "🎯 视角跟随中" : "🎯 回到化身";
     meditateBtn.classList.toggle("active", isMeditating);
     meditateBtn.textContent = isMeditating ? `🧘 打坐中 ${Math.ceil(meditateRemainingMs / 1000)}s` : "🧘 开始打坐";
 
@@ -3733,6 +4421,42 @@ function renderButtons() {
 function updateSimulation(ms) {
     const scaledMs = ms * timeScale;
     simulationTimeMs += scaledMs;
+    if (!avatarSessionExpired) {
+        avatarOnlineAccumMs = Math.min(AVATAR_MAX_ONLINE_MS, avatarOnlineAccumMs + scaledMs);
+        if (avatarOnlineAccumMs >= AVATAR_MAX_ONLINE_MS) {
+            avatarSessionExpired = true;
+            isAutoMode = false;
+            isGathering = false;
+            gatherRemainingMs = 0;
+            gatherTotalMs = 0;
+            gatheringProgress = 0;
+            battleState = null;
+            autoObjective = "explore";
+            releaseExploreTargetReservation();
+            exploreTarget = null;
+            movementStatusText = "化身在线12小时已达上限，请重新登录后继续";
+            addLog("化身在线12小时已达上限，自动探索停止，需要重新登录");
+            renderAll();
+            return;
+        }
+    }
+    if (worldEventId && simulationTimeMs >= worldEventUntilMs) {
+        addLog(`世界事件结束：${getWorldEventDef()?.label || worldEventId}`);
+        worldEventId = "";
+        worldEventUntilMs = 0;
+    }
+    if (simulationTimeMs >= nextWorldEventRollMs) {
+        rollWorldEvent();
+        nextWorldEventRollMs = simulationTimeMs + 120000 + (simpleHash(dayCount + gatherCount, Math.floor(simulationTimeMs / 1000)) % 120000);
+    }
+    if (avatarHp <= 0 && avatarReviveUntilMs > 0 && simulationTimeMs >= avatarReviveUntilMs) {
+        avatarReviveUntilMs = 0;
+        avatarHp = Math.floor(getAvatarMaxHp() * 0.7);
+        avatarMp = Math.floor(getAvatarMaxMp() * 0.7);
+        autoObjective = "explore";
+        addLog("化身已在洞府复活，可重新外出历练");
+        renderAll();
+    }
     bodyCultivationAccumMs += scaledMs;
     updateCultivationPanel();
     while (bodyCultivationAccumMs >= BODY_CULTIVATION_TICK_MS) {
@@ -3821,7 +4545,9 @@ function renderGameToText() {
         mode: battleState ? "battle" : isGathering ? "gathering" : isAutoMode ? autoObjective : "idle",
         day: dayCount,
         timeScale,
+        worldEvent: getWorldEventDef() ? { id: worldEventId, label: getWorldEventDef().label, remainMs: Math.max(0, Math.floor(worldEventUntilMs - simulationTimeMs)) } : null,
         zoom: { label: cfg.label, span: cfg.span, size: cfg.size },
+        camera: { mode: cameraMode, x: cameraMode === "follow" ? avatarX : cameraX, y: cameraMode === "follow" ? avatarY : cameraY },
         player: {
             x: avatarX,
             y: avatarY,
@@ -3834,20 +4560,28 @@ function renderGameToText() {
             distanceToHome: distanceToHome(),
             sharedStats: { ...sharedStats },
             battleTacticId,
-            autoBreakthrough,
             autoUsePillRatio,
             autoUseSalveRatio,
+            bloodPillCarryTarget,
+            bloodPillReturnThreshold,
+            autoBuyBloodPill,
             injuryDebuffRemainMs: Math.max(0, Math.floor(injuryDebuffUntilMs - simulationTimeMs)),
+            reviveCooldownRemainMs: Math.max(0, Math.floor(avatarReviveUntilMs - simulationTimeMs)),
             bodyCultivationExp,
             bodyCultivationExpNeed: getBodyCultivationExpNeed(cultivationLevel),
+            cultivationLevel,
+            cultivationExpRemain: Math.max(0, getBodyCultivationExpNeed(cultivationLevel) - bodyCultivationExp),
             cultivationRateMultiplier: getCultivationRateMultiplier(),
-            heavenlyEssence
+            avatarOnlineAccumMs,
+            avatarOnlineLimitMs: AVATAR_MAX_ONLINE_MS,
+            avatarSessionExpired
         },
         town,
         currencies: { goldCoins },
         avatarInventory,
         homeInventory,
         equipmentInventory,
+        equippedSlots,
         equipmentEnhanceLevels,
         equipmentBonus: getEquipmentBonus(),
         combatStats: getAvatarCombatSnapshot(),
@@ -3861,8 +4595,6 @@ function renderGameToText() {
             storageCap: town.storageCap,
             dayGatherUnits,
             gatherPerMinute: Number((dayGatherUnits / Math.max(1 / 60, (simulationTimeMs - dayStartMs) / 60000)).toFixed(2)),
-            dayRefineCount,
-            dayRefineLimit: town.refinementLevel,
             buildingTickMs: BALANCE_CONFIG.timing.buildingTickMs
         },
         reservationBackend: { mode: reservationBackend.mode },
@@ -3883,10 +4615,10 @@ function buildSavePayload() {
     return {
         v: 2,
         ts: Date.now(),
-        avatar: { x: avatarX, y: avatarY, hp: avatarHp, mp: avatarMp },
-        day: { dayCount, dayOriginX, dayOriginY, dayMoveCount, dayMoveLogBatch, dayGatherUnits, dayStartMs, dayRefineCount },
-        runtime: { zoomLevel, strategyId, autoObjective, isAutoMode, timeScale, simulationTimeMs, buildingProductionAccumMs },
-        combat: { battleTacticId, autoUsePillRatio, autoUseSalveRatio, injuryDebuffUntilMs, lastBattleFrame },
+        avatar: { x: avatarX, y: avatarY, hp: avatarHp, mp: avatarMp, reviveUntilMs: avatarReviveUntilMs },
+        day: { dayCount, dayOriginX, dayOriginY, dayMoveCount, dayMoveLogBatch, dayGatherUnits, dayStartMs },
+        runtime: { zoomLevel, strategyId, autoObjective, isAutoMode, timeScale, simulationTimeMs, buildingProductionAccumMs, worldEventId, worldEventUntilMs, nextWorldEventRollMs },
+        combat: { battleTacticId, autoUsePillRatio, autoUseSalveRatio, bloodPillCarryTarget, bloodPillReturnThreshold, autoBuyBloodPill, injuryDebuffUntilMs, lastBattleFrame },
         flags: { devForceMonster, devFixedDrops, baitBoostUntilMs },
         progression: {
             cultivationLevel,
@@ -3896,14 +4628,15 @@ function buildSavePayload() {
             goldCoins,
             bodyCultivationExp,
             bodyCultivationAccumMs,
-            heavenlyEssence,
+            avatarOnlineAccumMs,
+            avatarSessionExpired,
             cultivationBuffUntilMs,
-            autoBreakthrough,
+            equippedSlots: { ...equippedSlots },
             equipmentEnhanceLevels: { ...equipmentEnhanceLevels }
         },
         inventories: { avatar: { ...avatarInventory }, home: { ...homeInventory }, equipment: { ...equipmentInventory } },
         town: { ...town },
-        ui: { rightPanelTab, inspectText },
+        ui: { rightPanelTab, resourcePanelTab, showEquipAttrDetail, showWorldSummary, inspectText, cameraMode, cameraX, cameraY },
         maps: {
             reservations: reservationBackend.list(),
             homeBuildings: Array.from(homeBuildingMap.entries()),
@@ -3923,6 +4656,7 @@ function applySavePayload(payload) {
     avatarY = payload.avatar?.y ?? avatarY;
     avatarHp = payload.avatar?.hp ?? avatarHp;
     avatarMp = payload.avatar?.mp ?? avatarMp;
+    avatarReviveUntilMs = payload.avatar?.reviveUntilMs ?? avatarReviveUntilMs;
     dayCount = payload.day?.dayCount ?? dayCount;
     dayOriginX = payload.day?.dayOriginX ?? dayOriginX;
     dayOriginY = payload.day?.dayOriginY ?? dayOriginY;
@@ -3930,7 +4664,6 @@ function applySavePayload(payload) {
     dayMoveLogBatch = payload.day?.dayMoveLogBatch ?? dayMoveLogBatch;
     dayGatherUnits = payload.day?.dayGatherUnits ?? dayGatherUnits;
     dayStartMs = payload.day?.dayStartMs ?? dayStartMs;
-    dayRefineCount = payload.day?.dayRefineCount ?? dayRefineCount;
     zoomLevel = payload.runtime?.zoomLevel ?? zoomLevel;
     strategyId = payload.runtime?.strategyId ?? strategyId;
     autoObjective = payload.runtime?.autoObjective ?? autoObjective;
@@ -3938,9 +4671,15 @@ function applySavePayload(payload) {
     timeScale = payload.runtime?.timeScale ?? timeScale;
     simulationTimeMs = payload.runtime?.simulationTimeMs ?? simulationTimeMs;
     buildingProductionAccumMs = payload.runtime?.buildingProductionAccumMs ?? buildingProductionAccumMs;
+    worldEventId = payload.runtime?.worldEventId ?? worldEventId;
+    worldEventUntilMs = payload.runtime?.worldEventUntilMs ?? worldEventUntilMs;
+    nextWorldEventRollMs = payload.runtime?.nextWorldEventRollMs ?? nextWorldEventRollMs;
     battleTacticId = payload.combat?.battleTacticId ?? battleTacticId;
     autoUsePillRatio = payload.combat?.autoUsePillRatio ?? autoUsePillRatio;
     autoUseSalveRatio = payload.combat?.autoUseSalveRatio ?? autoUseSalveRatio;
+    bloodPillCarryTarget = payload.combat?.bloodPillCarryTarget ?? bloodPillCarryTarget;
+    bloodPillReturnThreshold = payload.combat?.bloodPillReturnThreshold ?? bloodPillReturnThreshold;
+    autoBuyBloodPill = payload.combat?.autoBuyBloodPill ?? autoBuyBloodPill;
     injuryDebuffUntilMs = payload.combat?.injuryDebuffUntilMs ?? injuryDebuffUntilMs;
     lastBattleFrame = payload.combat?.lastBattleFrame ?? lastBattleFrame;
     devForceMonster = payload.flags?.devForceMonster ?? devForceMonster;
@@ -3952,9 +4691,10 @@ function applySavePayload(payload) {
     goldCoins = payload.progression?.goldCoins ?? goldCoins;
     bodyCultivationExp = payload.progression?.bodyCultivationExp ?? bodyCultivationExp;
     bodyCultivationAccumMs = payload.progression?.bodyCultivationAccumMs ?? bodyCultivationAccumMs;
-    heavenlyEssence = payload.progression?.heavenlyEssence ?? heavenlyEssence;
+    avatarOnlineAccumMs = payload.progression?.avatarOnlineAccumMs ?? avatarOnlineAccumMs;
+    avatarSessionExpired = payload.progression?.avatarSessionExpired ?? avatarSessionExpired;
     cultivationBuffUntilMs = payload.progression?.cultivationBuffUntilMs ?? cultivationBuffUntilMs;
-    autoBreakthrough = payload.progression?.autoBreakthrough ?? autoBreakthrough;
+    Object.assign(equippedSlots, payload.progression?.equippedSlots || {});
     Object.assign(equipmentEnhanceLevels, payload.progression?.equipmentEnhanceLevels || {});
     Object.assign(sharedStats, payload.progression?.sharedStats || {});
     Object.keys(avatarInventory).forEach((k) => { avatarInventory[k] = 0; });
@@ -3965,7 +4705,20 @@ function applySavePayload(payload) {
     Object.assign(equipmentInventory, payload.inventories?.equipment || {});
     Object.assign(town, payload.town || {});
     rightPanelTab = payload.ui?.rightPanelTab || rightPanelTab;
+    resourcePanelTab = payload.ui?.resourcePanelTab || resourcePanelTab;
+    showEquipAttrDetail = payload.ui?.showEquipAttrDetail ?? showEquipAttrDetail;
+    showWorldSummary = payload.ui?.showWorldSummary ?? showWorldSummary;
     inspectText = payload.ui?.inspectText || "";
+    cameraMode = payload.ui?.cameraMode || cameraMode;
+    cameraX = Number.isFinite(payload.ui?.cameraX) ? payload.ui.cameraX : cameraX;
+    cameraY = Number.isFinite(payload.ui?.cameraY) ? payload.ui.cameraY : cameraY;
+    if (!["inventory", "bag", "equip"].includes(resourcePanelTab)) resourcePanelTab = "inventory";
+    if (cameraMode !== "follow" && cameraMode !== "free") cameraMode = "follow";
+    EQUIP_SLOT_DEFS.forEach((slot) => {
+        const id = equippedSlots[slot.id];
+        if (!id || slotForItem(id) === slot.id) return;
+        equippedSlots[slot.id] = null;
+    });
     reservationMap.clear();
     homeBuildingMap.clear();
     seedMap.clear();
@@ -3988,6 +4741,11 @@ function applySavePayload(payload) {
     salveThresholdInput.value = String(Math.round(autoUseSalveRatio * 100));
     pillThresholdLabel.textContent = String(Math.round(autoUsePillRatio * 100));
     salveThresholdLabel.textContent = String(Math.round(autoUseSalveRatio * 100));
+    if (bloodPillCarryTargetInput) bloodPillCarryTargetInput.value = String(bloodPillCarryTarget);
+    if (bloodPillReturnThresholdInput) bloodPillReturnThresholdInput.value = String(bloodPillReturnThreshold);
+    if (bloodPillCarryTargetLabel) bloodPillCarryTargetLabel.textContent = String(bloodPillCarryTarget);
+    if (bloodPillReturnThresholdLabel) bloodPillReturnThresholdLabel.textContent = String(bloodPillReturnThreshold);
+    if (autoBuyBloodPillToggle) autoBuyBloodPillToggle.checked = autoBuyBloodPill;
     return true;
 }
 
@@ -4030,6 +4788,11 @@ function advanceTime(ms) {
 }
 
 autoBtn.addEventListener("click", () => {
+    if (avatarSessionExpired) {
+        addLog("化身在线已达12小时，请重新登录后继续");
+        renderAll();
+        return;
+    }
     if (isBuildFocus) closeBuildPanel();
     isAutoMode = !isAutoMode;
     if (!isAutoMode) {
@@ -4046,12 +4809,7 @@ returnBtn.addEventListener("click", () => {
     exploreTarget = null;
     autoObjective = "return_home";
     isAutoMode = true;
-    addLog("切换为返城优先，化身将沿路返回洞府");
-    renderAll();
-});
-
-refineBtn.addEventListener("click", () => {
-    tryRefineAtHome(false);
+    addLog("切换为回城优先，化身将沿路返回洞府");
     renderAll();
 });
 
@@ -4063,20 +4821,6 @@ meditateBtn.addEventListener("click", () => {
         addLog("已中止打坐");
     } else {
         startMeditation();
-    }
-    renderAll();
-});
-
-breakthroughBtn.addEventListener("click", () => {
-    tryBreakthrough(false);
-    renderAll();
-});
-
-autoBreakthroughToggle.addEventListener("change", () => {
-    autoBreakthrough = autoBreakthroughToggle.checked;
-    addLog(`自动突破 ${autoBreakthrough ? "已开启" : "已关闭"}`);
-    if (autoBreakthrough) {
-        while (tryBreakthrough(true)) {}
     }
     renderAll();
 });
@@ -4151,6 +4895,38 @@ salveThresholdInput.addEventListener("input", () => {
     renderAll();
 });
 
+if (bloodPillCarryTargetInput && bloodPillCarryTargetLabel) {
+    bloodPillCarryTargetInput.addEventListener("input", () => {
+        bloodPillCarryTarget = Number(bloodPillCarryTargetInput.value);
+        if (bloodPillReturnThreshold > bloodPillCarryTarget) {
+            bloodPillReturnThreshold = bloodPillCarryTarget;
+            if (bloodPillReturnThresholdInput) bloodPillReturnThresholdInput.value = String(bloodPillReturnThreshold);
+        }
+        bloodPillCarryTargetLabel.textContent = String(bloodPillCarryTarget);
+        if (bloodPillReturnThresholdLabel) bloodPillReturnThresholdLabel.textContent = String(bloodPillReturnThreshold);
+        renderAll();
+    });
+}
+
+if (bloodPillReturnThresholdInput && bloodPillReturnThresholdLabel) {
+    bloodPillReturnThresholdInput.addEventListener("input", () => {
+        bloodPillReturnThreshold = Number(bloodPillReturnThresholdInput.value);
+        if (bloodPillReturnThreshold > bloodPillCarryTarget) {
+            bloodPillReturnThreshold = bloodPillCarryTarget;
+            bloodPillReturnThresholdInput.value = String(bloodPillReturnThreshold);
+        }
+        bloodPillReturnThresholdLabel.textContent = String(bloodPillReturnThreshold);
+        renderAll();
+    });
+}
+
+if (autoBuyBloodPillToggle) {
+    autoBuyBloodPillToggle.addEventListener("change", () => {
+        autoBuyBloodPill = autoBuyBloodPillToggle.checked;
+        renderAll();
+    });
+}
+
 forceMonsterToggle.addEventListener("change", () => {
     devForceMonster = forceMonsterToggle.checked;
     addLog(`测试开关：强制刷怪 ${devForceMonster ? "开启" : "关闭"}`);
@@ -4164,10 +4940,17 @@ fixedDropToggle.addEventListener("change", () => {
 
 debugBattleBtn.addEventListener("click", () => {
     if (isGathering) return;
-    const testMonster = getMonsterAt(avatarX, avatarY) || { x: avatarX, y: avatarY, type: "妖兽", level: 2, hp: 72, maxHp: 72, atk: 14, def: 5 };
+    const pick = debugMonsterSelect?.value || "normal";
+    const testMonster = pick === "nearby"
+        ? (getMonsterAt(avatarX, avatarY) || { x: avatarX, y: avatarY, type: "妖兽", level: 2, hp: 72, maxHp: 72, atk: 14, def: 5 })
+        : pick === "elite"
+            ? { x: avatarX, y: avatarY, type: "精英妖将", level: 7, hp: 340, maxHp: 340, atk: 56, def: 28 }
+            : pick === "boss"
+                ? { x: avatarX, y: avatarY, type: "天劫妖王", level: 10, hp: 620, maxHp: 620, atk: 92, def: 42 }
+                : { x: avatarX, y: avatarY, type: "妖兽", level: 2, hp: 72, maxHp: 72, atk: 14, def: 5 };
     startBattleWith(testMonster);
     isAutoMode = true;
-    addLog("测试：已触发即时战斗");
+    addLog(`测试：已触发即时战斗（${testMonster.type}）`);
     renderAll();
 });
 
@@ -4182,25 +4965,100 @@ loadBtn.addEventListener("click", () => {
     if (ok) renderAll();
 });
 
+resourceSummaryEl.addEventListener("click", (evt) => {
+    const slot = evt.target.closest(".inv-slot[data-item-id]");
+    if (!slot || !resourceSummaryEl.contains(slot)) return;
+    evt.stopPropagation();
+    const itemId = slot.dataset.itemId;
+    const source = slot.dataset.itemSource || "avatar";
+    openItemMenu(itemId, source, evt);
+});
+
+if (worldSummaryToggleBtn) {
+    worldSummaryToggleBtn.addEventListener("click", () => {
+        showWorldSummary = !showWorldSummary;
+        renderAll();
+    });
+}
+
 itemMenuEl.addEventListener("click", (e) => {
     e.stopPropagation();
     const btn = e.target.closest("button[data-item-action]");
     if (!btn || !itemMenuState) return;
     const { itemId, source } = itemMenuState;
+    const bag = getItemContainer(source);
+    const maxQty = Math.max(1, bag?.[itemId] || 1);
+    const qtyInput = itemMenuEl.querySelector("input[data-item-qty]");
+    const currentQty = qtyInput ? Number(qtyInput.value || 1) : 1;
+    itemMenuQty = Math.max(1, Math.min(maxQty, Number.isFinite(currentQty) ? currentQty : 1));
+    if (btn.dataset.itemAction === "qty-minus") {
+        itemMenuQty = Math.max(1, itemMenuQty - 1);
+        if (qtyInput) qtyInput.value = String(itemMenuQty);
+        syncItemMenuRecycleLabel(itemId, itemMenuQty);
+        return;
+    }
+    if (btn.dataset.itemAction === "qty-plus") {
+        itemMenuQty = Math.min(maxQty, itemMenuQty + 1);
+        if (qtyInput) qtyInput.value = String(itemMenuQty);
+        syncItemMenuRecycleLabel(itemId, itemMenuQty);
+        return;
+    }
+    if (btn.dataset.itemAction === "qty-all") {
+        itemMenuQty = maxQty;
+        if (qtyInput) qtyInput.value = String(itemMenuQty);
+        syncItemMenuRecycleLabel(itemId, itemMenuQty);
+        return;
+    }
+    if (btn.dataset.itemAction === "codex") {
+        closeItemMenu();
+        openItemCodexDetail(itemId);
+        return;
+    }
     let ok = false;
-    if (btn.dataset.itemAction === "use") ok = useItemFrom(source, itemId);
-    if (btn.dataset.itemAction === "equip") ok = equipItemFrom(source, itemId);
-    if (btn.dataset.itemAction === "recycle") ok = recycleItemFrom(source, itemId);
+    if (btn.dataset.itemAction === "use") ok = useItemFrom(source, itemId, itemMenuQty);
+    if (btn.dataset.itemAction === "equip") ok = equipItemFrom(source, itemId, 1);
+    if (btn.dataset.itemAction === "recycle") ok = recycleItemFrom(source, itemId, itemMenuQty);
     closeItemMenu();
     if (ok) renderAll();
 });
 
+equipSlotMenuEl.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const btn = e.target.closest("button[data-equip-action]");
+    if (!btn) return;
+    const slotId = btn.dataset.slotId;
+    if (!slotId) return;
+    if (btn.dataset.equipAction === "remove") {
+        const current = equippedSlots[slotId];
+        if (current) {
+            avatarInventory[current] = (avatarInventory[current] || 0) + 1;
+            equippedSlots[slotId] = null;
+            addLog(`卸下装备：${ITEM_DEFS[current]?.label || current}`);
+            closeEquipSlotMenu();
+            renderAll();
+        }
+        return;
+    }
+    if (btn.dataset.equipAction === "equip") {
+        const itemId = btn.dataset.itemId;
+        const source = btn.dataset.source;
+        if (!itemId || !source) return;
+        const ok = equipItemFrom(source, itemId, 1);
+        if (ok) {
+            closeEquipSlotMenu();
+            renderAll();
+        }
+    }
+});
+
 document.addEventListener("click", () => {
     closeItemMenu();
+    closeEquipSlotMenu();
 });
 
 window.addEventListener("resize", () => {
     closeItemMenu();
+    closeEquipSlotMenu();
 });
 
 rightTabButtonsEl.querySelectorAll("button[data-right-tab]").forEach((btn) => {
@@ -4244,6 +5102,10 @@ grid.addEventListener("mouseleave", () => {
 });
 
 grid.addEventListener("click", (e) => {
+    if (suppressNextMapClick) {
+        suppressNextMapClick = false;
+        return;
+    }
     const cell = e.target.closest(".cell");
     if (!cell) return;
     const wx = Number(cell.dataset.wx);
@@ -4266,6 +5128,42 @@ grid.addEventListener("click", (e) => {
     openBuildPanel(wx, wy);
     renderAll();
 });
+
+cameraResetBtn.addEventListener("click", () => {
+    resetCameraToAvatar();
+    renderAll();
+});
+
+if (mapContainerEl) {
+    mapContainerEl.addEventListener("mousedown", (e) => {
+        if (e.button !== 0 || isBuildFocus) return;
+        isMapDragging = true;
+        dragStartClientX = e.clientX;
+        dragStartClientY = e.clientY;
+        dragStartCameraX = cameraMode === "follow" ? avatarX : cameraX;
+        dragStartCameraY = cameraMode === "follow" ? avatarY : cameraY;
+        mapContainerEl.classList.add("dragging");
+    });
+
+    window.addEventListener("mousemove", (e) => {
+        if (!isMapDragging) return;
+        const cfg = ZOOM_LEVELS[zoomLevel];
+        const unitPx = Math.max(1, cfg.cellPx);
+        const worldDx = Math.round((e.clientX - dragStartClientX) / unitPx) * cfg.span;
+        const worldDy = Math.round((e.clientY - dragStartClientY) / unitPx) * cfg.span;
+        setCameraFreePosition(dragStartCameraX - worldDx, dragStartCameraY - worldDy);
+        if (Math.abs(e.clientX - dragStartClientX) + Math.abs(e.clientY - dragStartClientY) > 5) {
+            suppressNextMapClick = true;
+        }
+        renderAll();
+    });
+
+    window.addEventListener("mouseup", () => {
+        if (!isMapDragging) return;
+        isMapDragging = false;
+        mapContainerEl.classList.remove("dragging");
+    });
+}
 
 document.addEventListener("wheel", (e) => {
     e.preventDefault();
@@ -4296,6 +5194,11 @@ pillThresholdInput.value = String(Math.round(autoUsePillRatio * 100));
 salveThresholdInput.value = String(Math.round(autoUseSalveRatio * 100));
 pillThresholdLabel.textContent = String(Math.round(autoUsePillRatio * 100));
 salveThresholdLabel.textContent = String(Math.round(autoUseSalveRatio * 100));
+if (bloodPillCarryTargetInput) bloodPillCarryTargetInput.value = String(bloodPillCarryTarget);
+if (bloodPillReturnThresholdInput) bloodPillReturnThresholdInput.value = String(bloodPillReturnThreshold);
+if (bloodPillCarryTargetLabel) bloodPillCarryTargetLabel.textContent = String(bloodPillCarryTarget);
+if (bloodPillReturnThresholdLabel) bloodPillReturnThresholdLabel.textContent = String(bloodPillReturnThreshold);
+if (autoBuyBloodPillToggle) autoBuyBloodPillToggle.checked = autoBuyBloodPill;
 renderAll();
 addLog("系统就绪：自动探索、妖物遭遇战、返城整备与多级缩放已启用");
 </script>
