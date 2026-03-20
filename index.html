@@ -3,47 +3,124 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="善护念 — 简约禅修主页，守护正念，觉察当下。每日一念，陪伴你回归本心。">
-  <meta name="keywords" content="善护念,禅修,正念,冥想,道德经,黄檗禅师,觉察">
+  <meta name="description" content="善护念：专注呼吸训练、正念练习与身心恢复的中文内容站。提供可操作的方法、工具与每日练习建议。">
+  <meta name="keywords" content="善护念,呼吸训练,正念练习,冥想,身心恢复,护眼,专注">
   <title>善护念</title>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9169218800766361" crossorigin="anonymous"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500&display=swap" rel="stylesheet">
 
-  <style>:root{--bg:#f8f7f5;--text:#2d1810;--accent:#8c6b4a;--muted:#888;}*{margin:0;padding:0;box-sizing:border-box;}body{min-height:100vh;font-family:'Noto Serif SC',Georgia,serif;background:var(--bg) url('https://images.unsplash.com/photo-1506905925346-21bda4d8df73?ixlib=rb-4.0.3&auto=format&fit=crop&q=85&w=2850&h=1600') center/cover fixed;color:var(--text);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:2rem 2rem 0;position:relative;line-height:1.8;overflow-x:hidden;}body::before{content:"";position:absolute;inset:0;background:rgba(248,247,245,0.82);backdrop-filter:blur(2px);}main{position:relative;z-index:1;text-align:center;max-width:720px;}h1{font-size:4.5rem;font-weight:400;letter-spacing:0.2em;margin-bottom:4rem;color:var(--accent);}.quote{font-size:1.55rem;margin:4rem auto;max-width:90%;opacity:0.95;}.quote p{margin-bottom:1.8rem;}.author{font-size:1.2rem;opacity:0.7;margin-top:1rem;}footer{position:relative;z-index:1;margin-top:8rem;font-size:0.8rem;color:var(--muted);opacity:0.7;padding-bottom:100px;}footer .countdown{margin-top:0.6rem;font-size:0.78rem;}.nav-trigger{position:fixed;bottom:0;left:0;right:0;height:80px;z-index:10;cursor:pointer;}nav{position:fixed;bottom:0;left:0;right:0;background:rgba(248,247,245,0.85);backdrop-filter:blur(12px);border-top:1px solid rgba(140,107,74,0.12);padding:1.2rem 0;transform:translateY(100%);transition:transform .48s cubic-bezier(.22,1,.36,1);z-index:20;}nav.visible{transform:translateY(0);}.nav-inner{max-width:800px;margin:0 auto;display:flex;justify-content:center;flex-wrap:wrap;gap:2.8rem;font-size:1rem;color:var(--text);}nav a{color:var(--text);text-decoration:none;opacity:0.6;transition:opacity .3s;white-space:nowrap;}nav a:hover{opacity:1;}nav a::before{content:"◦";margin-right:0.6em;opacity:0.4;}@media(max-width:768px){h1{font-size:3.4rem;}.quote{font-size:1.35rem;}.nav-inner{gap:2rem;font-size:0.95rem;}}@media(max-width:480px){h1{font-size:2.9rem;}.nav-inner{gap:1.6rem;flex-direction:column;align-items:center;}nav a::before{content:none;}}</style>
+  <style>
+    :root{--bg:#f8f7f5;--text:#2d1810;--accent:#8c6b4a;--muted:#6d645d;--card:#ffffffc7;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      min-height:100vh;
+      font-family:'Noto Serif SC',Georgia,serif;
+      background:var(--bg) url('https://images.unsplash.com/photo-1506905925346-21bda4d8df73?ixlib=rb-4.0.3&auto=format&fit=crop&q=85&w=2850&h=1600') center/cover fixed;
+      color:var(--text);
+      line-height:1.8;
+      position:relative;
+      overflow-x:hidden;
+      padding:1.5rem;
+    }
+    body::before{content:"";position:absolute;inset:0;background:rgba(248,247,245,0.86);backdrop-filter:blur(2px);}
+    .wrap{position:relative;z-index:1;max-width:980px;margin:0 auto;}
+    header{padding:2.5rem 0 1.5rem;border-bottom:1px solid rgba(140,107,74,0.18);}
+    h1{font-size:3.2rem;font-weight:500;letter-spacing:0.1em;color:var(--accent);}
+    .intro{margin-top:1rem;max-width:760px;color:var(--muted);}
+    .quote{margin-top:1rem;font-size:1.2rem;}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:2rem;}
+    .card{
+      background:var(--card);
+      border:1px solid rgba(140,107,74,0.16);
+      border-radius:12px;
+      padding:1rem 1.1rem;
+    }
+    .card h2{font-size:1.1rem;margin-bottom:.5rem;color:#4f3a2d;}
+    .card ul{padding-left:1.1rem;}
+    .card li{margin:.35rem 0;}
+    a{color:#5a3f2f;text-decoration:none;border-bottom:1px solid rgba(90,63,47,0.25);}
+    a:hover{border-bottom-color:rgba(90,63,47,0.8);}
+    footer{
+      margin-top:2rem;
+      padding:1.2rem 0 .2rem;
+      border-top:1px solid rgba(140,107,74,0.18);
+      color:var(--muted);
+      font-size:.92rem;
+    }
+    .footer-links{display:flex;flex-wrap:wrap;gap:1rem;margin-top:.4rem;}
+    @media(max-width:800px){
+      h1{font-size:2.3rem;}
+      .grid{grid-template-columns:1fr;}
+    }
+  </style>
 </head>
 
 <body>
-  <main aria-label="善护念主页">
-    <h1>善护念</h1>
-    <section class="quote" id="daily-quote"></section>
-  </main>
+  <div class="wrap">
+    <header>
+      <h1>善护念</h1>
+      <p class="intro">这是一个围绕呼吸训练、正念练习和身心恢复的小站。我们持续整理简单可执行的方法，帮助你在日常中更稳定地休息、专注与觉察。</p>
+      <section class="quote" id="daily-quote" aria-live="polite"></section>
+    </header>
 
-  <footer>
-    © 2025 arkpy.com · 愿一切众生安宁喜乐
-    <div class="countdown" id="countdown" aria-live="polite"></div>
-  </footer>
+    <main class="grid" aria-label="网站内容导航">
+      <section class="card">
+        <h2>核心内容</h2>
+        <ul>
+          <li><a href="/article-dandao-overview.html">丹道修炼入门</a>：从身、息、心建立稳定日课。</li>
+          <li><a href="/read.html">语音念经计数器</a>：节奏稳定、可听可念。</li>
+          <li><a href="/r2.html">快速念佛计数器</a>：带文本输入与计次反馈。</li>
+          <li><a href="/left.html">半百从心</a>：长期主义与人生节律记录。</li>
+          <li><a href="/eyecare.html">护眼色调</a>：降低长时间用眼疲劳。</li>
+        </ul>
+      </section>
 
-  <div class="nav-trigger" id="navTrigger"></div>
-  <nav id="nav">
-    <div class="nav-inner">
-      <a href="/eyecare.html">护眼歇息</a>
-      <a href="/snake.html">一念贪嗔</a>
-      <a href="/cprice.html">币价观照</a>
-      <a href="/ai.html">智言</a>
-    </div>
-  </nav>
+      <section class="card">
+        <h2>实用工具</h2>
+        <ul>
+          <li><a href="/cd.html">极简倒计时</a>：用于专注训练和番茄钟。</li>
+          <li><a href="/cal_job.html">工作评分</a>：检查当前工作匹配度。</li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2>最近更新</h2>
+        <ul>
+          <!-- AUTO_RECENT_START -->
+          <li>2026-03-20：<a href="/article-yuzhou-yongqi.html">凡事发生，必有利于我：在广阔宇宙里活出行动与勇气</a></li>
+          <!-- AUTO_RECENT_END -->
+          <li>2026-03-20：<a href="/article-dandao-overview.html">丹道修炼入门：实践框架</a></li>
+          <li>2026-03-20：<a href="/article-16-ding-jin.html">16锭金（十六锭金）学习提要</a></li>
+          <li>2026-03-20：<a href="/article-neigong-sijing.html">内功四经导读：经典到练习</a></li>
+          <li>2026-03-20：<a href="/article-night-screen-sleep.html">夜间看屏幕不毁睡眠：晚间用眼流程</a></li>
+          <li>2026-03-20：<a href="/article-neck-eye-pain-desk.html">颈肩痛和眼疲劳：办公桌调整清单</a></li>
+          <li>2026-03-20：<a href="/article-pomodoro-breathing.html">番茄钟 + 呼吸训练：双节律方案</a></li>
+          <li>2026-03-20：<a href="/article-eye-breaks.html">久坐办公护眼：10分钟缓解眼疲劳流程</a></li>
+          <li>2026-03-20：<a href="/article-breathing-focus.html">3分钟呼吸练习：快速恢复专注</a></li>
+          <li>2026-03-20：<a href="/article-deep-work-reset.html">深度工作重启：60分钟专注流程</a></li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2>说明</h2>
+        <p>本站内容用于个人学习与练习记录，不构成医疗建议。若你有明显焦虑、睡眠障碍或长期不适，请优先联系专业医生。</p>
+      </section>
+    </main>
+
+    <footer>
+      <div>© 2026 arkpy.com · 愿一切众生安宁喜乐</div>
+      <div class="footer-links">
+        <a href="/about.html">关于我们</a>
+        <a href="/contact.html">联系我们</a>
+        <a href="/terms.html">使用条款</a>
+        <a href="/privacy.html">隐私政策</a>
+      </div>
+    </footer>
+  </div>
 
   <script>
-    // 每年1月8日倒计时
-    function getNextBirthday(){const today=new Date();const y=today.getFullYear();let bd=new Date(y,0,8);if(today>bd)bd.setFullYear(y+1);return bd;}function updateCountdown(){const days=Math.floor((getNextBirthday()-new Date())/86400000);document.getElementById('countdown').textContent=days===0?"今日 · 一月八日":`距明年1月8日还有 ${days} 天`;}updateCountdown();setInterval(updateCountdown,86400000);
-
-    // 每日一念
     const quotes=[{text:"直心是道场。",author:"—— 黄檗希运禅师"},{text:"上善若水。水善利万物而不争，处众人之所恶，故几于道。",author:"—— 《道德经》第八章"},{text:"应无所住，而生其心。",author:"—— 《金刚经》"},{text:"当下即是。",author:"—— 永嘉玄觉"},{text:"行住坐卧，应无非禅。",author:"—— 庞蕴居士"},{text:"一念净，心即是佛。",author:"—— 六祖惠能"},{text:"本来无一物，何处惹尘埃。",author:"—— 六祖惠能"},{text:"饥来吃饭，困来即眠。",author:"—— 庞蕴居士"},{text:"我且问尔。忽然临命终时，尔将何抵敌生死。",author:"—— 黄檗禅师"},{text:"致虚极，守静笃。万物并作，吾以观其复。",author:"—— 《道德经》"}];const day=new Date().getDate();const q=quotes[day % quotes.length];document.getElementById('daily-quote').innerHTML=`<p>“${q.text}”</p><div class="author">${q.author}</div>`;
-
-    // 导航显示
-    const nav=document.getElementById('nav');const trigger=document.getElementById('navTrigger');let showed=false;function check(){if(trigger.getBoundingClientRect().top<window.innerHeight+100&&!showed){nav.classList.add('visible');showed=true;}}window.addEventListener('scroll',check);trigger.addEventListener('mouseenter',()=>nav.classList.add('visible'));check();
   </script>
 </body>
 </html>

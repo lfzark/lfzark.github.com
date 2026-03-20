@@ -1,184 +1,347 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>护眼色调 - 智能护眼Chrome扩展，减少眼疲劳</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); /* 柔和蓝调，模拟护眼 */
-            color: #333;
-            line-height: 1.6;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        header {
-            text-align: center;
-            padding: 60px 0;
-            background: rgba(255, 255, 255, 0.8);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            font-size: 3em;
-            color: #1976d2;
-            margin: 0 0 20px;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-        }
-        .subtitle {
-            font-size: 1.5em;
-            color: #555;
-            margin: 0 0 30px;
-        }
-        .cta-button {
-            display: inline-block;
-            background: linear-gradient(45deg, #2196f3, #1976d2);
-            color: white;
-            padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 50px;
-            font-size: 1.2em;
-            font-weight: bold;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
-        }
-        .cta-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
-        }
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            padding: 60px 0;
-        }
-        .feature-card {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-        .feature-icon {
-            font-size: 3em;
-            color: #2196f3;
-            margin-bottom: 15px;
-        }
-        .benefits {
-            padding: 60px 0;
-            background: rgba(255, 255, 255, 0.6);
-            text-align: center;
-        }
-        .benefits ul {
-            list-style: none;
-            padding: 0;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        .benefits li {
-            font-size: 1.1em;
-            margin: 15px 0;
-            padding-left: 40px;
-            position: relative;
-        }
-        .benefits li::before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #4caf50;
-            font-weight: bold;
-            font-size: 1.5em;
-        }
-        .reviews {
-            padding: 60px 0;
-            text-align: center;
-        }
-        .review-quote {
-            font-size: 1.8em;
-            font-style: italic;
-            color: #1976d2;
-            margin: 20px 0;
-        }
-        .rating {
-            font-size: 2em;
-            color: #ffeb3b;
-        }
-        footer {
-            text-align: center;
-            padding: 40px 0;
-            background: #1976d2;
-            color: white;
-        }
-        @media (max-width: 768px) {
-            h1 { font-size: 2em; }
-            .features { grid-template-columns: 1fr; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="护眼色调：帮助你在长时间阅读和工作时降低屏幕刺激，缓解眼疲劳。">
+  <title>护眼色调 - 减少眼疲劳的 Chrome 扩展</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --ink: #1f2a37;
+      --muted: #5b6b7d;
+      --primary: #2d7ff9;
+      --primary-2: #1d63c9;
+      --card: #ffffff;
+      --line: #d9e4f2;
+      --ok: #19926b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background:
+        radial-gradient(circle at 80% 0%, #e9f2ff 0%, transparent 40%),
+        radial-gradient(circle at 0% 90%, #e6fff7 0%, transparent 35%),
+        var(--bg);
+      color: var(--ink);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: min(1100px, 92%);
+      margin: 0 auto;
+    }
+
+    .hero {
+      padding: 56px 0 34px;
+    }
+
+    .hero-card {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 12px 28px rgba(31, 42, 55, 0.08);
+      padding: 34px;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 24px;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 4vw, 2.8rem);
+      line-height: 1.2;
+      margin-bottom: 12px;
+      letter-spacing: 0.01em;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1.05rem;
+      margin-bottom: 20px;
+      max-width: 48ch;
+    }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      color: #fff;
+      border-radius: 999px;
+      padding: 12px 20px;
+      font-weight: 700;
+      box-shadow: 0 10px 20px rgba(45, 127, 249, 0.25);
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(45, 127, 249, 0.34);
+    }
+
+    .hero-metrics {
+      background: #f8fbff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .metric {
+      background: #fff;
+      border: 1px solid #e3ebf7;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .metric strong {
+      font-size: 1.25rem;
+      display: block;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    .section {
+      padding: 10px 0 26px;
+    }
+
+    .section h2 {
+      font-size: 1.55rem;
+      margin-bottom: 12px;
+    }
+
+    .section-p {
+      color: var(--muted);
+      margin-bottom: 16px;
+      max-width: 64ch;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 6px 14px rgba(31, 42, 55, 0.06);
+    }
+
+    .card h3 {
+      font-size: 1.05rem;
+      margin-bottom: 8px;
+    }
+
+    .card p {
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .step {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .step .num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #fff;
+      background: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .faq {
+      display: grid;
+      gap: 10px;
+    }
+
+    .faq-item {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+
+    .faq-item strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .faq-item p {
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    .footer {
+      margin: 18px 0 28px;
+      padding: 16px 0;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .92rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .footer a {
+      color: var(--primary-2);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(29, 99, 201, 0.35);
+    }
+
+    .ok {
+      color: var(--ok);
+      font-weight: 600;
+    }
+
+    @media (max-width: 920px) {
+      .hero-card {
+        grid-template-columns: 1fr;
+      }
+      .cards, .steps {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .hero {
+        padding-top: 28px;
+      }
+      .hero-card {
+        padding: 20px;
+      }
+      .cards, .steps, .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+      .cta {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>护眼色调</h1>
-            <p class="subtitle">智能调整网页色调，守护您的双眼，减少长时间浏览带来的眼疲劳</p>
-            <a href="https://chromewebstore.google.com/detail/%E6%8A%A4%E7%9C%BC%E8%89%B2%E8%B0%83/hbcplgamdcjcmkonjcdgdioijkndhghi" class="cta-button" target="_blank">立即添加至Chrome</a>
+  <header class="hero">
+    <div class="container">
+      <div class="hero-card">
+        <div>
+          <h1>护眼色调</h1>
+          <p class="subtitle">在工作、学习和夜间阅读时自动调节页面色调与亮度，减少刺眼高对比带来的疲劳感，帮助你更稳定地长期用眼。</p>
+          <a class="cta" href="https://chromewebstore.google.com/detail/%E6%8A%A4%E7%9C%BC%E8%89%B2%E8%B0%83/hbcplgamdcjcmkonjcdgdioijkndhghi" target="_blank" rel="noopener noreferrer">立即添加到 Chrome</a>
         </div>
-    </header>
+        <aside class="hero-metrics" aria-label="扩展关键信息">
+          <div class="metrics-grid">
+            <div class="metric"><strong>320+</strong><span>安装用户</span></div>
+            <div class="metric"><strong>5.0</strong><span>用户评分</span></div>
+            <div class="metric"><strong>97.5KiB</strong><span>轻量体积</span></div>
+            <div class="metric"><strong class="ok">无跟踪</strong><span>不采集个人数据</span></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </header>
 
-    <section class="features">
-        <div class="container">
-            <div class="feature-card">
-                <div class="feature-icon">🎨</div>
-                <h2>色调调整</h2>
-                <p>一键修改网页背景色调，营造柔和阅读环境，模拟夜间模式以保护视力。</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">☀️</div>
-                <h2>亮度调节</h2>
-                <p>智能降低屏幕亮度，避免强光刺眼，让眼睛在任何光线下都感到舒适。</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🛡️</div>
-                <h2>简单高效</h2>
-                <p>轻量级设计，仅97.5KiB，无数据收集，隐私安全，支持多语言。</p>
-            </div>
-        </div>
+  <main class="container">
+    <section class="section" aria-labelledby="features-title">
+      <h2 id="features-title">核心能力</h2>
+      <p class="section-p">不改变你的工作流程，只减少屏幕刺激。打开即用，适合程序员、设计师、学生和长时间阅读用户。</p>
+      <div class="cards">
+        <article class="card">
+          <h3>色温与色调调节</h3>
+          <p>对页面进行柔和偏暖处理，降低蓝光刺激，长时间阅读更舒适。</p>
+        </article>
+        <article class="card">
+          <h3>亮度与对比优化</h3>
+          <p>在保留内容清晰度的前提下压低刺眼高亮区域，减少眼干与酸胀感。</p>
+        </article>
+        <article class="card">
+          <h3>轻量且隐私友好</h3>
+          <p>不依赖复杂权限，不上传浏览内容，简单稳定，专注护眼功能。</p>
+        </article>
+      </div>
     </section>
 
-    <section class="benefits">
-        <div class="container">
-            <h2>为什么选择护眼色调？</h2>
-            <ul>
-                <li>减少眼疲劳：长时间上网后，眼睛不再干涩酸痛。</li>
-                <li>提升浏览体验：色调自适应，适合工作、学习或娱乐。</li>
-                <li>科学护眼：基于专业亮度调节，守护视力健康。</li>
-                <li>320+ 用户信赖：已帮助无数人重获舒适浏览。</li>
-            </ul>
+    <section class="section" aria-labelledby="steps-title">
+      <h2 id="steps-title">3 步开始使用</h2>
+      <div class="steps">
+        <div class="step">
+          <span class="num">1</span>
+          <h3>安装扩展</h3>
+          <p>点击上方按钮进入 Chrome 应用商店并安装。</p>
         </div>
+        <div class="step">
+          <span class="num">2</span>
+          <h3>开启护眼模式</h3>
+          <p>首次打开扩展后，按自己的环境选择偏好色调。</p>
+        </div>
+        <div class="step">
+          <span class="num">3</span>
+          <h3>按需微调</h3>
+          <p>白天保持清晰，夜间适当偏暖，降低连续用眼压力。</p>
+        </div>
+      </div>
     </section>
 
-    <section class="reviews">
-        <div class="container">
-            <h2>用户评价</h2>
-            <div class="rating">⭐⭐⭐⭐⭐ 5.0 (基于2条评价)</div>
-            <p class="review-quote">"这款扩展太棒了！色调调整后，眼睛舒服多了，强烈推荐！"</p>
-            <a href="https://chromewebstore.google.com/detail/%E6%8A%A4%E7%9C%BC%E8%89%B2%E8%B0%83/hbcplgamdcjcmkonjcdgdioijkndhghi" class="cta-button" target="_blank">查看更多评价</a>
-        </div>
+    <section class="section" aria-labelledby="faq-title">
+      <h2 id="faq-title">常见问题</h2>
+      <div class="faq">
+        <article class="faq-item">
+          <strong>会影响网页内容显示吗？</strong>
+          <p>仅调整显示层视觉参数，不改动网页原始内容与布局结构。</p>
+        </article>
+        <article class="faq-item">
+          <strong>是否会收集我的浏览数据？</strong>
+          <p>当前版本不做个人数据追踪，主要用于本地显示优化。</p>
+        </article>
+        <article class="faq-item">
+          <strong>适合哪些使用场景？</strong>
+          <p>文档阅读、夜间学习、长期办公、网页开发与表格处理都适用。</p>
+        </article>
+      </div>
     </section>
+  </main>
 
-    <footer>
-        <div class="container">
-            <p>&copy; 2025 护眼色调扩展。已安装用户：320+ | 版本：1.0</p>
-            <a href="https://chromewebstore.google.com/detail/%E6%8A%A4%E7%9C%BC%E8%89%B2%E8%B0%83/hbcplgamdcjcmkonjcdgdioijkndhghi" class="cta-button" target="_blank" style="margin-top: 10px; display: inline-block;">现在就试试吧！</a>
-        </div>
-    </footer>
+  <footer class="container footer">
+    <div>© 2026 护眼色调扩展</div>
+    <div>
+      <a href="/">返回首页</a>
+      <a href="/privacy.html">隐私政策</a>
+      <a href="/contact.html">联系我们</a>
+    </div>
+  </footer>
 </body>
 </html>
