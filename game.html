@@ -54,6 +54,19 @@
         color: var(--muted);
     }
 
+    .world-event-top .q {
+        display: inline-flex;
+        width: 14px;
+        height: 14px;
+        border-radius: 999px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(138, 168, 206, 0.5);
+        font-size: 10px;
+        margin-left: 3px;
+        color: #d0e4ff;
+    }
+
     .container {
         display: grid;
         grid-template-columns: 300px minmax(560px, 1fr) 280px;
@@ -903,6 +916,35 @@
         box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
     }
 
+    #battle-panel.simple-mode .battle-arena {
+        display: none;
+    }
+
+    #battle-panel.simple-mode #battleRoundResult {
+        margin: 6px 0 0;
+        padding: 8px 10px;
+    }
+
+    .battle-panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 4px;
+    }
+
+    .battle-mode-btn {
+        min-width: 74px;
+        text-align: center;
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(118, 146, 186, 0.45);
+        background: rgba(28, 39, 58, 0.85);
+        color: #d7e6f8;
+        cursor: pointer;
+    }
+
     #battle-panel.shake {
         animation: battle-panel-shake 140ms ease-out 1;
     }
@@ -929,6 +971,196 @@
         border-color: rgba(122, 156, 198, 0.35);
     }
 
+    .battle-arena {
+        display: grid;
+        grid-template-columns: minmax(170px, 1fr) minmax(180px, 220px) minmax(170px, 1fr);
+        gap: 10px;
+        align-items: stretch;
+        margin-bottom: 8px;
+    }
+
+    .battle-unit-card {
+        background: rgba(19, 28, 42, 0.9);
+        border: 1px solid rgba(110, 142, 182, 0.4);
+        border-radius: 8px;
+        padding: 8px;
+        display: grid;
+        gap: 6px;
+    }
+
+    .battle-unit-card.active {
+        border-color: rgba(255, 214, 116, 0.9);
+        box-shadow: 0 0 12px rgba(255, 204, 91, 0.4);
+    }
+
+    .battle-unit-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+    }
+
+    .battle-unit-avatar {
+        height: 58px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 34px;
+        line-height: 1;
+        background: rgba(11, 17, 27, 0.42);
+        border-radius: 6px;
+    }
+
+    .cd-track {
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(25, 37, 55, 0.9);
+        border: 1px solid rgba(110, 142, 182, 0.35);
+        overflow: hidden;
+    }
+
+    .cd-fill {
+        height: 100%;
+        width: 100%;
+        background: linear-gradient(90deg, #88c2ff, #57a1ff);
+        transform-origin: left center;
+    }
+
+    .cd-fill.enemy {
+        background: linear-gradient(90deg, #ffbf77, #ff9668);
+    }
+
+    .battle-center {
+        display: grid;
+        align-content: center;
+        gap: 8px;
+    }
+
+    #battleTurnBanner {
+        text-align: center;
+        border: 1px solid rgba(110, 142, 182, 0.35);
+        border-radius: 999px;
+        padding: 4px 8px;
+        background: rgba(23, 32, 46, 0.8);
+    }
+
+    .battle-bars {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    .battle-bar-row {
+        display: grid;
+        grid-template-columns: 74px 1fr auto;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+    }
+
+    .battle-bar-label {
+        color: #d3e6f8;
+        white-space: nowrap;
+    }
+
+    .battle-bar-track {
+        position: relative;
+        height: 12px;
+        border-radius: 999px;
+        background: rgba(36, 49, 68, 0.85);
+        overflow: hidden;
+        border: 1px solid rgba(98, 126, 162, 0.42);
+    }
+
+    .battle-bar-lag,
+    .battle-bar-fill {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+        transform-origin: left center;
+    }
+
+    .battle-bar-lag {
+        background: rgba(255, 118, 118, 0.62);
+        transition: transform 380ms ease-out;
+    }
+
+    .battle-bar-fill {
+        background: linear-gradient(90deg, #5ea8ff, #7ad8ff);
+        transition: transform 120ms linear;
+    }
+
+    .battle-bar-fill.enemy {
+        background: linear-gradient(90deg, #ff8768, #ffb06c);
+    }
+
+    .battle-bar-value {
+        color: #f2f7ff;
+        min-width: 114px;
+        text-align: left;
+        font-variant-numeric: tabular-nums;
+        font-size: 12px;
+    }
+
+    .battle-delta {
+        font-size: 12px;
+        min-height: 16px;
+        color: #c8d9ec;
+    }
+
+    .battle-delta.hit {
+        color: #ff8e8e;
+    }
+
+    .battle-delta.crit {
+        color: #ffd56f;
+        text-shadow: 0 0 6px rgba(255, 213, 111, 0.5);
+        font-weight: 700;
+    }
+
+    .battle-delta.heal {
+        color: #7cffac;
+    }
+
+    .summary-pill {
+        display: inline-block;
+        margin: 0 4px 4px 0;
+        padding: 2px 7px;
+        border-radius: 999px;
+        border: 1px solid rgba(118, 146, 186, 0.45);
+        background: rgba(26, 37, 56, 0.82);
+        font-size: 12px;
+        color: #d7e6f8;
+    }
+
+    .summary-pill.damage { color: #ffb3b3; border-color: rgba(255, 133, 133, 0.5); }
+    .summary-pill.heal { color: #9cf2bc; border-color: rgba(132, 228, 164, 0.45); }
+    .summary-pill.cd { color: #a6d0ff; }
+    .summary-pill.hp { color: #ffd8a1; }
+    .summary-pill.enemy { color: #ffcf9d; border-color: rgba(255, 176, 112, 0.45); }
+
+    .summary-line {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-bottom: 4px;
+    }
+
+    .summary-compact {
+        font-size: 12px;
+        line-height: 1.35;
+        color: #d4e6fb;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .summary-compact.heal {
+        color: #9cf2bc;
+    }
+
     #battleLogList {
         max-height: 110px;
         overflow-y: auto;
@@ -938,12 +1170,41 @@
     }
 
     .battle-log-line {
-        padding: 3px 2px;
+        padding: 4px 6px;
         border-bottom: 1px dashed rgba(110, 142, 182, 0.2);
+        border-left: 2px solid rgba(124, 154, 194, 0.45);
+        border-radius: 3px;
+        background: rgba(20, 29, 42, 0.36);
     }
 
     .battle-log-line.fade {
         opacity: 0.56;
+    }
+
+    .battle-log-line.crit {
+        border-left-color: rgba(255, 210, 74, 0.95);
+        color: #ffe7a4;
+        text-shadow: 0 0 5px rgba(255, 208, 103, 0.55);
+    }
+
+    .battle-log-line.hit {
+        border-left-color: rgba(126, 232, 160, 0.85);
+    }
+
+    .battle-log-line.miss {
+        border-left-color: rgba(142, 176, 225, 0.78);
+        color: #b8cbe2;
+    }
+
+    #battleResultCard {
+        margin-top: 8px;
+        background: rgba(16, 24, 37, 0.88);
+        border: 1px solid rgba(117, 147, 189, 0.44);
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 12px;
+        line-height: 1.5;
+        color: #d7e8f8;
     }
 
     #battle-hit-flash {
@@ -971,6 +1232,12 @@
         50% { transform: translateX(calc(-50% + 3px)) translateY(0); }
         75% { transform: translateX(calc(-50% - 2px)) translateY(0); }
         100% { transform: translateX(-50%) translateY(0); }
+    }
+
+    @media (max-width: 820px) {
+        .battle-arena {
+            grid-template-columns: 1fr;
+        }
     }
 
     #craft-panel,
@@ -1088,6 +1355,7 @@
         <span>视角 <span id="camera-mode-label">跟随</span></span>
         <span>观察 (<span id="camera-x">5000</span>, <span id="camera-y">5000</span>)</span>
         <span>缩放 <span id="zoom-label">巡视</span></span>
+        <span id="worldEventTop" class="world-event-top">世界事件：无 <span class="q">?</span></span>
     </div>
 </header>
 
@@ -1217,9 +1485,46 @@
 <div id="item-codex-modal" class="hidden"></div>
 <div id="equip-slot-menu" class="hidden"></div>
 <div id="battle-panel" class="hidden">
-    <div id="battleSummary" style="font-size:13px; margin-bottom:6px;"></div>
-    <div id="battleRoundResult" class="minor">等待回合结算...</div>
+    <div class="battle-panel-head">
+        <div id="battleSummary" style="font-size:13px; margin-bottom:0;"></div>
+        <button id="battleInfoModeBtn" class="battle-mode-btn">简化模式</button>
+    </div>
+    <div class="battle-arena">
+        <div id="battleSelfCard" class="battle-unit-card self">
+            <div class="battle-unit-head">
+                <span id="battleSelfName">ark1</span>
+                <span id="battleSelfStatus" class="small-note">待命</span>
+            </div>
+            <div id="battleSelfAvatar" class="battle-unit-avatar">🧍</div>
+            <div class="cd-track"><div id="battleSelfCdFill" class="cd-fill"></div></div>
+            <div class="battle-bar-track">
+                <div id="battleSelfLagBar" class="battle-bar-lag"></div>
+                <div id="battleSelfFillBar" class="battle-bar-fill"></div>
+            </div>
+            <div id="battleSelfValue" class="battle-bar-value">0/0 (0%)</div>
+            <div id="battleSelfDelta" class="battle-delta">-</div>
+        </div>
+        <div class="battle-center">
+            <div id="battleTurnBanner" class="small-note">轮到我方</div>
+            <div id="battleRoundResult" class="minor">等待回合结算...</div>
+        </div>
+        <div id="battleEnemyCard" class="battle-unit-card enemy">
+            <div class="battle-unit-head">
+                <span id="battleEnemyLabel">敌方</span>
+                <span id="battleEnemyStatus" class="small-note">待命</span>
+            </div>
+            <div id="battleEnemyAvatar" class="battle-unit-avatar">👹</div>
+            <div class="cd-track"><div id="battleEnemyCdFill" class="cd-fill enemy"></div></div>
+            <div class="battle-bar-track">
+                <div id="battleEnemyLagBar" class="battle-bar-lag"></div>
+                <div id="battleEnemyFillBar" class="battle-bar-fill enemy"></div>
+            </div>
+            <div id="battleEnemyValue" class="battle-bar-value">0/0 (0%)</div>
+            <div id="battleEnemyDelta" class="battle-delta">-</div>
+        </div>
+    </div>
     <div id="battleLogList"></div>
+    <div id="battleResultCard" class="hidden"></div>
 </div>
 <div id="battle-hit-flash"></div>
 <div id="craft-panel" class="hidden">
@@ -1272,7 +1577,7 @@ const SAVE_KEY = "simpleworld_save_v2";
 const BALANCE_CONFIG = {
     timing: {
         autoStepMs: AUTO_STEP_MS,
-        battleStepMs: 1600,
+        battleStepMs: 2300,
         gatherBaseMs: GATHER_BASE_MS,
         buildingTickMs: BUILDING_PRODUCTION_TICK_MS,
         monsterRespawnMs: MONSTER_RESPAWN_MS
@@ -1280,8 +1585,8 @@ const BALANCE_CONFIG = {
     combat: {
         lowHpRetreatRatio: 0.35,
         lowHpReturnRatio: 0.42,
-        monsterHpScale: 1.8,
-        playerDamageScale: 0.54,
+        monsterHpScale: 2.15,
+        playerDamageScale: 0.42,
         monsterDamageScale: 1.18,
         injuryDebuffRatio: 0.85,
         injuryDurationMs: 120000
@@ -1638,7 +1943,11 @@ let rightPanelTab = "resource";
 let resourcePanelTab = "inventory";
 let showEquipAttrDetail = false;
 let showWorldSummary = false;
-let battleRoundLogs = [];
+let battleSummaryData = null;
+let battleUiEnemyHpDisplay = 0;
+let battleUiSelfHpDisplay = 0;
+let battleMetrics = null;
+let battleInfoMode = "simple";
 let devForceMonster = false;
 let devFixedDrops = false;
 let baitBoostUntilMs = 0;
@@ -1833,8 +2142,30 @@ const itemCodexModalEl = document.getElementById("item-codex-modal");
 const equipSlotMenuEl = document.getElementById("equip-slot-menu");
 const battlePanelEl = document.getElementById("battle-panel");
 const battleSummaryEl = document.getElementById("battleSummary");
+const battleInfoModeBtn = document.getElementById("battleInfoModeBtn");
+const worldEventTopEl = document.getElementById("worldEventTop");
+const battleSelfCardEl = document.getElementById("battleSelfCard");
+const battleEnemyCardEl = document.getElementById("battleEnemyCard");
+const battleSelfNameEl = document.getElementById("battleSelfName");
+const battleSelfStatusEl = document.getElementById("battleSelfStatus");
+const battleEnemyStatusEl = document.getElementById("battleEnemyStatus");
+const battleSelfAvatarEl = document.getElementById("battleSelfAvatar");
+const battleEnemyAvatarEl = document.getElementById("battleEnemyAvatar");
+const battleSelfCdFillEl = document.getElementById("battleSelfCdFill");
+const battleEnemyCdFillEl = document.getElementById("battleEnemyCdFill");
+const battleSelfDeltaEl = document.getElementById("battleSelfDelta");
+const battleEnemyDeltaEl = document.getElementById("battleEnemyDelta");
+const battleTurnBannerEl = document.getElementById("battleTurnBanner");
+const battleEnemyLabelEl = document.getElementById("battleEnemyLabel");
+const battleEnemyLagBarEl = document.getElementById("battleEnemyLagBar");
+const battleEnemyFillBarEl = document.getElementById("battleEnemyFillBar");
+const battleEnemyValueEl = document.getElementById("battleEnemyValue");
+const battleSelfLagBarEl = document.getElementById("battleSelfLagBar");
+const battleSelfFillBarEl = document.getElementById("battleSelfFillBar");
+const battleSelfValueEl = document.getElementById("battleSelfValue");
 const battleRoundResultEl = document.getElementById("battleRoundResult");
 const battleLogListEl = document.getElementById("battleLogList");
+const battleResultCardEl = document.getElementById("battleResultCard");
 const battleHitFlashEl = document.getElementById("battle-hit-flash");
 const craftPanelEl = document.getElementById("craft-panel");
 const craftSummaryEl = document.getElementById("craftSummary");
@@ -2806,6 +3137,23 @@ function triggerBattleImpactFx(kind = "hit") {
     }
 }
 
+function triggerEnemyKillBarClearFx() {
+    if (!battleEnemyFillBarEl || !battleEnemyLagBarEl || !battleState) return;
+    const pct = Math.max(0, Math.min(1, battleState.hp / Math.max(1, battleState.maxHp)));
+    battleEnemyFillBarEl.style.transform = `scaleX(${pct})`;
+    battleEnemyLagBarEl.style.transform = `scaleX(${pct})`;
+    battleEnemyFillBarEl.style.transition = "transform 120ms ease-out";
+    battleEnemyLagBarEl.style.transition = "transform 120ms ease-out";
+    requestAnimationFrame(() => {
+        battleEnemyFillBarEl.style.transform = "scaleX(0)";
+        battleEnemyLagBarEl.style.transform = "scaleX(0)";
+    });
+    setTimeout(() => {
+        battleEnemyFillBarEl.style.transition = "";
+        battleEnemyLagBarEl.style.transition = "";
+    }, 160);
+}
+
 function monsterLevelAt(x, y) {
     const dist = Math.abs(x - HOME_X) + Math.abs(y - HOME_Y);
     if (dist <= 5) return 1;
@@ -2817,6 +3165,24 @@ function monsterLevelAt(x, y) {
 
 function getMonsterDropProfile(type) {
     return MONSTER_CODEX.find((m) => m.type === type) || null;
+}
+
+function getMonsterAvatar(type) {
+    if (type === "天劫妖王") return "🐲";
+    if (type === "精英妖将") return "🦔";
+    if (type === "妖将") return "🦂";
+    if (type === "妖兽") return "🦇";
+    return "🐭";
+}
+
+function getMonsterAttackCdMs(type, level = 1) {
+    const byType = type === "天劫妖王" ? 5000
+        : type === "精英妖将" ? 4400
+            : type === "妖将" ? 3800
+                : type === "妖兽" ? 3300
+                    : 2800;
+    const levelAdj = Math.max(0, Math.min(600, (level - 1) * 60));
+    return Math.max(2200, Math.min(5000, byType - levelAdj));
 }
 
 function getMonsterSeed(x, y) {
@@ -2906,9 +3272,16 @@ function startBattleWith(monster) {
         maxHp: monster.maxHp,
         atk: monster.atk,
         def: monster.def,
-        rounds: 0
+        rounds: 0,
+        playerCdMs: 0,
+        enemyCdMs: 0,
+        playerAttackCdMs: 5000,
+        enemyAttackCdMs: getMonsterAttackCdMs(monster.type, monster.level)
     };
-    battleRoundLogs = [`遭遇 ${monster.type} Lv.${monster.level}`];
+    battleSummaryData = null;
+    battleUiEnemyHpDisplay = monster.hp;
+    battleUiSelfHpDisplay = avatarHp;
+    battleMetrics = { dealt: 0, taken: 0, crits: 0, heals: 0, startMs: simulationTimeMs };
     lastBattleFrame = null;
     movementStatusText = `遭遇 ${monster.type} Lv.${monster.level}，进入战斗`;
     return true;
@@ -2917,15 +3290,16 @@ function startBattleWith(monster) {
 function grantBattleLoot(monster) {
     const riskBonus = getRiskRewardBonusAt(monster.x, monster.y);
     const eventDropMul = 1 + (getWorldEventEffects().dropMul || 0);
+    const rewardBoost = 1.6;
     const tierMul = monster.type === "天劫妖王" ? 3.2 : monster.type === "精英妖将" ? 2.2 : monster.type === "妖将" ? 1.5 : 1;
-    const gainStone = Math.floor((8 + monster.level * 4) * (1 + riskBonus * 0.9) * tierMul * eventDropMul);
-    const gainHerb = monster.level >= 2 ? Math.max(1, Math.floor((riskBonus >= 0.35 ? 2 : 1) * tierMul)) : 0;
+    const gainStone = Math.floor((8 + monster.level * 4) * (1 + riskBonus * 0.9) * tierMul * eventDropMul * rewardBoost);
+    const gainHerb = monster.level >= 2 ? Math.max(1, Math.floor((riskBonus >= 0.35 ? 2 : 1) * tierMul * rewardBoost)) : 0;
     const eq = getEquipmentBonus();
     const rareChance = Math.min(BALANCE_CONFIG.drops.rareMax, BALANCE_CONFIG.drops.rareBase + sharedStats.fortune + Math.floor(eq.luck * 0.8));
     const coreBase = monster.type === "妖将" ? 22 : monster.type === "妖兽" ? 14 : 8;
     const coreChance = Math.min(55, coreBase + Math.floor(sharedStats.fortune * 0.6));
-    const gainRare = monster.level >= 3 && (devFixedDrops || (simpleHash(monster.x + dayCount, monster.y + dayCombatWins) % 100 < (rareChance + Math.floor(riskBonus * 18) + (monster.type === "天劫妖王" ? 22 : monster.type === "精英妖将" ? 12 : 0)))) ? Math.max(1, Math.floor((tierMul / 1.5) * eventDropMul)) : 0;
-    const gainCore = devFixedDrops ? Math.max(1, Math.floor(tierMul * eventDropMul)) : (simpleHash(monster.x + dayCount * 3, monster.y + dayCombatWins * 11) % 100 < coreChance ? Math.max(1, Math.floor(tierMul * eventDropMul)) : 0);
+    const gainRare = monster.level >= 3 && (devFixedDrops || (simpleHash(monster.x + dayCount, monster.y + dayCombatWins) % 100 < (rareChance + Math.floor(riskBonus * 18) + (monster.type === "天劫妖王" ? 22 : monster.type === "精英妖将" ? 12 : 0)))) ? Math.max(1, Math.floor((tierMul / 1.5) * eventDropMul * rewardBoost)) : 0;
+    const gainCore = devFixedDrops ? Math.max(1, Math.floor(tierMul * eventDropMul * rewardBoost)) : (simpleHash(monster.x + dayCount * 3, monster.y + dayCombatWins * 11) % 100 < coreChance ? Math.max(1, Math.floor(tierMul * eventDropMul * rewardBoost)) : 0);
     const chestSmallChance = Math.min(95, BALANCE_CONFIG.drops.chestSmallBase + Math.floor(riskBonus * 42) + monster.level * 7);
     const chestMediumChance = Math.min(75, BALANCE_CONFIG.drops.chestMediumBase + Math.floor(riskBonus * 36) + (monster.level >= 2 ? 14 : 0));
     const chestLargeChance = Math.min(55, BALANCE_CONFIG.drops.chestLargeBase + Math.floor(riskBonus * 20) + (monster.type === "妖将" ? 14 : monster.type === "精英妖将" ? 24 : monster.type === "天劫妖王" ? 40 : 0));
@@ -2966,10 +3340,12 @@ function grantBattleLoot(monster) {
     if (gainVoidArmor > 0) discoveredItemSet.add("voidArmor");
     if (gainDragonRelic > 0) discoveredItemSet.add("dragonRelic");
     dayCombatWins += 1;
-    addLog(`战斗胜利：${monster.type}，掉落 灵石×${gainStone}${gainHerb ? ` / 灵草×${gainHerb}` : ""}${gainCore ? ` / 妖丹×${gainCore}` : ""}${gainRare ? ` / 异晶×${gainRare}` : ""}${gainSmallChest ? ` / 小宝箱×${gainSmallChest}` : ""}${gainMediumChest ? ` / 中宝箱×${gainMediumChest}` : ""}${gainLargeChest ? ` / 大宝箱×${gainLargeChest}` : ""}${gainThunderBlade ? " / 雷劫断岳×1" : ""}${gainPhoenixBow ? " / 赤凰长弓×1" : ""}${gainVoidArmor ? " / 太虚战铠×1" : ""}${gainDragonRelic ? " / 天龙遗宝×1" : ""}`);
+    const lootText = `灵石×${gainStone}${gainHerb ? ` / 灵草×${gainHerb}` : ""}${gainCore ? ` / 妖丹×${gainCore}` : ""}${gainRare ? ` / 异晶×${gainRare}` : ""}${gainSmallChest ? ` / 小宝箱×${gainSmallChest}` : ""}${gainMediumChest ? ` / 中宝箱×${gainMediumChest}` : ""}${gainLargeChest ? ` / 大宝箱×${gainLargeChest}` : ""}${gainThunderBlade ? " / 雷劫断岳×1" : ""}${gainPhoenixBow ? " / 赤凰长弓×1" : ""}${gainVoidArmor ? " / 太虚战铠×1" : ""}${gainDragonRelic ? " / 天龙遗宝×1" : ""}`;
+    addLog(`战斗胜利：${monster.type}，掉落 ${lootText}`);
+    return lootText;
 }
 
-function resolveBattleStep() {
+function resolveBattleStep(elapsedMs = 100) {
     if (!battleState) return;
     if (avatarHp <= 0) return;
     const tactic = currentBattleTactic();
@@ -2982,56 +3358,107 @@ function resolveBattleStep() {
         hit: Math.min(0.98, Math.max(0.55, meBase.hit + tactic.hitBonus - (debuffActive ? 0.03 : 0))),
         dodge: Math.min(0.55, Math.max(0.03, meBase.dodge + tactic.dodgeBonus - (debuffActive ? 0.02 : 0)))
     };
-    battleState.rounds += 1;
-    const rollA = (simpleHash(battleState.x + battleState.rounds * 7, battleState.y + dayCount * 17) % 1000) / 1000;
-    const rollB = (simpleHash(battleState.x + battleState.rounds * 13, battleState.y + dayCount * 23) % 1000) / 1000;
-    const avatarHit = rollA <= me.hit;
-    const monsterHit = rollB > me.dodge;
-    const avatarDmgBase = avatarHit ? Math.max(1, me.atk - battleState.def + (battleState.rounds % 3)) : 0;
-    const rawMonsterDmg = Math.floor(battleState.atk * 0.58) - Math.floor(me.def * 0.28);
-    const bossMul = battleState.type === "天劫妖王" ? 1.35 : battleState.type === "精英妖将" ? 1.18 : 1;
-    const monsterDmgBase = monsterHit ? Math.max(2, Math.floor(rawMonsterDmg * bossMul)) : 0;
-    const critRoll = (simpleHash(battleState.x + battleState.rounds * 29, battleState.y + dayCount * 5) % 1000) / 1000;
-    const didCrit = avatarHit && critRoll < (0.1 + tactic.critBonus);
-    const avatarScaled = Math.max(0, Math.floor(avatarDmgBase * BALANCE_CONFIG.combat.playerDamageScale));
-    const monsterScaled = Math.max(0, Math.floor(monsterDmgBase * BALANCE_CONFIG.combat.monsterDamageScale * tactic.incomingMul * (1 + (getWorldEventEffects().monsterDamageMul || 0))));
-    const finalAvatarDmg = didCrit ? Math.max(1, Math.floor(avatarScaled * 1.6)) : avatarScaled;
-    const hpBefore = { enemy: battleState.hp, self: avatarHp };
-    battleState.hp = Math.max(0, battleState.hp - finalAvatarDmg);
-    avatarHp = Math.max(0, avatarHp - monsterScaled);
+    battleState.playerCdMs = Math.max(0, (battleState.playerCdMs || 0) - elapsedMs);
+    battleState.enemyCdMs = Math.max(0, (battleState.enemyCdMs || 0) - elapsedMs);
+    const eventLines = [];
+    let detailMeta = "";
+    let lastEnemyLoss = 0;
+    let lastSelfLoss = 0;
+    let lastCrit = false;
+    const itemEvents = [];
+
+    if (battleState.playerCdMs <= 0 && battleState.hp > 0) {
+        battleState.rounds += 1;
+        const seed = battleState.rounds * 11 + 1;
+        const rollHit = (simpleHash(battleState.x + seed, battleState.y + dayCount * 17) % 1000) / 1000;
+        const avatarHit = rollHit <= me.hit;
+        const avatarDmgBase = avatarHit ? Math.max(1, me.atk - battleState.def + (battleState.rounds % 3)) : 0;
+        const critRoll = (simpleHash(battleState.x + seed * 5, battleState.y + dayCount * 5) % 1000) / 1000;
+        const didCrit = avatarHit && critRoll < (0.1 + tactic.critBonus);
+        const avatarScaled = Math.max(0, Math.floor(avatarDmgBase * BALANCE_CONFIG.combat.playerDamageScale));
+        const finalAvatarDmg = didCrit ? Math.max(1, Math.floor(avatarScaled * 1.6)) : avatarScaled;
+        const hpBeforeEnemy = battleState.hp;
+        battleState.hp = Math.max(0, battleState.hp - finalAvatarDmg);
+        lastEnemyLoss = Math.max(0, hpBeforeEnemy - battleState.hp);
+        lastCrit = didCrit && lastEnemyLoss > 0;
+        if (battleMetrics) {
+            battleMetrics.dealt += Math.max(0, hpBeforeEnemy - battleState.hp);
+            if (didCrit) battleMetrics.crits += 1;
+        }
+        if (didCrit) {
+            spawnCombatFx(`暴击 ${finalAvatarDmg}`, "crit", -6);
+            triggerBattleImpactFx("crit");
+        } else if (avatarHit) {
+            spawnCombatFx(`-${finalAvatarDmg}`, "damage", -6);
+            triggerBattleImpactFx("hit");
+        } else {
+            spawnCombatFx("未命中", "info", -6);
+        }
+        eventLines.push(avatarHit ? `我方 → 敌方 -${finalAvatarDmg}HP${didCrit ? "（暴击）" : ""}` : "我方 → 敌方 未命中");
+        detailMeta += `我方命中检定 ${rollHit.toFixed(3)}；`;
+        battleState.playerCdMs = battleState.playerAttackCdMs || 5000;
+    }
+
+    if (battleState.hp > 0 && battleState.enemyCdMs <= 0) {
+        const seed = battleState.rounds * 13 + 2;
+        const rollDodge = (simpleHash(battleState.x + seed * 3, battleState.y + dayCount * 23) % 1000) / 1000;
+        const monsterHit = rollDodge > me.dodge;
+        const rawMonsterDmg = Math.floor(battleState.atk * 0.58) - Math.floor(me.def * 0.28);
+        const bossMul = battleState.type === "天劫妖王" ? 1.35 : battleState.type === "精英妖将" ? 1.18 : 1;
+        const monsterDmgBase = monsterHit ? Math.max(2, Math.floor(rawMonsterDmg * bossMul)) : 0;
+        const monsterScaled = Math.max(0, Math.floor(monsterDmgBase * BALANCE_CONFIG.combat.monsterDamageScale * tactic.incomingMul * (1 + (getWorldEventEffects().monsterDamageMul || 0))));
+        const hpBeforeSelf = avatarHp;
+        avatarHp = Math.max(0, avatarHp - monsterScaled);
+        lastSelfLoss = Math.max(0, hpBeforeSelf - avatarHp);
+        if (battleMetrics) {
+            battleMetrics.taken += Math.max(0, hpBeforeSelf - avatarHp);
+        }
+        if (monsterHit) spawnCombatFx(`受击 -${monsterScaled}`, "damage", 6);
+        else spawnCombatFx("敌方未命中", "info", 6);
+        eventLines.push(monsterHit ? `敌方 → 我方 -${monsterScaled}HP` : "敌方 → 我方 未命中");
+        detailMeta += `敌方命中检定 ${rollDodge.toFixed(3)}；`;
+        battleState.enemyCdMs = battleState.enemyAttackCdMs || 5000;
+    }
+
     lastBattleFrame = {
         round: battleState.rounds,
         tactic: tactic.label,
-        avatarHit,
-        monsterHit,
-        crit: didCrit,
-        avatarDmg: finalAvatarDmg,
-        monsterDmg: monsterScaled,
-        hitRoll: Number(rollA.toFixed(3)),
-        dodgeRoll: Number(rollB.toFixed(3)),
-        hpBefore,
-        hpAfter: { enemy: battleState.hp, self: avatarHp }
+        actor: "CD",
+        avatarHit: eventLines.some((line) => line.includes("我方 → 敌方 -")),
+        monsterHit: eventLines.some((line) => line.includes("敌方 → 我方 -")),
+        crit: eventLines.some((line) => line.includes("暴击")),
+        avatarDmg: lastEnemyLoss,
+        monsterDmg: lastSelfLoss,
+        hitRoll: 0,
+        dodgeRoll: 0,
+        hpBefore: {},
+        hpAfter: { enemy: battleState.hp, self: avatarHp },
+        eventText: eventLines.join(" ｜ "),
+        detailText: detailMeta,
+        itemText: ""
     };
-    if (didCrit) {
-        spawnCombatFx(`暴击 ${finalAvatarDmg}`, "crit", -6);
-        triggerBattleImpactFx("crit");
-    } else if (avatarHit) {
-        spawnCombatFx(`-${finalAvatarDmg}`, "damage", -6);
-        triggerBattleImpactFx("hit");
-    } else {
-        spawnCombatFx("闪避", "info", -6);
-    }
-    if (monsterHit) {
-        spawnCombatFx(`受击 -${monsterScaled}`, "damage", 6);
-    } else {
-        spawnCombatFx("未命中", "info", 6);
-    }
-    battleRoundLogs.unshift(`R${battleState.rounds} ${tactic.label} | 我方${avatarHit ? "命中" : "未中"}-${finalAvatarDmg}${didCrit ? "(暴)" : ""} / 敌方${monsterHit ? "命中" : "未中"}-${monsterScaled} | 命中检定 ${rollA.toFixed(2)}/${me.hit.toFixed(2)} | 闪避检定 ${rollB.toFixed(2)}/${me.dodge.toFixed(2)}`);
-    if (battleRoundLogs.length > 14) battleRoundLogs.length = 14;
-    movementStatusText = `战斗中 ${battleState.type} HP ${battleState.hp}/${battleState.maxHp}，化身HP ${avatarHp}/${getAvatarMaxHp()}`;
+    movementStatusText = `战斗中 ${battleState.type} HP ${battleState.hp}/${battleState.maxHp}，化身HP ${avatarHp}/${getAvatarMaxHp()}｜CD 我方${Math.ceil(battleState.playerCdMs / 1000)}s 敌方${Math.ceil(battleState.enemyCdMs / 1000)}s`;
     if (battleState.hp <= 0) {
+        battleState.hp = 0;
+        battleUiEnemyHpDisplay = 0;
+        triggerEnemyKillBarClearFx();
         setMonsterHp(battleState.x, battleState.y, 0, battleState.maxHp);
-        grantBattleLoot(battleState);
+        const lootText = grantBattleLoot(battleState);
+        battleSummaryData = {
+            atMs: simulationTimeMs,
+            result: "胜利",
+            enemy: `${battleState.type} Lv.${battleState.level}`,
+            enemyMaxHp: battleState.maxHp,
+            enemyHpEnd: 0,
+            rounds: battleState.rounds,
+            durationSec: battleMetrics ? Math.max(1, Math.round((simulationTimeMs - battleMetrics.startMs) / 1000)) : battleState.rounds,
+            dealt: battleMetrics ? battleMetrics.dealt : Math.max(0, battleState.maxHp),
+            taken: battleMetrics ? battleMetrics.taken : Math.max(0, getAvatarMaxHp() - avatarHp),
+            crits: battleMetrics ? battleMetrics.crits : 0,
+            healed: battleMetrics ? battleMetrics.heals : 0,
+            loot: lootText
+        };
+        battleMetrics = null;
         battleState = null;
         if (shouldReturnHome()) autoObjective = "return_home";
         return;
@@ -3040,21 +3467,28 @@ function resolveBattleStep() {
         avatarInventory.spiritPill -= 1;
         const heal = Math.floor(getAvatarMaxHp() * 0.32);
         avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
+        if (battleMetrics) battleMetrics.heals += heal;
         spawnCombatFx(`+${heal}`, "heal", 12);
-        battleRoundLogs.unshift("触发聚灵丹：回复生命");
+        itemEvents.push(`聚灵丹 +${heal}HP`);
     } else if (avatarHp <= Math.floor(getAvatarMaxHp() * autoUsePillRatio) && (avatarInventory.bloodPill || 0) > 0) {
         avatarInventory.bloodPill -= 1;
         const heal = Math.floor(getAvatarMaxHp() * 0.42);
         avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
+        if (battleMetrics) battleMetrics.heals += heal;
         spawnCombatFx(`+${heal}`, "heal", 12);
-        battleRoundLogs.unshift("触发回血丹：快速回复");
+        itemEvents.push(`回血丹 +${heal}HP`);
     }
     if (avatarHp <= Math.floor(getAvatarMaxHp() * autoUseSalveRatio) && (avatarInventory.healingSalve || 0) > 0) {
         avatarInventory.healingSalve -= 1;
         const heal = Math.floor(getAvatarMaxHp() * 0.22);
         avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
+        if (battleMetrics) battleMetrics.heals += heal;
         spawnCombatFx(`+${heal}`, "heal", 16);
-        battleRoundLogs.unshift("触发回春散：稳定伤势");
+        itemEvents.push(`回春散 +${heal}HP`);
+    }
+    if (lastBattleFrame) {
+        lastBattleFrame.itemText = itemEvents.join("；");
+        lastBattleFrame.crit = lastCrit;
     }
     if (avatarHp <= 0) {
         const riskBonus = getRiskRewardBonusAt(battleState.x, battleState.y);
@@ -3069,6 +3503,21 @@ function resolveBattleStep() {
         avatarMp = 0;
         avatarReviveUntilMs = simulationTimeMs + AVATAR_REVIVE_COOLDOWN_MS;
         injuryDebuffUntilMs = simulationTimeMs + BALANCE_CONFIG.combat.injuryDurationMs;
+        battleSummaryData = {
+            atMs: simulationTimeMs,
+            result: "战败",
+            enemy: `${battleState.type} Lv.${battleState.level}`,
+            enemyMaxHp: battleState.maxHp,
+            enemyHpEnd: battleState.hp,
+            rounds: battleState.rounds,
+            durationSec: battleMetrics ? Math.max(1, Math.round((simulationTimeMs - battleMetrics.startMs) / 1000)) : battleState.rounds,
+            dealt: battleMetrics ? battleMetrics.dealt : Math.max(0, battleState.maxHp - battleState.hp),
+            taken: battleMetrics ? battleMetrics.taken : Math.max(0, getAvatarMaxHp() - avatarHp),
+            crits: battleMetrics ? battleMetrics.crits : 0,
+            healed: battleMetrics ? battleMetrics.heals : 0,
+            loot: `损失灵石 ${lostStone}${lostCore ? ` / 妖丹 ${lostCore}` : ""}`
+        };
+        battleMetrics = null;
         battleState = null;
         autoObjective = "return_home";
         addLog(`化身陨落退回洞府，损失灵石 ${lostStone}${lostCore ? ` / 妖丹 ${lostCore}` : ""}，10分钟后复活`);
@@ -3076,8 +3525,24 @@ function resolveBattleStep() {
     }
     if (avatarHp <= Math.floor(getAvatarMaxHp() * BALANCE_CONFIG.combat.lowHpRetreatRatio)) {
         addLog("化身血量偏低，撤离返城");
+        battleSummaryData = {
+            atMs: simulationTimeMs,
+            result: "撤离",
+            enemy: `${battleState.type} Lv.${battleState.level}`,
+            enemyMaxHp: battleState.maxHp,
+            enemyHpEnd: battleState.hp,
+            rounds: battleState.rounds,
+            durationSec: battleMetrics ? Math.max(1, Math.round((simulationTimeMs - battleMetrics.startMs) / 1000)) : battleState.rounds,
+            dealt: battleMetrics ? battleMetrics.dealt : Math.max(0, battleState.maxHp - battleState.hp),
+            taken: battleMetrics ? battleMetrics.taken : Math.max(0, getAvatarMaxHp() - avatarHp),
+            crits: battleMetrics ? battleMetrics.crits : 0,
+            healed: battleMetrics ? battleMetrics.heals : 0,
+            loot: "无结算掉落"
+        };
+        battleMetrics = null;
         autoObjective = "return_home";
         battleState = null;
+        return;
     }
 }
 
@@ -3414,7 +3879,7 @@ function finishGathering() {
     }
 }
 
-function autoExploreStep() {
+function autoExploreStep(elapsedMs = 100) {
     if (isGathering) return;
     if (avatarSessionExpired) {
         isAutoMode = false;
@@ -3428,7 +3893,7 @@ function autoExploreStep() {
         return;
     }
     if (battleState) {
-        resolveBattleStep();
+        resolveBattleStep(elapsedMs);
         return;
     }
 
@@ -3749,6 +4214,24 @@ function updateHeader() {
     const realmNameEl = document.getElementById("realm-name");
     realmNameEl.className = getRealmStyleClass();
     realmNameEl.textContent = `Lv.${cultivationLevel} ${getRealmName()}`;
+    if (worldEventTopEl) {
+        const eventDef = getWorldEventDef();
+        if (!eventDef) {
+            worldEventTopEl.innerHTML = `世界事件：无 <span class="q">?</span>`;
+            worldEventTopEl.title = "当前无世界事件";
+        } else {
+            const remain = Math.max(0, Math.ceil((worldEventUntilMs - simulationTimeMs) / 1000));
+            const effects = getWorldEventEffects();
+            const detail = [
+                effects.dropMul ? `掉落倍率 +${Math.round(effects.dropMul * 100)}%` : null,
+                effects.monsterSpawnAdd ? `刷怪率 +${Math.round(effects.monsterSpawnAdd * 100)}%` : null,
+                effects.monsterDamageMul ? `怪物伤害 +${Math.round(effects.monsterDamageMul * 100)}%` : null,
+                effects.cultivationMul ? `修炼效率 +${Math.round(effects.cultivationMul * 100)}%` : null
+            ].filter(Boolean).join("；") || "无额外影响";
+            worldEventTopEl.innerHTML = `世界事件：${eventDef.label} (${remain}s) <span class="q">?</span>`;
+            worldEventTopEl.title = `旁白：${eventDef.desc || eventDef.label}\n影响：${detail}`;
+        }
+    }
 }
 
 function renderMap() {
@@ -3942,46 +4425,144 @@ function updateMovementStatus() {
 }
 
 function updateBattlePanel() {
+    if (battleInfoModeBtn) battleInfoModeBtn.textContent = battleInfoMode === "detail" ? "完整模式" : "简化模式";
+    if (battlePanelEl) battlePanelEl.classList.toggle("simple-mode", battleInfoMode === "simple");
     if (!battleState) {
-        battlePanelEl.classList.add("hidden");
+        if (!battleSummaryData || simulationTimeMs - battleSummaryData.atMs > 10000) {
+            battlePanelEl.classList.add("hidden");
+            return;
+        }
+        if (battleSelfCardEl) battleSelfCardEl.classList.remove("active");
+        if (battleEnemyCardEl) battleEnemyCardEl.classList.remove("active");
+        if (battleTurnBannerEl) battleTurnBannerEl.textContent = "战斗已结束";
+        if (battleSelfStatusEl) battleSelfStatusEl.textContent = "待命";
+        if (battleEnemyStatusEl) battleEnemyStatusEl.textContent = "已结算";
+        battleSummaryEl.innerHTML = `⚔ 战斗结算 · ${battleSummaryData.result}`;
+        battleRoundResultEl.textContent = `${battleSummaryData.result} · ${battleSummaryData.enemy}`;
+        battleRoundResultEl.classList.toggle("minor", battleSummaryData.result !== "胜利");
+        battleLogListEl.innerHTML = "";
+        battleLogListEl.style.display = "none";
+        const enemyHpEnd = Math.max(0, battleSummaryData.enemyHpEnd ?? 0);
+        const enemyHpMax = Math.max(1, battleSummaryData.enemyMaxHp ?? 1);
+        const enemyPct = Math.round((enemyHpEnd / enemyHpMax) * 100);
+        battleEnemyLabelEl.textContent = "敌方";
+        battleEnemyValueEl.textContent = `${enemyHpEnd}/${enemyHpMax} (${enemyPct}%)`;
+        battleEnemyFillBarEl.style.transform = `scaleX(${enemyPct / 100})`;
+        battleEnemyLagBarEl.style.transform = `scaleX(${enemyPct / 100})`;
+        battleUiEnemyHpDisplay = enemyHpEnd;
+        if (battleEnemyCdFillEl) battleEnemyCdFillEl.style.transform = "scaleX(0)";
+        if (battleSelfCdFillEl) battleSelfCdFillEl.style.transform = "scaleX(0)";
+        battleResultCardEl.innerHTML = `
+            时长 ${battleSummaryData.durationSec || battleSummaryData.rounds}s ｜ 回合 ${battleSummaryData.rounds} ｜ 总伤害 ${battleSummaryData.dealt} ｜ 承伤 ${battleSummaryData.taken} ｜ 暴击 ${battleSummaryData.crits} ｜ 治疗 ${battleSummaryData.healed || 0}<br>
+            战利品：${battleSummaryData.loot}
+        `;
+        if (battleInfoMode === "detail") {
+            battleResultCardEl.innerHTML += `<br>结算时间：第 ${dayCount} 天 · ${Math.floor(simulationTimeMs / 1000)}s`;
+        }
+        battleResultCardEl.classList.remove("hidden");
+        battlePanelEl.classList.remove("hidden");
         return;
     }
     const profile = getMonsterDropProfile(battleState.type);
     const dropPreview = profile ? profile.drops.map((d) => `${ITEM_DEFS[d.id]?.label || d.id} ${d.chance}`).join(" / ") : "灵石 100%";
     const enemyPct = Math.max(0, Math.round((battleState.hp / Math.max(1, battleState.maxHp)) * 100));
     const selfPct = Math.max(0, Math.round((avatarHp / Math.max(1, getAvatarMaxHp())) * 100));
-    const detail = lastBattleFrame
-        ? `R${lastBattleFrame.round}｜我方${lastBattleFrame.avatarHit ? "命中" : "未中"}${lastBattleFrame.crit ? "(暴击)" : ""} ${lastBattleFrame.avatarDmg}｜敌方${lastBattleFrame.monsterHit ? "命中" : "未中"} ${lastBattleFrame.monsterDmg}｜命中 ${lastBattleFrame.hitRoll} / 闪避 ${lastBattleFrame.dodgeRoll}`
-        : "等待首回合结算...";
     const isBossTier = battleState.type === "天劫妖王" || battleState.type === "精英妖将";
     const bossTag = battleState.type === "天劫妖王" ? "【BOSS】" : battleState.type === "精英妖将" ? "【精英】" : "";
-    battleSummaryEl.innerHTML = `⚔ ${bossTag} ${battleState.type} Lv.${battleState.level} · 回合 ${battleState.rounds}<br>
-        <span class="small-note">敌HP ${battleState.hp}/${battleState.maxHp}（${enemyPct}%） · 我方HP ${avatarHp}/${getAvatarMaxHp()}（${selfPct}%）</span><br>
-        <span class="small-note">敌方属性：攻击 ${battleState.atk} / 防御 ${battleState.def}${isBossTier ? "（高威胁目标）" : ""}</span><br>
-        <span class="small-note">战术：${currentBattleTactic().label}｜掉落预览：${dropPreview}</span>`;
-    let roundResult = "蓄势中...";
+    battleSummaryEl.innerHTML = battleInfoMode === "detail"
+        ? `⚔ ${bossTag} ${battleState.type} Lv.${battleState.level} · 回合 ${battleState.rounds} · CD模式<br><span class="small-note">战术：${currentBattleTactic().label}｜掉落预览：${dropPreview}</span>`
+        : `⚔ ${battleState.type} Lv.${battleState.level}｜CD战斗中`;
+    if (battleSelfNameEl) battleSelfNameEl.textContent = "ark1";
+    if (battleEnemyLabelEl) battleEnemyLabelEl.textContent = `${bossTag || ""}${battleState.type}`;
+    if (battleSelfStatusEl) battleSelfStatusEl.textContent = `攻击CD ${Math.ceil((battleState.playerCdMs || 0) / 1000)}s`;
+    if (battleEnemyStatusEl) battleEnemyStatusEl.textContent = `攻击CD ${Math.ceil((battleState.enemyCdMs || 0) / 1000)}s / ${((battleState.enemyAttackCdMs || 5000) / 1000).toFixed(1)}s`;
+    if (battleTurnBannerEl) battleTurnBannerEl.textContent = "CD并行攻击";
+    if (battleSelfCardEl) battleSelfCardEl.classList.toggle("active", (battleState.playerCdMs || 0) <= 0);
+    if (battleEnemyCardEl) battleEnemyCardEl.classList.toggle("active", (battleState.enemyCdMs || 0) <= 0);
+    if (battleSelfAvatarEl) battleSelfAvatarEl.textContent = "🧍";
+    if (battleEnemyAvatarEl) battleEnemyAvatarEl.textContent = getMonsterAvatar(battleState.type);
+    let roundResult = "双方蓄力中...";
     let minor = true;
     if (lastBattleFrame) {
-        if (lastBattleFrame.crit) {
-            roundResult = `暴击 ${lastBattleFrame.avatarDmg} · 破势一击`;
-            minor = false;
-        } else if (lastBattleFrame.avatarHit) {
-            roundResult = `命中 ${lastBattleFrame.avatarDmg}`;
-            minor = false;
-        } else if (!lastBattleFrame.avatarHit) {
-            roundResult = "本回合未命中";
-            minor = true;
-        }
-        if (lastBattleFrame.monsterHit && lastBattleFrame.monsterDmg > 0) {
-            roundResult += ` ｜ 受击 -${lastBattleFrame.monsterDmg}`;
-        } else {
-            roundResult += " ｜ 敌方未命中";
-        }
+        roundResult = lastBattleFrame.eventText || roundResult;
+        minor = !(lastBattleFrame.eventText || "").includes("-");
     }
     battleRoundResultEl.textContent = roundResult;
     battleRoundResultEl.classList.toggle("minor", minor);
-    const topLogs = battleRoundLogs.slice(0, 6);
-    battleLogListEl.innerHTML = topLogs.map((line, idx) => `<div class="battle-log-line${idx >= 4 ? " fade" : ""}">${line}</div>`).join("") + `<div class="battle-log-line fade">${detail}</div>`;
+    battleUiEnemyHpDisplay = Math.max(battleState.hp, battleUiEnemyHpDisplay - Math.max(1, (battleUiEnemyHpDisplay - battleState.hp) * 0.18));
+    battleUiSelfHpDisplay = Math.max(avatarHp, battleUiSelfHpDisplay - Math.max(1, (battleUiSelfHpDisplay - avatarHp) * 0.2));
+    const enemyLagPct = Math.max(0, Math.round((battleUiEnemyHpDisplay / Math.max(1, battleState.maxHp)) * 100));
+    const selfLagPct = Math.max(0, Math.round((battleUiSelfHpDisplay / Math.max(1, getAvatarMaxHp())) * 100));
+    battleEnemyLabelEl.textContent = `${bossTag}敌方`;
+    battleEnemyValueEl.textContent = `${battleState.hp}/${battleState.maxHp} (${enemyPct}%)`;
+    battleSelfValueEl.textContent = `${avatarHp}/${getAvatarMaxHp()} (${selfPct}%)`;
+    battleEnemyFillBarEl.style.transform = `scaleX(${enemyPct / 100})`;
+    battleEnemyLagBarEl.style.transform = `scaleX(${enemyLagPct / 100})`;
+    battleSelfFillBarEl.style.transform = `scaleX(${selfPct / 100})`;
+    battleSelfLagBarEl.style.transform = `scaleX(${selfLagPct / 100})`;
+    const selfCdBase = Math.max(1, battleState.playerAttackCdMs || 5000);
+    const enemyCdBase = Math.max(1, battleState.enemyAttackCdMs || 5000);
+    const selfCdPct = Math.max(0, Math.min(100, Math.round(((battleState.playerCdMs || 0) / selfCdBase) * 100)));
+    const enemyCdPct = Math.max(0, Math.min(100, Math.round(((battleState.enemyCdMs || 0) / enemyCdBase) * 100)));
+    if (battleSelfCdFillEl) battleSelfCdFillEl.style.transform = `scaleX(${selfCdPct / 100})`;
+    if (battleEnemyCdFillEl) battleEnemyCdFillEl.style.transform = `scaleX(${enemyCdPct / 100})`;
+    if (battleSelfDeltaEl) {
+        const selfLoss = lastBattleFrame?.monsterDmg || 0;
+        battleSelfDeltaEl.className = "battle-delta";
+        if (selfLoss > 0) {
+            battleSelfDeltaEl.textContent = `-${selfLoss} HP`;
+            battleSelfDeltaEl.classList.add("hit");
+        } else if (lastBattleFrame?.itemText) {
+            battleSelfDeltaEl.textContent = lastBattleFrame.itemText;
+            battleSelfDeltaEl.classList.add("heal");
+        } else {
+            battleSelfDeltaEl.textContent = "未受击";
+        }
+    }
+    if (battleEnemyDeltaEl) {
+        const enemyLoss = lastBattleFrame?.avatarDmg || 0;
+        battleEnemyDeltaEl.className = "battle-delta";
+        if (enemyLoss > 0) {
+            battleEnemyDeltaEl.textContent = `-${enemyLoss} HP`;
+            battleEnemyDeltaEl.classList.add(lastBattleFrame?.crit ? "crit" : "hit");
+        } else {
+            battleEnemyDeltaEl.textContent = "未命中";
+        }
+    }
+    battleLogListEl.innerHTML = "";
+    battleLogListEl.style.display = "none";
+    if (battleInfoMode === "simple") {
+        if (battleSelfCardEl) battleSelfCardEl.style.display = "none";
+        if (battleEnemyCardEl) battleEnemyCardEl.style.display = "none";
+        if (battleTurnBannerEl) battleTurnBannerEl.style.display = "none";
+        const selfCdSec = Math.ceil((battleState.playerCdMs || 0) / 1000);
+        const enemyCdSec = Math.ceil((battleState.enemyCdMs || 0) / 1000);
+        const selfLoss = lastBattleFrame?.monsterDmg || 0;
+        const enemyLoss = lastBattleFrame?.avatarDmg || 0;
+        const itemText = lastBattleFrame?.itemText || "无";
+        battleRoundResultEl.innerHTML = `
+            <div class="summary-line">
+                <span class="summary-pill hp">血量 ${avatarHp}/${getAvatarMaxHp()}</span>
+                <span class="summary-pill enemy">敌方 ${battleState.hp}/${battleState.maxHp}</span>
+                <span class="summary-pill cd">CD倒数 我${selfCdSec}s / 敌${enemyCdSec}s</span>
+            </div>
+            <div class="summary-line">
+                <span class="summary-pill damage">本轮扣血 -${selfLoss}</span>
+                <span class="summary-pill enemy">敌方受伤 -${enemyLoss}</span>
+                <span class="summary-pill heal">道具 ${itemText}</span>
+            </div>
+        `;
+        battleRoundResultEl.classList.add("minor");
+    } else {
+        if (battleSelfCardEl) battleSelfCardEl.style.display = "";
+        if (battleEnemyCardEl) battleEnemyCardEl.style.display = "";
+        if (battleTurnBannerEl) {
+            battleTurnBannerEl.style.display = "";
+            if (lastBattleFrame?.detailText) battleTurnBannerEl.textContent = `CD并行攻击｜${lastBattleFrame.detailText}`;
+        }
+        battleRoundResultEl.textContent = lastBattleFrame?.eventText || "双方蓄力中...";
+    }
+    battleResultCardEl.classList.add("hidden");
     battlePanelEl.classList.remove("hidden");
 }
 
@@ -4496,10 +5077,10 @@ function updateSimulation(ms) {
 
     if (isAutoMode && !isGathering) {
         autoAccumulatorMs += scaledMs;
-        const stepMs = battleState ? BALANCE_CONFIG.timing.battleStepMs : BALANCE_CONFIG.timing.autoStepMs;
+        const stepMs = battleState ? 100 : BALANCE_CONFIG.timing.autoStepMs;
         while (autoAccumulatorMs >= stepMs) {
             autoAccumulatorMs -= stepMs;
-            autoExploreStep();
+            autoExploreStep(stepMs);
             renderAll();
             if (isGathering) break;
         }
@@ -4605,6 +5186,7 @@ function renderGameToText() {
         buildTile: buildPanelTile,
         battle: battleState ? { ...battleState } : null,
         battleDetail: lastBattleFrame,
+        battleInfoMode,
         meditating: isMeditating ? { remainingMs: meditateRemainingMs, totalMs: meditateTotalMs } : null,
         gathering: gatheringTarget ? { x: gatheringTarget.x, y: gatheringTarget.y, remainingMs: gatherRemainingMs } : null,
         visible
@@ -4636,7 +5218,7 @@ function buildSavePayload() {
         },
         inventories: { avatar: { ...avatarInventory }, home: { ...homeInventory }, equipment: { ...equipmentInventory } },
         town: { ...town },
-        ui: { rightPanelTab, resourcePanelTab, showEquipAttrDetail, showWorldSummary, inspectText, cameraMode, cameraX, cameraY },
+        ui: { rightPanelTab, resourcePanelTab, showEquipAttrDetail, showWorldSummary, inspectText, cameraMode, cameraX, cameraY, battleInfoMode },
         maps: {
             reservations: reservationBackend.list(),
             homeBuildings: Array.from(homeBuildingMap.entries()),
@@ -4712,6 +5294,7 @@ function applySavePayload(payload) {
     cameraMode = payload.ui?.cameraMode || cameraMode;
     cameraX = Number.isFinite(payload.ui?.cameraX) ? payload.ui.cameraX : cameraX;
     cameraY = Number.isFinite(payload.ui?.cameraY) ? payload.ui.cameraY : cameraY;
+    battleInfoMode = payload.ui?.battleInfoMode === "detail" ? "detail" : "simple";
     if (!["inventory", "bag", "equip"].includes(resourcePanelTab)) resourcePanelTab = "inventory";
     if (cameraMode !== "follow" && cameraMode !== "free") cameraMode = "follow";
     EQUIP_SLOT_DEFS.forEach((slot) => {
@@ -4812,6 +5395,14 @@ returnBtn.addEventListener("click", () => {
     addLog("切换为回城优先，化身将沿路返回洞府");
     renderAll();
 });
+
+if (battleInfoModeBtn) {
+    battleInfoModeBtn.addEventListener("click", () => {
+        battleInfoMode = battleInfoMode === "detail" ? "simple" : "detail";
+        addLog(`战斗信息模式：${battleInfoMode === "detail" ? "完整" : "简化"}`);
+        renderAll();
+    });
+}
 
 meditateBtn.addEventListener("click", () => {
     if (isMeditating) {
