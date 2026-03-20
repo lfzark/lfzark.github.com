@@ -81,6 +81,10 @@
         overflow-y: auto;
     }
 
+    .right-panel {
+        position: relative;
+    }
+
     .map-container {
         position: relative;
         display: flex;
@@ -364,6 +368,17 @@
         transform: translate(-50%, -50%);
         color: #ffc87d;
         font-size: 12px;
+    }
+
+    .home-area-tag {
+        position: absolute;
+        left: 2px;
+        bottom: 2px;
+        font-size: 9px;
+        color: rgba(255, 220, 160, 0.9);
+        pointer-events: none;
+        text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+        z-index: 4;
     }
 
     .target-tag {
@@ -728,15 +743,62 @@
 
     .codex-grid {
         display: grid;
-        grid-template-columns: 1fr;
-        gap: 8px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
     }
 
     .codex-item {
         border-radius: 6px;
-        padding: 8px;
+        padding: 7px;
         border: 1px solid rgba(95, 120, 155, 0.2);
         background: rgba(20, 28, 40, 0.75);
+    }
+    .codex-item-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+    .codex-item-meta {
+        font-size: 11px;
+        color: #a9bdd5;
+        line-height: 1.35;
+    }
+    .codex-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 5px;
+    }
+    .codex-tag {
+        font-size: 10px;
+        color: #dbe9ff;
+        border: 1px solid rgba(137, 160, 199, 0.35);
+        border-radius: 999px;
+        padding: 1px 6px;
+        background: rgba(37, 48, 66, 0.72);
+    }
+    .monster-icon-wrap {
+        width: 20px;
+        height: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        background: rgba(25, 36, 50, 0.85);
+        border: 1px solid rgba(120, 146, 186, 0.35);
+    }
+    .monster-icon-wrap svg {
+        width: 16px;
+        height: 16px;
+        display: block;
+    }
+    .monster-drop-row {
+        margin-top: 4px;
+        font-size: 11px;
+        color: #c0d1e3;
+        line-height: 1.3;
     }
 
     .codex-item.locked {
@@ -753,7 +815,7 @@
         position: fixed;
         right: 24px;
         top: 72px;
-        width: min(420px, calc(100vw - 40px));
+        width: min(520px, calc(100vw - 40px));
         max-height: calc(100vh - 96px);
         overflow-y: auto;
         z-index: 60;
@@ -901,6 +963,11 @@
         padding: 8px;
         font-size: 12px;
     }
+    @media (max-width: 920px) {
+        .codex-grid {
+            grid-template-columns: 1fr;
+        }
+    }
 
     #battle-panel {
         position: fixed;
@@ -914,6 +981,11 @@
         border-radius: 10px;
         padding: 10px 12px;
         box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+        pointer-events: none;
+    }
+
+    #battle-panel * {
+        pointer-events: auto;
     }
 
     #battle-panel.simple-mode .battle-arena {
@@ -1424,6 +1496,7 @@
             <button id="loadBtn" class="mode-btn speed-btn">📂 读档</button>
             <button id="helpBtn" class="mode-btn speed-btn">📘 帮助</button>
         </div>
+        <button id="rebirthBtn" class="control-btn">♻ 重生（清档）</button>
         <button id="shopBtn" class="control-btn">🛒 丹药商店</button>
         <button id="enhanceBtn" class="control-btn">⚒ 装备强化</button>
         <button id="changelogBtn" class="control-btn">📝 更新日志</button>
@@ -1554,8 +1627,8 @@
 </div>
 
 <script>
-const HOME_X = 5000;
-const HOME_Y = 5000;
+let HOME_X = 5000;
+let HOME_Y = 5000;
 const AUTO_STEP_MS = 1000;
 const GATHER_BASE_MS = 9000;
 const MAX_LOGS = 16;
@@ -1664,7 +1737,13 @@ const ITEM_DEFS = {
     thunderBlade: { label: "雷劫断岳", icon: "⚡🗡", rarity: "epic", category: "装备", source: "精英/BOSS掉落", bonus: { atk: 16, hit: 0.05 }, sellValue: 240 },
     phoenixBow: { label: "赤凰长弓", icon: "🔥🏹", rarity: "epic", category: "装备", source: "精英/BOSS掉落", bonus: { atk: 12, hit: 0.06, luck: 2 }, sellValue: 228 },
     voidArmor: { label: "太虚战铠", icon: "🛡️✨", rarity: "epic", category: "装备", source: "精英/BOSS掉落", bonus: { def: 14, dodge: 0.05 }, sellValue: 252 },
-    dragonRelic: { label: "天龙遗宝", icon: "🐉", rarity: "epic", category: "关键道具", source: "BOSS稀有掉落", bonus: { atk: 4, def: 4, luck: 6 }, sellValue: 360 }
+    dragonRelic: { label: "天龙遗宝", icon: "🐉", rarity: "epic", category: "关键道具", source: "BOSS稀有掉落", bonus: { atk: 4, def: 4, luck: 6 }, sellValue: 360 },
+    spiritBlade: { label: "玄霄灵刃", icon: "⚔", rarity: "rare", category: "装备", source: "精英掉落 / 大宝箱", bonus: { atk: 11, hit: 0.03 }, sellValue: 158 },
+    soulRobe: { label: "玄冥法衣", icon: "👘", rarity: "epic", category: "装备", source: "精英/BOSS掉落", bonus: { def: 11, dodge: 0.04, hit: 0.01 }, sellValue: 238 },
+    qilinRing: { label: "麒麟戒", icon: "💍", rarity: "rare", category: "装备", source: "精英掉落", bonus: { luck: 4, dodge: 0.02 }, sellValue: 172 },
+    warDrum: { label: "战魂鼓", icon: "🥁", rarity: "epic", category: "装备", source: "BOSS掉落", bonus: { atk: 7, def: 4, luck: 2 }, sellValue: 276 },
+    ironBodyPill: { label: "淬体丹", icon: "🧪", rarity: "uncommon", category: "消耗品", source: "商店 / 战斗掉落", bonus: { def: 2 }, buff: { type: "battle", def: 2, durationMs: 150000 }, sellValue: 20, usable: true },
+    swiftTalisman: { label: "疾风符", icon: "🪶", rarity: "rare", category: "符咒", source: "商店 / 合成 / 战斗掉落", bonus: { dodge: 0.03, hit: 0.01 }, buff: { type: "battle", dodge: 0.03, hit: 0.01, durationMs: 180000 }, sellValue: 34, usable: true }
 };
 
 const EQUIP_SLOT_DEFS = [
@@ -1677,13 +1756,17 @@ const EQUIP_SLOT_DEFS = [
 
 const ITEM_EQUIP_SLOT = {
     sword: "weaponMain",
+    spiritBlade: "weaponMain",
     thunderBlade: "weaponMain",
     bow: "weaponOff",
     phoenixBow: "weaponOff",
     shield: "armor",
     voidArmor: "armor",
+    soulRobe: "armor",
     artifact: "artifact",
-    dragonRelic: "trinket"
+    warDrum: "artifact",
+    dragonRelic: "trinket",
+    qilinRing: "trinket"
 };
 
 const ITEM_ICON_SVG = {
@@ -1712,6 +1795,12 @@ const ITEM_ICON_SVG = {
     phoenixBow: `<svg viewBox="0 0 32 32"><path d="M8 6c8 3 8 17 0 20" stroke="#bb8a53" stroke-width="2.2" fill="none"/><path d="M8 16h16" stroke="#c6d4ef" stroke-width="1.4"/><path d="M20 7l4 4-4 4-3-4z" fill="#ff875c"/></svg>`,
     voidArmor: `<svg viewBox="0 0 32 32"><path d="M16 4l9 4v8c0 6-3.5 10-9 12-5.5-2-9-6-9-12V8l9-4Z" fill="#8ea0d8"/><circle cx="16" cy="16" r="3" fill="#f4f6ff"/></svg>`,
     dragonRelic: `<svg viewBox="0 0 32 32"><path d="M8 20c0-6 7-11 12-8 3 2 4 6 2 9-3 4-8 5-14 3z" fill="#5bcf87"/><circle cx="19" cy="13" r="1.6" fill="#f2ffd7"/></svg>`,
+    spiritBlade: `<svg viewBox="0 0 32 32"><path d="M8 24l3 3 9-9-3-3z" fill="#f1f6ff"/><path d="M18 7l7-2-2 7-6 6-4-4z" fill="#85a9ff"/><rect x="6" y="25" width="8" height="2" fill="#d4b36f"/></svg>`,
+    soulRobe: `<svg viewBox="0 0 32 32"><path d="M9 9l7-4 7 4 2 15H7z" fill="#6978be"/><path d="M16 8v16" stroke="#d9e2ff" stroke-width="1.4"/><circle cx="16" cy="13" r="2" fill="#f0f4ff"/></svg>`,
+    qilinRing: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="8" fill="#f4d88c"/><circle cx="16" cy="16" r="4" fill="#3f2f1a"/><circle cx="21" cy="11" r="2" fill="#f9f1d1"/></svg>`,
+    warDrum: `<svg viewBox="0 0 32 32"><ellipse cx="16" cy="16" rx="8" ry="10" fill="#8f5b3c"/><ellipse cx="16" cy="16" rx="6" ry="8" fill="#c58a61"/><path d="M10 9h12M10 23h12" stroke="#f2d3a7" stroke-width="1.2"/></svg>`,
+    ironBodyPill: `<svg viewBox="0 0 32 32"><rect x="10" y="7" width="12" height="18" rx="4" fill="#a9d4e6"/><path d="M12 13h8M12 17h8" stroke="#2e5571" stroke-width="1.6"/></svg>`,
+    swiftTalisman: `<svg viewBox="0 0 32 32"><path d="M5 18c5-6 12-8 22-7-4 5-11 9-20 10z" fill="#e9f2ff"/><path d="M7 21c6-1 12-4 17-9" stroke="#7aa8d6" stroke-width="1.5"/></svg>`,
     default: `<svg viewBox="0 0 32 32"><rect x="8" y="8" width="16" height="16" rx="4" fill="#98a7c8"/></svg>`
 };
 
@@ -1720,10 +1809,40 @@ function getItemIconMarkup(itemId) {
     return `<span class="icon-wrap" aria-hidden="true">${svg}</span>`;
 }
 
+const MONSTER_ICON_SVG = {
+    邪祟: `<svg viewBox="0 0 32 32"><path d="M7 24c0-8 4-15 9-15s9 7 9 15z" fill="#8ea0c7"/><circle cx="13" cy="17" r="1.5" fill="#f2f6ff"/><circle cx="19" cy="17" r="1.5" fill="#f2f6ff"/></svg>`,
+    夜蝠: `<svg viewBox="0 0 32 32"><path d="M4 18c5-7 8-10 12-10s7 3 12 10c-4-2-6-2-8-1-2-2-4-2-8 0-2-1-4-1-8 1z" fill="#7f87c4"/><circle cx="16" cy="15" r="2" fill="#dce3ff"/></svg>`,
+    石甲妖: `<svg viewBox="0 0 32 32"><rect x="7" y="8" width="18" height="18" rx="4" fill="#7b8a96"/><path d="M10 12h12M10 16h12M10 20h12" stroke="#cad7e0" stroke-width="1.3"/></svg>`,
+    林魈: `<svg viewBox="0 0 32 32"><path d="M16 5l8 8-8 14-8-14z" fill="#4fae67"/><path d="M16 10v10" stroke="#e4ffea" stroke-width="1.5"/><circle cx="16" cy="17" r="2" fill="#e4ffea"/></svg>`,
+    妖兽: `<svg viewBox="0 0 32 32"><path d="M6 22c1-7 6-12 10-12s9 5 10 12z" fill="#b17d5a"/><circle cx="13" cy="16" r="1.6" fill="#fff2da"/><circle cx="19" cy="16" r="1.6" fill="#fff2da"/></svg>`,
+    毒沼蛛后: `<svg viewBox="0 0 32 32"><circle cx="16" cy="17" r="6" fill="#5e6f44"/><path d="M10 9l3 4M22 9l-3 4M8 15h5M24 15h-5M9 24l4-4M23 24l-4-4" stroke="#afcf73" stroke-width="1.6"/></svg>`,
+    妖将: `<svg viewBox="0 0 32 32"><path d="M16 5l8 5v9c0 5-3 8-8 10-5-2-8-5-8-10v-9z" fill="#7f4f95"/><path d="M12 16h8" stroke="#f4d2ff" stroke-width="1.6"/></svg>`,
+    精英妖将: `<svg viewBox="0 0 32 32"><path d="M16 4l9 5v10c0 5-4 8-9 9-5-1-9-4-9-9V9z" fill="#be6a48"/><path d="M11 15h10M16 10v10" stroke="#ffe1c8" stroke-width="1.6"/></svg>`,
+    深渊魔主: `<svg viewBox="0 0 32 32"><rect x="7" y="6" width="18" height="20" rx="5" fill="#4b4f91"/><circle cx="13" cy="16" r="2" fill="#f3f5ff"/><circle cx="19" cy="16" r="2" fill="#f3f5ff"/><path d="M12 21h8" stroke="#f3f5ff" stroke-width="1.5"/></svg>`,
+    天劫妖王: `<svg viewBox="0 0 32 32"><path d="M16 3l10 7-4 16H10L6 10z" fill="#2f6fa6"/><path d="M16 8l3 6h-4l2 4-6-7h4z" fill="#e8f7ff"/></svg>`
+};
+
+function getMonsterIconMarkup(type) {
+    const svg = MONSTER_ICON_SVG[type] || MONSTER_ICON_SVG.邪祟;
+    return `<span class="monster-icon-wrap" aria-hidden="true">${svg}</span>`;
+}
+
+function formatBonusText(bonus) {
+    if (!bonus || typeof bonus !== "object") return "无";
+    const labels = { atk: "攻击", def: "防御", hit: "命中", dodge: "闪避", luck: "气运" };
+    const rows = Object.entries(bonus).filter(([k]) => Object.prototype.hasOwnProperty.call(labels, k)).map(([k, v]) => {
+        const key = labels[k] || k;
+        if (k === "hit" || k === "dodge") return `${key} +${(Number(v) * 100).toFixed(1)}%`;
+        return `${key} +${v}`;
+    });
+    return rows.length ? rows.join(" / ") : "无";
+}
+
 const MONSTER_CODEX = [
     {
         type: "邪祟",
         levelRange: "Lv.1-2",
+        tier: 1,
         drops: [
             { id: "spiritStone", chance: "100%" },
             { id: "herb", chance: "35%" },
@@ -1731,8 +1850,39 @@ const MONSTER_CODEX = [
         ]
     },
     {
+        type: "夜蝠",
+        levelRange: "Lv.1-3",
+        tier: 1,
+        drops: [
+            { id: "spiritStone", chance: "100%" },
+            { id: "healingSalve", chance: "10%" },
+            { id: "herb", chance: "38%" }
+        ]
+    },
+    {
+        type: "石甲妖",
+        levelRange: "Lv.2-3",
+        tier: 2,
+        drops: [
+            { id: "spiritStone", chance: "100%" },
+            { id: "wood", chance: "40%" },
+            { id: "wardCharm", chance: "8%" }
+        ]
+    },
+    {
+        type: "林魈",
+        levelRange: "Lv.2-4",
+        tier: 2,
+        drops: [
+            { id: "herb", chance: "100%" },
+            { id: "demonCore", chance: "16%" },
+            { id: "swiftTalisman", chance: "7%" }
+        ]
+    },
+    {
         type: "妖兽",
         levelRange: "Lv.2-3",
+        tier: 2,
         drops: [
             { id: "spiritStone", chance: "100%" },
             { id: "herb", chance: "45%" },
@@ -1741,8 +1891,19 @@ const MONSTER_CODEX = [
         ]
     },
     {
+        type: "毒沼蛛后",
+        levelRange: "Lv.3-4",
+        tier: 3,
+        drops: [
+            { id: "demonCore", chance: "100%" },
+            { id: "rareCrystal", chance: "26%" },
+            { id: "ironBodyPill", chance: "18%" }
+        ]
+    },
+    {
         type: "妖将",
         levelRange: "Lv.3-5",
+        tier: 3,
         drops: [
             { id: "spiritStone", chance: "100%" },
             { id: "demonCore", chance: "22%" },
@@ -1752,23 +1913,40 @@ const MONSTER_CODEX = [
     {
         type: "精英妖将",
         levelRange: "Lv.5-7",
+        tier: 4,
         drops: [
             { id: "demonCore", chance: "100%" },
             { id: "rareCrystal", chance: "55%" },
             { id: "thunderBlade", chance: "12%" },
+            { id: "spiritBlade", chance: "10%" },
             { id: "phoenixBow", chance: "10%" },
-            { id: "voidArmor", chance: "10%" }
+            { id: "voidArmor", chance: "10%" },
+            { id: "qilinRing", chance: "9%" }
+        ]
+    },
+    {
+        type: "深渊魔主",
+        levelRange: "Lv.7-9",
+        tier: 4,
+        drops: [
+            { id: "rareCrystal", chance: "100%" },
+            { id: "soulRobe", chance: "14%" },
+            { id: "warDrum", chance: "10%" },
+            { id: "chestLarge", chance: "25%" }
         ]
     },
     {
         type: "天劫妖王",
         levelRange: "Lv.8-10",
+        tier: 5,
         drops: [
             { id: "rareCrystal", chance: "100%" },
             { id: "dragonRelic", chance: "20%" },
             { id: "thunderBlade", chance: "18%" },
             { id: "phoenixBow", chance: "18%" },
-            { id: "voidArmor", chance: "18%" }
+            { id: "voidArmor", chance: "18%" },
+            { id: "soulRobe", chance: "16%" },
+            { id: "warDrum", chance: "14%" }
         ]
     }
 ];
@@ -1819,6 +1997,22 @@ const CRAFT_RECIPES = [
         out: { focusCharm: 1 },
         cost: { spiritStone: 20, herb: 2 },
         use: "提高命中与掉率"
+    },
+    {
+        id: "ironBodyPill",
+        label: "淬体丹",
+        tier: 1,
+        out: { ironBodyPill: 1 },
+        cost: { spiritStone: 16, herb: 2 },
+        use: "提供短时防御强化"
+    },
+    {
+        id: "swiftTalisman",
+        label: "疾风符",
+        tier: 2,
+        out: { swiftTalisman: 1 },
+        cost: { spiritStone: 26, herb: 2, wood: 1 },
+        use: "提供短时命中与闪避强化"
     },
     {
         id: "baitFlag",
@@ -1880,6 +2074,7 @@ const CHEST_LOOT_TABLES = {
         { id: "demonCore", weight: 18, min: 1, max: 3 },
         { id: "spiritPill", weight: 11, min: 1, max: 2 },
         { id: "healingSalve", weight: 9, min: 1, max: 2 },
+        { id: "ironBodyPill", weight: 8, min: 1, max: 2 },
         { id: "focusCharm", weight: 7, min: 1, max: 1 },
         { id: "rareCrystal", weight: 9, min: 1, max: 2 }
     ],
@@ -1889,6 +2084,9 @@ const CHEST_LOOT_TABLES = {
         { id: "rareCrystal", weight: 18, min: 1, max: 3 },
         { id: "coreElixir", weight: 14, min: 1, max: 2 },
         { id: "starShard", weight: 12, min: 1, max: 2 },
+        { id: "swiftTalisman", weight: 9, min: 1, max: 2 },
+        { id: "qilinRing", weight: 5, min: 1, max: 1 },
+        { id: "spiritBlade", weight: 5, min: 1, max: 1 },
         { id: "wardCharm", weight: 7, min: 1, max: 2 },
         { id: "ascendSeal", weight: 7, min: 1, max: 1 }
     ]
@@ -1964,6 +2162,8 @@ let bloodPillCarryTarget = 10;
 let bloodPillReturnThreshold = 3;
 let autoBuyBloodPill = true;
 let injuryDebuffUntilMs = 0;
+let ironBodyBuffUntilMs = 0;
+let swiftTalismanBuffUntilMs = 0;
 let avatarReviveUntilMs = 0;
 let lastBattleFrame = null;
 let goldCoins = 0;
@@ -1985,21 +2185,24 @@ let dragStartClientY = 0;
 let dragStartCameraX = HOME_X;
 let dragStartCameraY = HOME_Y;
 let suppressNextMapClick = false;
-const equipmentEnhanceLevels = { sword: 0, bow: 0, shield: 0, artifact: 0, thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0 };
+let sidePanelRefreshRaf = 0;
+const equipmentEnhanceLevels = { sword: 0, bow: 0, shield: 0, artifact: 0, thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, warDrum: 0 };
 
 const avatarInventory = {
     spiritStone: 0, herb: 0, wood: 0, rareCrystal: 0, demonCore: 0,
     spiritPill: 0, healingSalve: 0, bloodPill: 0, wardCharm: 0, focusCharm: 0, baitFlag: 0, coreElixir: 0, starShard: 0, ascendSeal: 0,
+    ironBodyPill: 0, swiftTalisman: 0,
     chestSmall: 0, chestMedium: 0, chestLarge: 0,
-    thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0
+    thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, warDrum: 0
 };
 const homeInventory = {
     spiritStone: 156, herb: 11, wood: 0, rareCrystal: 0, demonCore: 0,
     spiritPill: 0, healingSalve: 0, bloodPill: 0, wardCharm: 0, focusCharm: 0, baitFlag: 0, coreElixir: 0, starShard: 0, ascendSeal: 0,
+    ironBodyPill: 0, swiftTalisman: 0,
     chestSmall: 0, chestMedium: 0, chestLarge: 0,
-    thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0
+    thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, warDrum: 0
 };
-const equipmentInventory = { sword: 0, bow: 0, shield: 0, artifact: 0, thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0 };
+const equipmentInventory = { sword: 0, bow: 0, shield: 0, artifact: 0, thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, warDrum: 0 };
 const equippedSlots = { weaponMain: "sword", weaponOff: "bow", armor: "shield", artifact: "artifact", trinket: null };
 const town = { prosperity: 1, storageCap: 260 };
 const sharedStats = {
@@ -2121,6 +2324,7 @@ const helpBtn = document.getElementById("helpBtn");
 const changelogBtn = document.getElementById("changelogBtn");
 const saveBtn = document.getElementById("saveBtn");
 const loadBtn = document.getElementById("loadBtn");
+const rebirthBtn = document.getElementById("rebirthBtn");
 const bagCapInput = document.getElementById("bagCapInput");
 const bagReturnInput = document.getElementById("bagReturnInput");
 const pillThresholdInput = document.getElementById("pillThresholdInput");
@@ -2201,11 +2405,44 @@ const debugMonsterSelect = document.getElementById("debugMonsterSelect");
 const debugBattleBtn = document.getElementById("debugBattleBtn");
 let movementStatusText = "待命";
 let itemMenuQty = 1;
+let controlButtonsInited = false;
 
 function simpleHash(x, y) {
     let n = x * 374761393 + y * 668265263;
     n = (n ^ (n >> 13)) * 1274126177;
     return (n ^ (n >> 11)) >>> 0;
+}
+
+function rollRandomHomeCoord() {
+    return 4200 + Math.floor(Math.random() * 1601);
+}
+
+function applyHomeCoordinates(x, y) {
+    HOME_X = x;
+    HOME_Y = y;
+    avatarX = x;
+    avatarY = y;
+    dayOriginX = x;
+    dayOriginY = y;
+    cameraX = x;
+    cameraY = y;
+    isAutoMode = false;
+    autoObjective = "explore";
+    isGathering = false;
+    gatherRemainingMs = 0;
+    gatherTotalMs = 0;
+    gatheringProgress = 0;
+    gatheringTarget = null;
+    battleState = null;
+    battleSummaryData = null;
+    exploreTarget = null;
+    reservationMap.clear();
+    targetBackoffMap.clear();
+    homeBuildingMap.clear();
+    stateMap.clear();
+    seedMap.clear();
+    chunkHeatMap.clear();
+    monsterStateMap.clear();
 }
 
 function clampCameraOffsetFromAvatar(nextX, nextY) {
@@ -2729,10 +2966,9 @@ function bindItemHover(containerEl) {
             if (!def) return;
             const qty = el.dataset.itemCount || "0";
             const rarity = (def.rarity || "common").toUpperCase();
-            const bonus = def.bonus
-                ? `加成: ${Object.entries(def.bonus).map(([k, v]) => `${k}+${v}`).join(" / ")}`
-                : "加成: 无";
-            itemDetailEl.innerHTML = `<strong>${getItemIconMarkup(itemId)} ${def.label}</strong><br>品质: ${rarity}<br>类别: ${def.category}<br>${bonus}<br>来源: ${def.source}<br>回收: ${def.sellValue || 0} 金币<br>持有: ${qty}`;
+            const bonus = `加成: ${formatBonusText(def.bonus)}`;
+            const buff = def.buff ? `<br>增益: ${formatBonusText(def.buff)}（${Math.floor((def.buff.durationMs || 0) / 1000)}s）` : "";
+            itemDetailEl.innerHTML = `<strong>${getItemIconMarkup(itemId)} ${def.label}</strong><br>品质: ${rarity}<br>类别: ${def.category}<br>${bonus}${buff}<br>来源: ${def.source}<br>回收: ${def.sellValue || 0} 金币<br>持有: ${qty}`;
             itemDetailEl.classList.remove("hidden");
             itemDetailEl.style.left = `${e.clientX + 12}px`;
             itemDetailEl.style.top = `${e.clientY + 12}px`;
@@ -2755,11 +2991,14 @@ function getAvatarCombatPower() {
     const eq = getEquipmentBonus();
     const wardBonus = Math.min(6, (homeInventory.wardCharm || 0));
     const focusBonus = Math.min(6, (homeInventory.focusCharm || 0));
+    const ironBodyActive = simulationTimeMs < ironBodyBuffUntilMs ? 2 : 0;
+    const swiftActive = simulationTimeMs < swiftTalismanBuffUntilMs ? 0.03 : 0;
+    const swiftHit = simulationTimeMs < swiftTalismanBuffUntilMs ? 0.01 : 0;
     return {
         atk: 10 + Math.floor(sharedStats.spirit * 1.4) + Math.floor(sharedStats.control * 0.9) + Math.floor(eq.atk),
-        def: 4 + Math.floor(sharedStats.body * 0.9) + Math.floor(sharedStats.control * 0.4) + Math.floor(eq.def) + wardBonus,
-        hit: Math.min(0.97, 0.78 + sharedStats.mind * 0.008 + sharedStats.control * 0.004 + eq.hit + focusBonus * 0.005),
-        dodge: Math.min(0.42, 0.06 + sharedStats.body * 0.008 + sharedStats.mind * 0.004 + eq.dodge)
+        def: 4 + Math.floor(sharedStats.body * 0.9) + Math.floor(sharedStats.control * 0.4) + Math.floor(eq.def) + wardBonus + ironBodyActive,
+        hit: Math.min(0.97, 0.78 + sharedStats.mind * 0.008 + sharedStats.control * 0.004 + eq.hit + focusBonus * 0.005 + swiftHit),
+        dodge: Math.min(0.42, 0.06 + sharedStats.body * 0.008 + sharedStats.mind * 0.004 + eq.dodge + swiftActive)
     };
 }
 
@@ -2866,7 +3105,7 @@ function openItemCodexDetail(itemId) {
         </div>
         <div style="display:flex; gap:10px; align-items:center; margin:8px 0 12px;">
             ${getItemIconMarkup(itemId)}
-            <div class="small-note">用于${def.category} · 来源 ${def.source}</div>
+            <div class="small-note">类别 ${def.category} · 品质 ${(def.rarity || "common").toUpperCase()} · 来源 ${def.source}</div>
         </div>
         <div class="codex-detail-columns">
             <div class="codex-col">
@@ -2878,8 +3117,8 @@ function openItemCodexDetail(itemId) {
                 <div style="margin-top:6px;">${dropBy.length ? dropBy.map((m) => `${m.type} ${m.levelRange}`).join("<br>") : "采集/商店/合成"}</div>
             </div>
             <div class="codex-col">
-                <strong>转化与产出</strong>
-                <div style="margin-top:6px;">回收金币：${def.sellValue || 0}<br>${canCraft.length ? `可直接合成：${canCraft.map((r) => r.label).join(" / ")}` : "非直接合成产出"}</div>
+                <strong>属性与转化</strong>
+                <div style="margin-top:6px;">基础属性：${formatBonusText(def.bonus)}<br>增益效果：${def.buff ? `${formatBonusText(def.buff)}（${Math.floor((def.buff.durationMs || 0) / 1000)}秒）` : "无"}<br>回收金币：${def.sellValue || 0}<br>${canCraft.length ? `可直接合成：${canCraft.map((r) => r.label).join(" / ")}` : "非直接合成产出"}</div>
             </div>
         </div>
     `;
@@ -3014,6 +3253,18 @@ function useItemFrom(source, itemId, count = 1) {
         bag[itemId] -= useCount;
         homeInventory.focusCharm = (homeInventory.focusCharm || 0) + useCount;
         addLog(`使用凝神符 x${useCount}：转化为洞府凝神层数`);
+        return true;
+    }
+    if (itemId === "ironBodyPill") {
+        bag[itemId] -= useCount;
+        ironBodyBuffUntilMs = Math.max(ironBodyBuffUntilMs, simulationTimeMs) + 150000 * useCount;
+        addLog(`使用淬体丹 x${useCount}：防御强化持续 ${150 * useCount} 秒`);
+        return true;
+    }
+    if (itemId === "swiftTalisman") {
+        bag[itemId] -= useCount;
+        swiftTalismanBuffUntilMs = Math.max(swiftTalismanBuffUntilMs, simulationTimeMs) + 180000 * useCount;
+        addLog(`使用疾风符 x${useCount}：命中/闪避强化持续 ${180 * useCount} 秒`);
         return true;
     }
     return false;
@@ -3174,7 +3425,12 @@ function getMonsterDropProfile(type) {
 
 function getMonsterAvatar(type) {
     if (type === "天劫妖王") return "🐲";
+    if (type === "深渊魔主") return "👹";
     if (type === "精英妖将") return "🦔";
+    if (type === "毒沼蛛后") return "🕷";
+    if (type === "石甲妖") return "🪨";
+    if (type === "夜蝠") return "🦇";
+    if (type === "林魈") return "🌲";
     if (type === "妖将") return "🦂";
     if (type === "妖兽") return "🦇";
     return "🐭";
@@ -3182,10 +3438,15 @@ function getMonsterAvatar(type) {
 
 function getMonsterAttackCdMs(type, level = 1) {
     const byType = type === "天劫妖王" ? 5000
-        : type === "精英妖将" ? 4400
-            : type === "妖将" ? 3800
-                : type === "妖兽" ? 3300
-                    : 2800;
+        : type === "深渊魔主" ? 4700
+            : type === "精英妖将" ? 4400
+                : type === "妖将" ? 3900
+                    : type === "毒沼蛛后" ? 3700
+                        : type === "妖兽" ? 3400
+                            : type === "林魈" ? 3250
+                                : type === "石甲妖" ? 3100
+                                    : type === "夜蝠" ? 2950
+                                        : 2800;
     const levelAdj = Math.max(0, Math.min(600, (level - 1) * 60));
     return Math.max(2200, Math.min(5000, byType - levelAdj));
 }
@@ -3197,14 +3458,14 @@ function getMonsterSeed(x, y) {
     if (isHomeBuildTile(x, y)) return null;
     if (devForceMonster) {
         const level = Math.max(1, monsterLevelAt(x, y));
-        const type = level >= 8 ? "天劫妖王" : level >= 6 ? "精英妖将" : level >= 4 ? "妖将" : level >= 2 ? "妖兽" : "邪祟";
-        const devMul = type === "天劫妖王" ? 3.1 : type === "精英妖将" ? 2.1 : 1;
+        const type = level >= 5 ? "天劫妖王" : level >= 4 ? "精英妖将" : level >= 3 ? "妖将" : level >= 2 ? "妖兽" : "邪祟";
+        const devMul = type === "天劫妖王" ? 3.1 : type === "深渊魔主" ? 2.6 : type === "精英妖将" ? 2.1 : 1;
         return {
             type,
             level,
             maxHp: Math.floor((34 + level * 24) * BALANCE_CONFIG.combat.monsterHpScale * devMul),
-            atk: Math.floor((8 + level * 3 + (level >= 6 ? 7 : 0)) * (type === "天劫妖王" ? 2.2 : type === "精英妖将" ? 1.55 : 1)),
-            def: Math.floor((2 + level * 2 + (level >= 6 ? 4 : 0)) * (type === "天劫妖王" ? 2.0 : type === "精英妖将" ? 1.5 : 1))
+            atk: Math.floor((8 + level * 3 + (level >= 6 ? 7 : 0)) * (type === "天劫妖王" ? 2.2 : type === "深渊魔主" ? 1.9 : type === "精英妖将" ? 1.55 : 1)),
+            def: Math.floor((2 + level * 2 + (level >= 6 ? 4 : 0)) * (type === "天劫妖王" ? 2.0 : type === "深渊魔主" ? 1.75 : type === "精英妖将" ? 1.5 : 1))
         };
     }
     const baitBoost = simulationTimeMs < baitBoostUntilMs ? 0.2 : 0;
@@ -3214,16 +3475,22 @@ function getMonsterSeed(x, y) {
     const level = monsterLevelAt(x, y);
     const homeDist = Math.abs(x - HOME_X) + Math.abs(y - HOME_Y);
     const rareRoll = ((h >> 10) % 1000) / 1000;
-    let type = rareRoll < 0.08 ? "妖将" : rareRoll < 0.28 ? "妖兽" : "邪祟";
-    if (level >= 4 && rareRoll < 0.05) type = "精英妖将";
-    if (level >= 4 && rareRoll < 0.01) type = "天劫妖王";
+    let type = "邪祟";
+    if (level <= 1) type = rareRoll < 0.45 ? "夜蝠" : "邪祟";
+    else if (level === 2) type = rareRoll < 0.24 ? "林魈" : rareRoll < 0.52 ? "石甲妖" : rareRoll < 0.8 ? "妖兽" : "夜蝠";
+    else if (level === 3) type = rareRoll < 0.2 ? "毒沼蛛后" : rareRoll < 0.44 ? "林魈" : rareRoll < 0.72 ? "妖兽" : "石甲妖";
+    else if (level === 4) type = rareRoll < 0.2 ? "精英妖将" : rareRoll < 0.36 ? "毒沼蛛后" : rareRoll < 0.66 ? "妖将" : "妖兽";
+    else type = rareRoll < 0.06 ? "天劫妖王" : rareRoll < 0.16 ? "深渊魔主" : rareRoll < 0.36 ? "精英妖将" : "妖将";
+    if (terrain === "forest" && level <= 4 && rareRoll < 0.32) type = "林魈";
+    if (terrain === "hill" && level <= 4 && rareRoll < 0.28) type = "石甲妖";
+    if (terrain === "mountain" && level >= 4 && rareRoll < 0.2) type = "精英妖将";
     if (type === "天劫妖王" && homeDist > BOSS_SPAWN_MAX_HOME_DISTANCE) {
-        type = "精英妖将";
+        type = level >= 5 ? "深渊魔主" : "精英妖将";
     }
-    const eliteMul = type === "精英妖将" ? 2.0 : type === "天劫妖王" ? 3.0 : 1;
+    const eliteMul = type === "精英妖将" ? 2.0 : type === "深渊魔主" ? 2.45 : type === "天劫妖王" ? 3.0 : 1;
     const maxHp = Math.floor((32 + level * 22 + (h % 9)) * BALANCE_CONFIG.combat.monsterHpScale * eliteMul);
-    const atk = Math.floor((8 + level * 3 + (h % 4)) * (type === "天劫妖王" ? 2.4 : type === "精英妖将" ? 1.75 : 1));
-    const def = Math.floor((2 + level * 2) * (type === "天劫妖王" ? 2.3 : type === "精英妖将" ? 1.7 : 1));
+    const atk = Math.floor((8 + level * 3 + (h % 4)) * (type === "天劫妖王" ? 2.4 : type === "深渊魔主" ? 2.0 : type === "精英妖将" ? 1.75 : 1));
+    const def = Math.floor((2 + level * 2) * (type === "天劫妖王" ? 2.3 : type === "深渊魔主" ? 1.9 : type === "精英妖将" ? 1.7 : 1));
     return { type, level, maxHp, atk, def };
 }
 
@@ -3297,18 +3564,22 @@ function grantBattleLoot(monster) {
     const riskBonus = getRiskRewardBonusAt(monster.x, monster.y);
     const eventDropMul = 1 + (getWorldEventEffects().dropMul || 0);
     const rewardBoost = 1.6;
-    const tierMul = monster.type === "天劫妖王" ? 3.2 : monster.type === "精英妖将" ? 2.2 : monster.type === "妖将" ? 1.5 : 1;
+    const profile = getMonsterDropProfile(monster.type);
+    const monsterTier = profile?.tier || 1;
+    const isEliteTier = monsterTier >= 4;
+    const isBossTier = monsterTier >= 5;
+    const tierMul = monsterTier >= 5 ? 3.2 : monsterTier >= 4 ? 2.4 : monsterTier >= 3 ? 1.6 : 1;
     const gainStone = Math.floor((8 + monster.level * 4) * (1 + riskBonus * 0.9) * tierMul * eventDropMul * rewardBoost);
     const gainHerb = monster.level >= 2 ? Math.max(1, Math.floor((riskBonus >= 0.35 ? 2 : 1) * tierMul * rewardBoost)) : 0;
     const eq = getEquipmentBonus();
     const rareChance = Math.min(BALANCE_CONFIG.drops.rareMax, BALANCE_CONFIG.drops.rareBase + sharedStats.fortune + Math.floor(eq.luck * 0.8));
-    const coreBase = monster.type === "妖将" ? 22 : monster.type === "妖兽" ? 14 : 8;
+    const coreBase = monsterTier >= 3 ? 24 : monsterTier === 2 ? 14 : 8;
     const coreChance = Math.min(55, coreBase + Math.floor(sharedStats.fortune * 0.6));
-    const gainRare = monster.level >= 3 && (devFixedDrops || (simpleHash(monster.x + dayCount, monster.y + dayCombatWins) % 100 < (rareChance + Math.floor(riskBonus * 18) + (monster.type === "天劫妖王" ? 22 : monster.type === "精英妖将" ? 12 : 0)))) ? Math.max(1, Math.floor((tierMul / 1.5) * eventDropMul * rewardBoost)) : 0;
+    const gainRare = monster.level >= 3 && (devFixedDrops || (simpleHash(monster.x + dayCount, monster.y + dayCombatWins) % 100 < (rareChance + Math.floor(riskBonus * 18) + (monsterTier >= 5 ? 22 : monsterTier >= 4 ? 12 : 0)))) ? Math.max(1, Math.floor((tierMul / 1.5) * eventDropMul * rewardBoost)) : 0;
     const gainCore = devFixedDrops ? Math.max(1, Math.floor(tierMul * eventDropMul * rewardBoost)) : (simpleHash(monster.x + dayCount * 3, monster.y + dayCombatWins * 11) % 100 < coreChance ? Math.max(1, Math.floor(tierMul * eventDropMul * rewardBoost)) : 0);
     const chestSmallChance = Math.min(95, BALANCE_CONFIG.drops.chestSmallBase + Math.floor(riskBonus * 42) + monster.level * 7);
     const chestMediumChance = Math.min(75, BALANCE_CONFIG.drops.chestMediumBase + Math.floor(riskBonus * 36) + (monster.level >= 2 ? 14 : 0));
-    const chestLargeChance = Math.min(55, BALANCE_CONFIG.drops.chestLargeBase + Math.floor(riskBonus * 20) + (monster.type === "妖将" ? 14 : monster.type === "精英妖将" ? 24 : monster.type === "天劫妖王" ? 40 : 0));
+    const chestLargeChance = Math.min(55, BALANCE_CONFIG.drops.chestLargeBase + Math.floor(riskBonus * 20) + (monsterTier >= 5 ? 40 : monsterTier >= 4 ? 24 : monsterTier >= 3 ? 14 : 0));
     const gainSmallChest = devFixedDrops || (simpleHash(monster.x + 41, monster.y + dayCombatWins * 7) % 100 < chestSmallChance) ? 1 : 0;
     const gainMediumChest = devFixedDrops || (simpleHash(monster.x + 71, monster.y + dayCombatWins * 13) % 100 < chestMediumChance) ? 1 : 0;
     const gainLargeChest = devFixedDrops || (simpleHash(monster.x + 97, monster.y + dayCombatWins * 19) % 100 < chestLargeChance) ? 1 : 0;
@@ -3316,14 +3587,24 @@ function grantBattleLoot(monster) {
     let gainThunderBlade = 0;
     let gainPhoenixBow = 0;
     let gainVoidArmor = 0;
+    let gainSpiritBlade = 0;
+    let gainSoulRobe = 0;
+    let gainQilinRing = 0;
+    let gainWarDrum = 0;
     let gainDragonRelic = 0;
-    if (monster.type === "精英妖将" || monster.type === "天劫妖王") {
+    if (isEliteTier) {
         if (dropWeaponRoll < 90) gainThunderBlade = 1;
         else if (dropWeaponRoll < 170) gainPhoenixBow = 1;
         else if (dropWeaponRoll < 250) gainVoidArmor = 1;
+        else if (dropWeaponRoll < 330) gainSpiritBlade = 1;
+        else if (dropWeaponRoll < 390) gainQilinRing = 1;
+        else if (dropWeaponRoll < 455) gainSoulRobe = 1;
     }
-    if (monster.type === "天劫妖王" && (devFixedDrops || (simpleHash(monster.x + 211, monster.y + dayCombatWins * 53) % 100 < 20))) {
+    if (isBossTier && (devFixedDrops || (simpleHash(monster.x + 211, monster.y + dayCombatWins * 53) % 100 < 20))) {
         gainDragonRelic = 1;
+    }
+    if (isBossTier && (devFixedDrops || (simpleHash(monster.x + 173, monster.y + dayCombatWins * 59) % 100 < 18))) {
+        gainWarDrum = 1;
     }
     avatarInventory.spiritStone += gainStone;
     avatarInventory.herb += gainHerb;
@@ -3335,6 +3616,10 @@ function grantBattleLoot(monster) {
     avatarInventory.thunderBlade += gainThunderBlade;
     avatarInventory.phoenixBow += gainPhoenixBow;
     avatarInventory.voidArmor += gainVoidArmor;
+    avatarInventory.spiritBlade += gainSpiritBlade;
+    avatarInventory.soulRobe += gainSoulRobe;
+    avatarInventory.qilinRing += gainQilinRing;
+    avatarInventory.warDrum += gainWarDrum;
     avatarInventory.dragonRelic += gainDragonRelic;
     discoveredItemSet.add("demonCore");
     if (gainRare > 0) discoveredItemSet.add("rareCrystal");
@@ -3344,9 +3629,13 @@ function grantBattleLoot(monster) {
     if (gainThunderBlade > 0) discoveredItemSet.add("thunderBlade");
     if (gainPhoenixBow > 0) discoveredItemSet.add("phoenixBow");
     if (gainVoidArmor > 0) discoveredItemSet.add("voidArmor");
+    if (gainSpiritBlade > 0) discoveredItemSet.add("spiritBlade");
+    if (gainSoulRobe > 0) discoveredItemSet.add("soulRobe");
+    if (gainQilinRing > 0) discoveredItemSet.add("qilinRing");
+    if (gainWarDrum > 0) discoveredItemSet.add("warDrum");
     if (gainDragonRelic > 0) discoveredItemSet.add("dragonRelic");
     dayCombatWins += 1;
-    const lootText = `灵石×${gainStone}${gainHerb ? ` / 灵草×${gainHerb}` : ""}${gainCore ? ` / 妖丹×${gainCore}` : ""}${gainRare ? ` / 异晶×${gainRare}` : ""}${gainSmallChest ? ` / 小宝箱×${gainSmallChest}` : ""}${gainMediumChest ? ` / 中宝箱×${gainMediumChest}` : ""}${gainLargeChest ? ` / 大宝箱×${gainLargeChest}` : ""}${gainThunderBlade ? " / 雷劫断岳×1" : ""}${gainPhoenixBow ? " / 赤凰长弓×1" : ""}${gainVoidArmor ? " / 太虚战铠×1" : ""}${gainDragonRelic ? " / 天龙遗宝×1" : ""}`;
+    const lootText = `灵石×${gainStone}${gainHerb ? ` / 灵草×${gainHerb}` : ""}${gainCore ? ` / 妖丹×${gainCore}` : ""}${gainRare ? ` / 异晶×${gainRare}` : ""}${gainSmallChest ? ` / 小宝箱×${gainSmallChest}` : ""}${gainMediumChest ? ` / 中宝箱×${gainMediumChest}` : ""}${gainLargeChest ? ` / 大宝箱×${gainLargeChest}` : ""}${gainThunderBlade ? " / 雷劫断岳×1" : ""}${gainPhoenixBow ? " / 赤凰长弓×1" : ""}${gainVoidArmor ? " / 太虚战铠×1" : ""}${gainSpiritBlade ? " / 玄霄灵刃×1" : ""}${gainSoulRobe ? " / 玄冥法衣×1" : ""}${gainQilinRing ? " / 麒麟戒×1" : ""}${gainWarDrum ? " / 战魂鼓×1" : ""}${gainDragonRelic ? " / 天龙遗宝×1" : ""}`;
     addLog(`战斗胜利：${monster.type}，掉落 ${lootText}`);
     return lootText;
 }
@@ -3410,7 +3699,8 @@ function resolveBattleStep(elapsedMs = 100) {
         const rollDodge = (simpleHash(battleState.x + seed * 3, battleState.y + dayCount * 23) % 1000) / 1000;
         const monsterHit = rollDodge > me.dodge;
         const rawMonsterDmg = Math.floor(battleState.atk * 0.58) - Math.floor(me.def * 0.28);
-        const bossMul = battleState.type === "天劫妖王" ? 1.35 : battleState.type === "精英妖将" ? 1.18 : 1;
+        const battleMonsterTier = getMonsterDropProfile(battleState.type)?.tier || 1;
+        const bossMul = battleMonsterTier >= 5 ? 1.35 : battleMonsterTier >= 4 ? 1.22 : 1;
         const monsterDmgBase = monsterHit ? Math.max(2, Math.floor(rawMonsterDmg * bossMul)) : 0;
         const monsterScaled = Math.max(0, Math.floor(monsterDmgBase * BALANCE_CONFIG.combat.monsterDamageScale * tactic.incomingMul * (1 + (getWorldEventEffects().monsterDamageMul || 0))));
         const hpBeforeSelf = avatarHp;
@@ -4291,7 +4581,7 @@ function renderMap() {
             if (wx === HOME_X && wy === HOME_Y) {
                 const host = document.createElement("div");
                 host.className = "home-tag";
-                host.textContent = "主";
+                host.textContent = "洞府";
                 cell.appendChild(host);
             }
 
@@ -4345,11 +4635,12 @@ function renderMap() {
                 const monster = getMonsterAt(wx, wy);
                 if (monster) {
                     cell.classList.add("monster-cell");
-                    if (monster.type === "精英妖将") cell.classList.add("monster-elite");
-                    if (monster.type === "天劫妖王") cell.classList.add("monster-boss");
+                    const tier = getMonsterDropProfile(monster.type)?.tier || 1;
+                    if (tier >= 4) cell.classList.add("monster-elite");
+                    if (tier >= 5) cell.classList.add("monster-boss");
                     const targetTag = document.createElement("div");
                     targetTag.className = "target-tag";
-                    targetTag.textContent = monster.type === "天劫妖王" ? "王" : monster.type === "精英妖将" ? "精" : "妖";
+                    targetTag.textContent = tier >= 5 ? "王" : tier >= 4 ? "精" : "妖";
                     cell.appendChild(targetTag);
                 } else {
                     const reservation = getReservationAt(wx, wy);
@@ -4479,8 +4770,9 @@ function updateBattlePanel() {
     const dropPreview = profile ? profile.drops.map((d) => `${ITEM_DEFS[d.id]?.label || d.id} ${d.chance}`).join(" / ") : "灵石 100%";
     const enemyPct = Math.max(0, Math.round((battleState.hp / Math.max(1, battleState.maxHp)) * 100));
     const selfPct = Math.max(0, Math.round((avatarHp / Math.max(1, getAvatarMaxHp())) * 100));
-    const isBossTier = battleState.type === "天劫妖王" || battleState.type === "精英妖将";
-    const bossTag = battleState.type === "天劫妖王" ? "【BOSS】" : battleState.type === "精英妖将" ? "【精英】" : "";
+    const battleTier = profile?.tier || 1;
+    const isBossTier = battleTier >= 4;
+    const bossTag = battleTier >= 5 ? "【BOSS】" : battleTier >= 4 ? "【精英】" : "";
     battleSummaryEl.innerHTML = battleInfoMode === "detail"
         ? `⚔ ${bossTag} ${battleState.type} Lv.${battleState.level} · 回合 ${battleState.rounds} · CD模式<br><span class="small-note">战术：${currentBattleTactic().label}｜掉落预览：${dropPreview}</span>`
         : `⚔ ${battleState.type} Lv.${battleState.level}｜CD战斗中`;
@@ -4764,13 +5056,16 @@ function updateSidePanels() {
         <div class="codex-grid" style="margin-top:8px;">
             ${codexItems.map((item) => `
                 <div class="codex-item rarity-${item.rarity} ${item.discovered ? "" : "locked"}" data-item-id="${item.id}" data-item-count="${item.owned}">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="codex-item-head">
                         <div><strong>${getItemIconMarkup(item.id)} ${item.discovered ? item.label : "？？？"}</strong></div>
-                        <div class="small-note">${item.rarity.toUpperCase()}</div>
+                        <div class="small-note">${item.rarity.toUpperCase()} · ${item.owned}</div>
                     </div>
-                    <div class="small-note" style="margin-top:4px;">类别：${item.category}</div>
-                    <div class="small-note">来源：${item.discovered ? item.source : "未解锁"}</div>
-                    <div class="small-note">持有：${item.owned}</div>
+                    <div class="codex-item-meta">${item.category} · ${item.discovered ? item.source : "未解锁"}</div>
+                    <div class="codex-tags">
+                        <span class="codex-tag">属性 ${item.discovered ? formatBonusText(item.bonus) : "???"}</span>
+                        ${item.buff ? `<span class="codex-tag">增益 ${Math.floor((item.buff.durationMs || 0) / 1000)}s</span>` : ""}
+                        ${item.usable ? `<span class="codex-tag">可使用</span>` : ""}
+                    </div>
                 </div>
             `).join("")}
         </div>
@@ -4778,12 +5073,12 @@ function updateSidePanels() {
         <div class="codex-grid">
             ${MONSTER_CODEX.map((m) => `
                 <div class="codex-item">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <strong>👾 ${m.type}</strong>
+                    <div class="codex-item-head">
+                        <strong>${getMonsterIconMarkup(m.type)} ${m.type}</strong>
                         <span class="small-note">${m.levelRange}</span>
                     </div>
-                    <div class="small-note" style="margin-top:4px;">掉落：</div>
-                    <div class="small-note">${m.drops.map((d) => `${ITEM_DEFS[d.id]?.label || d.id} ${d.chance}`).join(" / ")}</div>
+                    <div class="codex-item-meta">威胁层级 T${m.tier || 1}</div>
+                    <div class="monster-drop-row">${m.drops.map((d) => `${ITEM_DEFS[d.id]?.label || d.id} ${d.chance}`).join(" / ")}</div>
                 </div>
             `).join("")}
         </div>
@@ -4829,6 +5124,8 @@ function updateSidePanels() {
     const bloodPillPrice = getShopPrice(42);
     const wardCharmPrice = getShopPrice(48);
     const focusCharmPrice = getShopPrice(52);
+    const ironBodyPillPrice = getShopPrice(42);
+    const swiftTalismanPrice = getShopPrice(66);
     shopSummaryEl.innerHTML = `
         <div class="small-note" style="margin-bottom:8px;">当前金币：${goldCoins}</div>
         <div class="codex-grid">
@@ -4866,6 +5163,20 @@ function updateSidePanels() {
                     <button class="mini-btn" data-shop-buy="focusCharm" data-cost="${focusCharmPrice}">购买 ${focusCharmPrice}</button>
                 </div>
                 <div class="small-note">提升命中和稀有掉率</div>
+            </div>
+            <div class="codex-item">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong>${getItemIconMarkup("ironBodyPill")} ${ITEM_DEFS.ironBodyPill.label}</strong>
+                    <button class="mini-btn" data-shop-buy="ironBodyPill" data-cost="${ironBodyPillPrice}">购买 ${ironBodyPillPrice}</button>
+                </div>
+                <div class="small-note">短时防御强化，战斗容错更高</div>
+            </div>
+            <div class="codex-item">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong>${getItemIconMarkup("swiftTalisman")} ${ITEM_DEFS.swiftTalisman.label}</strong>
+                    <button class="mini-btn" data-shop-buy="swiftTalisman" data-cost="${swiftTalismanPrice}">购买 ${swiftTalismanPrice}</button>
+                </div>
+                <div class="small-note">短时命中/闪避强化，适合精英战</div>
             </div>
         </div>
     `;
@@ -4939,71 +5250,102 @@ function addLog(msg) {
     }
 }
 
+function scheduleSidePanelRefresh() {
+    if (battleState || !showWorldSummary) return;
+    if (sidePanelRefreshRaf) return;
+    sidePanelRefreshRaf = requestAnimationFrame(() => {
+        sidePanelRefreshRaf = 0;
+        updateSidePanels();
+    });
+}
+
 function renderAll() {
     renderMap();
     updateCultivationPanel();
     updateStatus();
     updateMovementStatus();
     updateBattlePanel();
-    updateSidePanels();
+    if (!battleState) {
+        updateSidePanels();
+    }
     renderButtons();
 }
 
 function renderButtons() {
-    strategyButtonsEl.innerHTML = "";
-    for (const strategy of STRATEGIES) {
-        const btn = document.createElement("button");
-        btn.className = `mode-btn${strategy.id === strategyId ? " active" : ""}`;
-        btn.textContent = `${strategy.label} · ${strategy.hint}`;
-        btn.addEventListener("click", () => {
-            strategyId = strategy.id;
-            addLog(`探索策略切换为：${strategy.label}`);
-            renderAll();
+    if (!controlButtonsInited) {
+        strategyButtonsEl.innerHTML = "";
+        for (const strategy of STRATEGIES) {
+            const btn = document.createElement("button");
+            btn.className = "mode-btn";
+            btn.dataset.strategyId = strategy.id;
+            btn.textContent = `${strategy.label} · ${strategy.hint}`;
+            btn.addEventListener("click", () => {
+                strategyId = strategy.id;
+                addLog(`探索策略切换为：${strategy.label}`);
+                renderAll();
+            });
+            strategyButtonsEl.appendChild(btn);
+        }
+
+        tacticButtonsEl.innerHTML = "";
+        for (const tactic of BATTLE_TACTICS) {
+            const btn = document.createElement("button");
+            btn.className = "mode-btn";
+            btn.dataset.tacticId = tactic.id;
+            btn.textContent = `${tactic.label} · ${tactic.hint}`;
+            btn.addEventListener("click", () => {
+                battleTacticId = tactic.id;
+                addLog(`战斗策略切换为：${tactic.label}`);
+                renderAll();
+            });
+            tacticButtonsEl.appendChild(btn);
+        }
+
+        zoomButtonsEl.className = "compact-row";
+        zoomButtonsEl.style.gridTemplateColumns = "repeat(4,minmax(0,1fr))";
+        zoomButtonsEl.innerHTML = "";
+        ZOOM_LEVELS.forEach((cfg, index) => {
+            const btn = document.createElement("button");
+            btn.className = "mode-btn speed-btn";
+            btn.dataset.zoomIndex = String(index);
+            btn.textContent = cfg.label;
+            btn.title = cfg.span === 1 ? "单格视野" : `${cfg.span}x 采样`;
+            btn.addEventListener("click", () => {
+                zoomLevel = index;
+                renderAll();
+            });
+            zoomButtonsEl.appendChild(btn);
         });
-        strategyButtonsEl.appendChild(btn);
+
+        speedButtonsEl.className = "compact-row";
+        speedButtonsEl.innerHTML = "";
+        for (let i = 1; i <= 10; i++) {
+            const btn = document.createElement("button");
+            btn.className = "mode-btn speed-btn";
+            btn.dataset.speedValue = String(i);
+            btn.textContent = `${i}x`;
+            btn.addEventListener("click", () => {
+                timeScale = i;
+                addLog(`模拟倍速切换为 ${i}x`);
+                renderAll();
+            });
+            speedButtonsEl.appendChild(btn);
+        }
+        controlButtonsInited = true;
     }
 
-    tacticButtonsEl.innerHTML = "";
-    for (const tactic of BATTLE_TACTICS) {
-        const btn = document.createElement("button");
-        btn.className = `mode-btn${tactic.id === battleTacticId ? " active" : ""}`;
-        btn.textContent = `${tactic.label} · ${tactic.hint}`;
-        btn.addEventListener("click", () => {
-            battleTacticId = tactic.id;
-            addLog(`战斗策略切换为：${tactic.label}`);
-            renderAll();
-        });
-        tacticButtonsEl.appendChild(btn);
-    }
-
-    zoomButtonsEl.className = "compact-row";
-    zoomButtonsEl.style.gridTemplateColumns = "repeat(4,minmax(0,1fr))";
-    zoomButtonsEl.innerHTML = "";
-    ZOOM_LEVELS.forEach((cfg, index) => {
-        const btn = document.createElement("button");
-        btn.className = `mode-btn speed-btn${index === zoomLevel ? " active" : ""}`;
-        btn.textContent = cfg.label;
-        btn.title = cfg.span === 1 ? "单格视野" : `${cfg.span}x 采样`;
-        btn.addEventListener("click", () => {
-            zoomLevel = index;
-            renderAll();
-        });
-        zoomButtonsEl.appendChild(btn);
+    strategyButtonsEl.querySelectorAll("button[data-strategy-id]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.strategyId === strategyId);
     });
-
-    speedButtonsEl.className = "compact-row";
-    speedButtonsEl.innerHTML = "";
-    for (let i = 1; i <= 10; i++) {
-        const btn = document.createElement("button");
-        btn.className = `mode-btn speed-btn${timeScale === i ? " active" : ""}`;
-        btn.textContent = `${i}x`;
-        btn.addEventListener("click", () => {
-            timeScale = i;
-            addLog(`模拟倍速切换为 ${i}x`);
-            renderAll();
-        });
-        speedButtonsEl.appendChild(btn);
-    }
+    tacticButtonsEl.querySelectorAll("button[data-tactic-id]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.tacticId === battleTacticId);
+    });
+    zoomButtonsEl.querySelectorAll("button[data-zoom-index]").forEach((btn) => {
+        btn.classList.toggle("active", Number(btn.dataset.zoomIndex) === zoomLevel);
+    });
+    speedButtonsEl.querySelectorAll("button[data-speed-value]").forEach((btn) => {
+        btn.classList.toggle("active", Number(btn.dataset.speedValue) === timeScale);
+    });
 
     autoBtn.classList.toggle("active", isAutoMode);
     autoBtn.textContent = avatarSessionExpired ? "⛔ 需重新登录" : (isAutoMode ? "■ 停止自动探索" : "▶ 开始自动探索");
@@ -5145,6 +5487,7 @@ function renderGameToText() {
         worldEvent: getWorldEventDef() ? { id: worldEventId, label: getWorldEventDef().label, remainMs: Math.max(0, Math.floor(worldEventUntilMs - simulationTimeMs)) } : null,
         zoom: { label: cfg.label, span: cfg.span, size: cfg.size },
         camera: { mode: cameraMode, x: cameraMode === "follow" ? avatarX : cameraX, y: cameraMode === "follow" ? avatarY : cameraY },
+        home: { x: HOME_X, y: HOME_Y },
         player: {
             x: avatarX,
             y: avatarY,
@@ -5163,6 +5506,8 @@ function renderGameToText() {
             bloodPillReturnThreshold,
             autoBuyBloodPill,
             injuryDebuffRemainMs: Math.max(0, Math.floor(injuryDebuffUntilMs - simulationTimeMs)),
+            ironBodyBuffRemainMs: Math.max(0, Math.floor(ironBodyBuffUntilMs - simulationTimeMs)),
+            swiftTalismanBuffRemainMs: Math.max(0, Math.floor(swiftTalismanBuffUntilMs - simulationTimeMs)),
             reviveCooldownRemainMs: Math.max(0, Math.floor(avatarReviveUntilMs - simulationTimeMs)),
             bodyCultivationExp,
             bodyCultivationExpNeed: getBodyCultivationExpNeed(cultivationLevel),
@@ -5213,10 +5558,11 @@ function buildSavePayload() {
     return {
         v: 2,
         ts: Date.now(),
+        home: { x: HOME_X, y: HOME_Y },
         avatar: { x: avatarX, y: avatarY, hp: avatarHp, mp: avatarMp, reviveUntilMs: avatarReviveUntilMs },
         day: { dayCount, dayOriginX, dayOriginY, dayMoveCount, dayMoveLogBatch, dayGatherUnits, dayStartMs },
         runtime: { zoomLevel, strategyId, autoObjective, isAutoMode, timeScale, simulationTimeMs, buildingProductionAccumMs, worldEventId, worldEventUntilMs, nextWorldEventRollMs },
-        combat: { battleTacticId, autoUsePillRatio, autoUseSalveRatio, bloodPillCarryTarget, bloodPillReturnThreshold, autoBuyBloodPill, injuryDebuffUntilMs, lastBattleFrame },
+        combat: { battleTacticId, autoUsePillRatio, autoUseSalveRatio, bloodPillCarryTarget, bloodPillReturnThreshold, autoBuyBloodPill, injuryDebuffUntilMs, ironBodyBuffUntilMs, swiftTalismanBuffUntilMs, lastBattleFrame },
         flags: { devForceMonster, devFixedDrops, baitBoostUntilMs },
         progression: {
             cultivationLevel,
@@ -5250,6 +5596,10 @@ function buildSavePayload() {
 
 function applySavePayload(payload) {
     if (!payload || (payload.v && ![1, 2].includes(payload.v))) return false;
+    if (Number.isFinite(payload.home?.x) && Number.isFinite(payload.home?.y)) {
+        HOME_X = payload.home.x;
+        HOME_Y = payload.home.y;
+    }
     avatarX = payload.avatar?.x ?? avatarX;
     avatarY = payload.avatar?.y ?? avatarY;
     avatarHp = payload.avatar?.hp ?? avatarHp;
@@ -5279,6 +5629,8 @@ function applySavePayload(payload) {
     bloodPillReturnThreshold = payload.combat?.bloodPillReturnThreshold ?? bloodPillReturnThreshold;
     autoBuyBloodPill = payload.combat?.autoBuyBloodPill ?? autoBuyBloodPill;
     injuryDebuffUntilMs = payload.combat?.injuryDebuffUntilMs ?? injuryDebuffUntilMs;
+    ironBodyBuffUntilMs = payload.combat?.ironBodyBuffUntilMs ?? ironBodyBuffUntilMs;
+    swiftTalismanBuffUntilMs = payload.combat?.swiftTalismanBuffUntilMs ?? swiftTalismanBuffUntilMs;
     lastBattleFrame = payload.combat?.lastBattleFrame ?? lastBattleFrame;
     devForceMonster = payload.flags?.devForceMonster ?? devForceMonster;
     devFixedDrops = payload.flags?.devFixedDrops ?? devFixedDrops;
@@ -5572,6 +5924,16 @@ loadBtn.addEventListener("click", () => {
     if (ok) renderAll();
 });
 
+if (rebirthBtn) {
+    rebirthBtn.addEventListener("click", () => {
+        const ok = window.confirm("重生会清除本地存档并随机重建洞府坐标，是否继续？");
+        if (!ok) return;
+        localStorage.removeItem(SAVE_KEY);
+        localStorage.removeItem("simpleworld_save_v1");
+        window.location.reload();
+    });
+}
+
 resourceSummaryEl.addEventListener("click", (evt) => {
     const slot = evt.target.closest(".inv-slot[data-item-id]");
     if (!slot || !resourceSummaryEl.contains(slot)) return;
@@ -5584,7 +5946,12 @@ resourceSummaryEl.addEventListener("click", (evt) => {
 if (worldSummaryToggleBtn) {
     worldSummaryToggleBtn.addEventListener("click", () => {
         showWorldSummary = !showWorldSummary;
-        renderAll();
+        if (battleState) {
+            updateSidePanels();
+            renderButtons();
+        } else {
+            renderAll();
+        }
     });
 }
 
@@ -5671,7 +6038,12 @@ window.addEventListener("resize", () => {
 rightTabButtonsEl.querySelectorAll("button[data-right-tab]").forEach((btn) => {
     btn.addEventListener("click", () => {
         rightPanelTab = btn.dataset.rightTab;
-        renderAll();
+        if (battleState) {
+            updateSidePanels();
+            renderButtons();
+        } else {
+            renderAll();
+        }
     });
 });
 
@@ -5699,13 +6071,13 @@ grid.addEventListener("mousemove", (e) => {
     tooltip.style.display = "block";
     tooltip.style.left = `${e.clientX + 16}px`;
     tooltip.style.top = `${e.clientY + 16}px`;
-    updateSidePanels();
+    scheduleSidePanelRefresh();
 });
 
 grid.addEventListener("mouseleave", () => {
     tooltip.style.display = "none";
     inspectText = "";
-    updateSidePanels();
+    scheduleSidePanelRefresh();
 });
 
 grid.addEventListener("click", (e) => {
@@ -5759,7 +6131,7 @@ if (mapContainerEl) {
         const worldDx = Math.round((e.clientX - dragStartClientX) / unitPx) * cfg.span;
         const worldDy = Math.round((e.clientY - dragStartClientY) / unitPx) * cfg.span;
         setCameraFreePosition(dragStartCameraX - worldDx, dragStartCameraY - worldDy);
-        if (Math.abs(e.clientX - dragStartClientX) + Math.abs(e.clientY - dragStartClientY) > 5) {
+        if (Math.abs(e.clientX - dragStartClientX) + Math.abs(e.clientY - dragStartClientY) > 12) {
             suppressNextMapClick = true;
         }
         renderAll();
@@ -5773,6 +6145,7 @@ if (mapContainerEl) {
 }
 
 document.addEventListener("wheel", (e) => {
+    if (!e.target.closest(".map-container")) return;
     e.preventDefault();
     const delta = e.deltaY > 0 ? 1 : -1;
     const nextLevel = Math.max(0, Math.min(ZOOM_LEVELS.length - 1, zoomLevel + delta));
@@ -5796,6 +6169,13 @@ avatarHp = getAvatarMaxHp();
 avatarMp = getAvatarMaxMp();
 if (loadFromLocal()) {
     addLog("已自动读取本地存档");
+} else {
+    const nx = rollRandomHomeCoord();
+    const ny = rollRandomHomeCoord();
+    applyHomeCoordinates(nx, ny);
+    avatarHp = getAvatarMaxHp();
+    avatarMp = getAvatarMaxMp();
+    addLog(`新账号已建立，洞府坐标 (${nx}, ${ny})`);
 }
 pillThresholdInput.value = String(Math.round(autoUsePillRatio * 100));
 salveThresholdInput.value = String(Math.round(autoUseSalveRatio * 100));
