@@ -917,7 +917,11 @@
     }
 
     #battle-panel.simple-mode .battle-arena {
-        display: none;
+        grid-template-columns: 1fr;
+    }
+
+    #battle-panel.simple-mode .battle-center {
+        justify-items: stretch;
     }
 
     #battle-panel.simple-mode #battleRoundResult {
@@ -1948,6 +1952,7 @@ let battleUiEnemyHpDisplay = 0;
 let battleUiSelfHpDisplay = 0;
 let battleMetrics = null;
 let battleInfoMode = "simple";
+let lastDamageSnapshot = { selfLoss: 0, enemyLoss: 0 };
 let devForceMonster = false;
 let devFixedDrops = false;
 let baitBoostUntilMs = 0;
@@ -3282,6 +3287,7 @@ function startBattleWith(monster) {
     battleUiEnemyHpDisplay = monster.hp;
     battleUiSelfHpDisplay = avatarHp;
     battleMetrics = { dealt: 0, taken: 0, crits: 0, heals: 0, startMs: simulationTimeMs };
+    lastDamageSnapshot = { selfLoss: 0, enemyLoss: 0 };
     lastBattleFrame = null;
     movementStatusText = `遭遇 ${monster.type} Lv.${monster.level}，进入战斗`;
     return true;
@@ -3489,6 +3495,12 @@ function resolveBattleStep(elapsedMs = 100) {
     if (lastBattleFrame) {
         lastBattleFrame.itemText = itemEvents.join("；");
         lastBattleFrame.crit = lastCrit;
+        if ((lastBattleFrame.monsterDmg || 0) > 0 || (lastBattleFrame.avatarDmg || 0) > 0) {
+            lastDamageSnapshot = {
+                selfLoss: lastBattleFrame.monsterDmg || 0,
+                enemyLoss: lastBattleFrame.avatarDmg || 0
+            };
+        }
     }
     if (avatarHp <= 0) {
         const riskBonus = getRiskRewardBonusAt(battleState.x, battleState.y);
@@ -4537,8 +4549,12 @@ function updateBattlePanel() {
         if (battleTurnBannerEl) battleTurnBannerEl.style.display = "none";
         const selfCdSec = Math.ceil((battleState.playerCdMs || 0) / 1000);
         const enemyCdSec = Math.ceil((battleState.enemyCdMs || 0) / 1000);
-        const selfLoss = lastBattleFrame?.monsterDmg || 0;
-        const enemyLoss = lastBattleFrame?.avatarDmg || 0;
+        const selfLossNow = lastBattleFrame?.monsterDmg || 0;
+        const enemyLossNow = lastBattleFrame?.avatarDmg || 0;
+        const selfLoss = selfLossNow > 0 ? selfLossNow : (lastDamageSnapshot.selfLoss || 0);
+        const enemyLoss = enemyLossNow > 0 ? enemyLossNow : (lastDamageSnapshot.enemyLoss || 0);
+        const selfLossText = selfLoss > 0 ? `本轮扣血 -${selfLoss}` : "本轮扣血 无";
+        const enemyLossText = enemyLoss > 0 ? `敌方受伤 -${enemyLoss}` : "敌方受伤 无";
         const itemText = lastBattleFrame?.itemText || "无";
         battleRoundResultEl.innerHTML = `
             <div class="summary-line">
@@ -4547,8 +4563,8 @@ function updateBattlePanel() {
                 <span class="summary-pill cd">CD倒数 我${selfCdSec}s / 敌${enemyCdSec}s</span>
             </div>
             <div class="summary-line">
-                <span class="summary-pill damage">本轮扣血 -${selfLoss}</span>
-                <span class="summary-pill enemy">敌方受伤 -${enemyLoss}</span>
+                <span class="summary-pill damage">${selfLossText}</span>
+                <span class="summary-pill enemy">${enemyLossText}</span>
                 <span class="summary-pill heal">道具 ${itemText}</span>
             </div>
         `;
