@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>极简世界 - 游戏百科</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #111b2e;
+      --panel-soft: #16243d;
+      --text: #e8eef9;
+      --muted: #98a8c4;
+      --line: #223555;
+      --accent: #78b7ff;
+      --ok: #74d18d;
+      --warn: #f2c26b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 700px at 10% -20%, #17335f 0%, #0b1220 45%), var(--bg);
+      line-height: 1.65;
+    }
+    .wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 28px 18px 44px;
+    }
+    h1, h2, h3 { margin: 0; line-height: 1.3; }
+    .hero {
+      background: linear-gradient(135deg, rgba(120,183,255,0.16), rgba(117,255,198,0.08));
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px 18px 14px;
+      margin-bottom: 16px;
+    }
+    .hero p { margin: 8px 0 0; color: var(--muted); }
+    .toc {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px;
+      margin: 14px 0 18px;
+    }
+    .toc a {
+      text-decoration: none;
+      color: var(--text);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 14px;
+    }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 14px 10px;
+      margin-bottom: 12px;
+    }
+    h2 { font-size: 20px; margin-bottom: 8px; color: #d7e7ff; }
+    h3 { font-size: 16px; margin: 10px 0 6px; color: #bfd9ff; }
+    p, li { font-size: 14px; }
+    ul, ol { margin: 6px 0 10px 18px; padding: 0; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px;
+    }
+    .card {
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+    .chip {
+      display: inline-block;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 1px 8px;
+      font-size: 12px;
+      margin-right: 6px;
+      color: var(--muted);
+    }
+    .ok { color: var(--ok); }
+    .warn { color: var(--warn); }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+      font-size: 13px;
+    }
+    .table th, .table td {
+      border: 1px solid var(--line);
+      padding: 6px 8px;
+      text-align: left;
+    }
+    .table th { background: #0f1930; color: #cfe0ff; }
+    .footer-note {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 10px;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>极简世界 · 游戏百科</h1>
+      <p>当前 DEMO 全玩法总览。已整合原帮助文档内容，统一以本页为唯一玩法说明。</p>
+    </div>
+
+    <nav class="toc">
+      <a href="#quickstart">快速上手</a>
+      <a href="#core">核心循环</a>
+      <a href="#realm">境界与修为</a>
+      <a href="#avatar">化身探索</a>
+      <a href="#battle">战斗系统</a>
+      <a href="#home">洞府建设/阵法</a>
+      <a href="#items">物品与装备</a>
+      <a href="#ui">界面与面板</a>
+      <a href="#social">排行榜与名片</a>
+      <a href="#save">存档与调试</a>
+    </nav>
+
+    <section id="quickstart">
+      <h2>0. 快速上手</h2>
+      <ol>
+        <li>点击左侧 <strong>开始打坐</strong>，主角持续积累修为升级。</li>
+        <li>点击 <strong>自动探索</strong>，化身外出采集与战斗。</li>
+        <li>背包接近上限或低血时，化身会按策略回城补给。</li>
+        <li>在 <strong>洞府建设/阵法</strong> 中建设 5x5 地块，提升战斗与掉落收益。</li>
+        <li>使用商店、合成、强化把成长循环跑起来。</li>
+      </ol>
+    </section>
+
+    <section id="core">
+      <h2>1. 核心循环</h2>
+      <ol>
+        <li>主角在洞府内持续打坐修炼，积累修为和等级。</li>
+        <li>化身外出自动探索，进行采集、遭遇怪物并战斗。</li>
+        <li>资源带回洞府后用于建造、强化、合成、丹药补给。</li>
+        <li>通过阵法与装备提升战斗效率，形成更高收益闭环。</li>
+      </ol>
+    </section>
+
+    <section id="realm">
+      <h2>2. 境界与修为（100级）</h2>
+      <p><span class="chip">等级上限</span> Lv.1 - Lv.100，最高为飞升境。境界保留 <strong>前期 / 中期 / 后期</strong> 命名。</p>
+      <table class="table">
+        <thead><tr><th>等级段</th><th>境界名</th><th>阶段</th></tr></thead>
+        <tbody>
+          <tr><td>1-10</td><td>凡体境</td><td>前/中/后期</td></tr>
+          <tr><td>11-20</td><td>练气境</td><td>前/中/后期</td></tr>
+          <tr><td>21-30</td><td>筑基境</td><td>前/中/后期</td></tr>
+          <tr><td>31-40</td><td>金丹境</td><td>前/中/后期</td></tr>
+          <tr><td>41-50</td><td>元婴境</td><td>前/中/后期</td></tr>
+          <tr><td>51-60</td><td>化神境</td><td>前/中/后期</td></tr>
+          <tr><td>61-70</td><td>炼虚境</td><td>前/中/后期</td></tr>
+          <tr><td>71-80</td><td>合体境</td><td>前/中/后期</td></tr>
+          <tr><td>81-90</td><td>大乘境</td><td>前/中/后期</td></tr>
+          <tr><td>91-100</td><td>飞升境</td><td>前/中/后期</td></tr>
+        </tbody>
+      </table>
+      <p>修为需求曲线：<code>needExp(lv) = floor(40 + lv^2.05 * 6 + lv * 18)</code>。</p>
+      <h3>每级所需经验值（Lv1-Lv100）</h3>
+      <table class="table">
+        <thead><tr><th>等级</th><th>本级升下级所需修为</th><th>累计总修为（到达下级）</th></tr></thead>
+        <tbody id="expRows"></tbody>
+      </table>
+    </section>
+
+    <section id="avatar">
+      <h2>3. 化身探索</h2>
+      <ul>
+        <li>化身每秒移动 1 格，当日活动半径限制为 15 格（相对当日起点）。</li>
+        <li>支持自动探索与回城优先，化身在线时长上限 12 小时，需重新登录激活。</li>
+        <li>死亡后进入 10 分钟冷却，回洞府复活。</li>
+        <li>支持背包上限、回血丹补给阈值与自动购买规则。</li>
+      </ul>
+    </section>
+
+    <section id="battle">
+      <h2>4. 战斗系统（CD并行）</h2>
+      <ul>
+        <li>采用 CD 攻击模型，双方同时倒计时，先转好先出手。</li>
+        <li>怪物有类型差异 CD（上限 5s）。</li>
+        <li>战斗面板提供 <strong>简洁/完整</strong> 双模式。</li>
+        <li>结算显示：时长、回合、总伤害、承伤、暴击、治疗、战利品。</li>
+        <li>新增关键帧回放与近 5 场均值对比。</li>
+      </ul>
+      <h3>怪物层级</h3>
+      <div class="grid">
+        <div class="card">普通：荒原魔兵、夜翼蝠、岩甲战兽</div>
+        <div class="card">进阶：丛林狼王、裂地凶兽、毒刺蛛后</div>
+        <div class="card">精英：狂刃魔将、玄甲统领</div>
+        <div class="card">Boss：深渊君王、天罚魔龙</div>
+      </div>
+    </section>
+
+    <section id="home">
+      <h2>5. 洞府建设与阵法</h2>
+      <p>洞府中心 5x5 地块可建造/升级/拆除。主角常驻洞府，可在化身外出时继续建设。</p>
+      <h3>基础建筑</h3>
+      <ul>
+        <li>灵草圃：产灵草，提升打坐效率。</li>
+        <li>灵木坊：产灵木。</li>
+        <li>聚灵井：消耗灵草产灵石，提升仓储。</li>
+        <li>悟道室：消耗灵石转化成长价值。</li>
+      </ul>
+      <h3>战斗阵法</h3>
+      <ul>
+        <li>天罡阵：攻击提升、掉落提升。</li>
+        <li>玄武阵：防御提升、自动用药治疗提升。</li>
+        <li>烈魄阵：暴击率提升、暴击伤害提升。</li>
+      </ul>
+    </section>
+
+    <section id="items">
+      <h2>6. 物品、装备与经济</h2>
+      <ul>
+        <li>资源分为背包 / 库存 / 装备三栏，未拥有不显示。</li>
+        <li>物品支持点击菜单：使用、装备、回收金币、查看图鉴。</li>
+        <li>装备为单槽唯一，不可叠装，支持强化至 +10。</li>
+        <li>小/中/大宝箱按概率产出材料、消耗品、稀有装备。</li>
+        <li>丹药商店支持金币购买，配合自动补给规则稳定挂机。</li>
+      </ul>
+    </section>
+
+    <section id="ui">
+      <h2>7. UI 与交互</h2>
+      <ul>
+        <li>左侧：主角打坐、化身探索、策略、倍速、建设与功能按钮。</li>
+        <li>中部：可缩放地图、自由拖拽视角、战斗浮层、建设高亮格。</li>
+        <li>右侧：资源/属性/图鉴、地图解读（默认可隐藏）。</li>
+        <li>战斗中侧栏仍可操作，战斗结束后同步刷新关键数据。</li>
+      </ul>
+    </section>
+
+    <section id="social">
+      <h2>8. 排行榜与轻社交</h2>
+      <ul>
+        <li>排行榜包含：境界榜、战力榜、讨伐榜。</li>
+        <li>称号系统基于探索/讨伐/洞府评分条件解锁。</li>
+        <li>支持复制洞府名片码，用于后续分享与异步社交扩展。</li>
+      </ul>
+    </section>
+
+    <section id="save">
+      <h2>9. 存档、测试与开发接口</h2>
+      <ul>
+        <li>支持手动存档/读档，并兼容历史版本迁移。</li>
+        <li>提供开发调试开关：强制刷怪、固定掉落、一键触发战斗。</li>
+        <li>自动化接口：
+          <span class="chip ok">window.render_game_to_text()</span>
+          <span class="chip ok">window.advanceTime(ms)</span>
+          <span class="chip ok">window.saveGame()</span>
+          <span class="chip ok">window.loadGame()</span>
+        </li>
+      </ul>
+      <p class="warn">注：本 WIKI 按当前 DEMO 功能维护，若机制有更新请同步此文档。</p>
+    </section>
+
+    <div class="footer-note">SimpleWorld DEMO · 游戏百科</div>
+  </div>
+  <script>
+    (function renderLevelExpTable() {
+      const body = document.getElementById("expRows");
+      if (!body) return;
+      const needExp = (lv) => Math.floor(40 + Math.pow(lv, 2.05) * 6 + lv * 18);
+      let sum = 0;
+      const rows = [];
+      for (let lv = 1; lv <= 100; lv++) {
+        const need = needExp(lv);
+        sum += need;
+        rows.push(`<tr><td>Lv.${lv}</td><td>${need}</td><td>${sum}</td></tr>`);
+      }
+      body.innerHTML = rows.join("");
+    })();
+  </script>
+</body>
+</html>

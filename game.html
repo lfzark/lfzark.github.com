@@ -780,20 +780,91 @@
         background: rgba(37, 48, 66, 0.72);
     }
     .monster-icon-wrap {
-        width: 20px;
-        height: 20px;
+        width: 90px;
+        height: 115px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        border-radius: 4px;
-        background: rgba(25, 36, 50, 0.85);
-        border: 1px solid rgba(120, 146, 186, 0.35);
+        border-radius: 10px;
+        background:
+            radial-gradient(circle at 30% 20%, rgba(130, 166, 224, 0.42) 0%, rgba(35, 51, 78, 0.38) 34%, rgba(17, 26, 40, 0.94) 100%),
+            linear-gradient(160deg, rgba(34, 48, 73, 0.86), rgba(15, 24, 38, 0.96));
+        border: 1px solid rgba(144, 174, 220, 0.6);
+        box-shadow: inset 0 0 0 1px rgba(182, 204, 240, 0.16), 0 6px 16px rgba(0, 0, 0, 0.35);
+        overflow: hidden;
+        flex: 0 0 auto;
     }
-    .monster-icon-wrap svg {
-        width: 16px;
-        height: 16px;
+    .monster-icon-wrap svg,
+    .monster-icon-wrap img {
+        width: 86px;
+        height: 111px;
         display: block;
+        object-fit: contain;
     }
+    .codex-tab-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+        margin: 8px 0;
+    }
+    .codex-tab-btn.active {
+        border-color: rgba(142, 178, 236, 0.78);
+        box-shadow: 0 0 0 1px rgba(142, 178, 236, 0.35) inset;
+        background: rgba(44, 63, 92, 0.92);
+    }
+    .monster-codex-item {
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(120, 146, 190, 0.35);
+        background:
+            radial-gradient(circle at 18% 20%, rgba(88, 118, 168, 0.35) 0%, rgba(20, 27, 40, 0.88) 55%),
+            linear-gradient(145deg, rgba(31, 42, 62, 0.86), rgba(16, 24, 36, 0.94));
+        cursor: pointer;
+        transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+    }
+    .monster-codex-item:hover {
+        transform: translateY(-1px);
+        border-color: rgba(157, 188, 236, 0.72);
+        box-shadow: 0 8px 18px rgba(7, 13, 23, 0.45);
+    }
+    .monster-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 5px;
+    }
+    .monster-title {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 700;
+        color: #e6f1ff;
+        font-size: 13px;
+    }
+    .monster-title .monster-icon-wrap {
+        margin-right: 2px;
+    }
+    .drop-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 6px;
+    }
+    .drop-chip {
+        font-size: 10px;
+        line-height: 1.2;
+        border-radius: 999px;
+        padding: 2px 7px;
+        border: 1px solid rgba(130, 155, 194, 0.42);
+        background: rgba(33, 46, 65, 0.85);
+        color: #d9e8ff;
+        white-space: nowrap;
+    }
+    .drop-chip.rarity-common { border-color: rgba(170, 185, 210, 0.42); color: #d7e3ff; }
+    .drop-chip.rarity-uncommon { border-color: rgba(110, 210, 135, 0.55); color: #c6ffd3; }
+    .drop-chip.rarity-rare { border-color: rgba(109, 174, 255, 0.65); color: #cde6ff; }
+    .drop-chip.rarity-epic { border-color: rgba(213, 122, 255, 0.72); color: #f2d3ff; }
     .monster-drop-row {
         margin-top: 4px;
         font-size: 11px;
@@ -911,7 +982,9 @@
         height: 16px;
     }
     #chest-modal,
-    #item-codex-modal {
+    #item-codex-modal,
+    #monster-codex-modal,
+    #story-modal {
         position: fixed;
         left: 50%;
         top: 50%;
@@ -951,6 +1024,78 @@
         max-height: calc(100vh - 40px);
         overflow-y: auto;
     }
+    #monster-codex-modal,
+    #story-modal {
+        width: min(760px, calc(100vw - 28px));
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+        z-index: 88;
+    }
+    .story-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+    .story-chapter {
+        border: 1px solid rgba(132, 160, 202, 0.38);
+        border-radius: 10px;
+        padding: 12px;
+        background:
+            radial-gradient(circle at 18% 10%, rgba(115, 146, 206, 0.25), rgba(30, 41, 61, 0.12) 45%),
+            rgba(20, 28, 42, 0.84);
+    }
+    .story-chapter.theme-prologue {
+        background:
+            radial-gradient(circle at 18% 10%, rgba(120, 155, 214, 0.38), rgba(35, 49, 73, 0.2) 44%),
+            linear-gradient(140deg, rgba(34, 48, 72, 0.92), rgba(17, 25, 39, 0.95));
+    }
+    .story-chapter.theme-journey {
+        background:
+            radial-gradient(circle at 82% 15%, rgba(124, 184, 133, 0.28), rgba(40, 62, 51, 0.2) 44%),
+            linear-gradient(140deg, rgba(32, 55, 44, 0.9), rgba(17, 28, 23, 0.95));
+    }
+    .story-chapter.theme-finale {
+        background:
+            radial-gradient(circle at 50% 6%, rgba(214, 141, 89, 0.32), rgba(63, 30, 27, 0.22) 44%),
+            linear-gradient(140deg, rgba(63, 34, 36, 0.9), rgba(25, 18, 24, 0.95));
+    }
+    .story-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #e9f3ff;
+        margin-bottom: 6px;
+    }
+    .story-meta {
+        font-size: 12px;
+        color: #abc0dc;
+        margin-bottom: 10px;
+    }
+    .story-body {
+        font-size: 13px;
+        color: #d6e6f7;
+        line-height: 1.78;
+        min-height: 164px;
+    }
+    .story-cursor {
+        display: inline-block;
+        width: 8px;
+        margin-left: 2px;
+        color: #9fc4ef;
+        animation: story-cursor-blink 840ms steps(1, end) infinite;
+    }
+    @keyframes story-cursor-blink {
+        0%, 48% { opacity: 1; }
+        50%, 100% { opacity: 0; }
+    }
+    .story-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 10px;
+    }
     .codex-detail-columns {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -984,7 +1129,7 @@
         pointer-events: none;
     }
 
-    #battle-panel * {
+    #battleInfoModeBtn {
         pointer-events: auto;
     }
 
@@ -1077,14 +1222,26 @@
     }
 
     .battle-unit-avatar {
-        height: 58px;
+        min-height: 115px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 34px;
+        font-size: 42px;
         line-height: 1;
-        background: rgba(11, 17, 27, 0.42);
-        border-radius: 6px;
+        background:
+            radial-gradient(circle at 35% 22%, rgba(103, 140, 195, 0.25), rgba(11, 17, 27, 0.6) 52%),
+            rgba(11, 17, 27, 0.56);
+        border-radius: 8px;
+        padding: 4px;
+    }
+    .battle-unit-avatar .monster-icon-wrap {
+        width: 90px;
+        height: 115px;
+    }
+    .battle-unit-avatar .monster-icon-wrap svg,
+    .battle-unit-avatar .monster-icon-wrap img {
+        width: 86px;
+        height: 111px;
     }
 
     .cd-track {
@@ -1318,7 +1475,8 @@
 
     #craft-panel,
     #shop-panel,
-    #enhance-panel {
+    #enhance-panel,
+    #social-panel {
         position: fixed;
         left: 24px;
         top: 72px;
@@ -1331,6 +1489,66 @@
         border-radius: 10px;
         padding: 12px;
         box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+    }
+    #social-panel {
+        width: min(720px, calc(100vw - 32px));
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 89;
+    }
+    .social-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 8px;
+    }
+    .social-card {
+        border: 1px solid rgba(118, 145, 187, 0.4);
+        border-radius: 8px;
+        padding: 8px;
+        background: rgba(23, 33, 49, 0.82);
+    }
+    .rank-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 12px;
+        padding: 3px 0;
+        border-bottom: 1px dashed rgba(118, 145, 187, 0.25);
+    }
+    .rank-row:last-child {
+        border-bottom: 0;
+    }
+    .rank-row.me {
+        color: #ffe39e;
+        font-weight: 700;
+    }
+    .title-chip {
+        display: inline-block;
+        margin: 0 6px 6px 0;
+        padding: 3px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(126, 154, 196, 0.45);
+        background: rgba(36, 50, 72, 0.84);
+        font-size: 11px;
+        color: #d9e8ff;
+    }
+    .title-chip.unlocked {
+        border-color: rgba(255, 207, 123, 0.66);
+        color: #ffe5ad;
+    }
+    #socialProfileCode {
+        width: 100%;
+        min-height: 88px;
+        resize: vertical;
+        border: 1px solid rgba(126, 154, 196, 0.45);
+        border-radius: 8px;
+        background: rgba(17, 26, 39, 0.92);
+        color: #d8e7f9;
+        font-size: 12px;
+        padding: 8px;
+        line-height: 1.45;
     }
 
     .attr-row {
@@ -1460,6 +1678,14 @@
             <div style="font-size:1.02em; margin-bottom:8px; color:#a8d0ff;">🧍 化身 · 外出历练</div>
             <button id="autoBtn" class="control-btn">▶ 自动探索</button>
             <button id="returnBtn" class="control-btn">🏠 回城优先</button>
+            <button id="reloginBtn" class="control-btn hidden">🔐 重新登录激活化身</button>
+        </div>
+        <div id="newbieGuideCard" class="card" style="margin:8px 0 0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <div style="font-size:1.02em; color:#a8d0ff;">🎯 新手引导任务链</div>
+                <button id="newbieGuideClaimBtn" class="mini-btn">领取</button>
+            </div>
+            <div id="newbieGuideSummary" class="small-note" style="margin-top:6px;">任务载入中...</div>
         </div>
 
         <div class="section-title" style="margin-top:8px;">倍速</div>
@@ -1488,17 +1714,19 @@
         <button id="cameraResetBtn" class="control-btn">🎯 回到化身</button>
 
         <div class="section-title" style="margin-top:8px;">洞府建设</div>
+        <button id="homeBuildBtn" class="control-btn">🏗 洞府建设/阵法</button>
 
         <div class="section-title" style="margin-top:10px;">功能</div>
         <div class="compact-row" style="grid-template-columns:repeat(2,minmax(0,1fr));">
             <button id="craftBtn" class="mode-btn speed-btn">🧪 合成</button>
             <button id="saveBtn" class="mode-btn speed-btn">💾 存档</button>
             <button id="loadBtn" class="mode-btn speed-btn">📂 读档</button>
-            <button id="helpBtn" class="mode-btn speed-btn">📘 帮助</button>
+            <button id="helpBtn" class="mode-btn speed-btn">📘 游戏百科</button>
         </div>
         <button id="rebirthBtn" class="control-btn">♻ 重生（清档）</button>
         <button id="shopBtn" class="control-btn">🛒 丹药商店</button>
         <button id="enhanceBtn" class="control-btn">⚒ 装备强化</button>
+        <button id="socialBtn" class="control-btn">🏆 排行榜</button>
         <button id="changelogBtn" class="control-btn">📝 更新日志</button>
 
         <div class="section-title" style="margin-top:16px;">测试开关</div>
@@ -1509,9 +1737,9 @@
             <input id="fixedDropToggle" type="checkbox"> 固定掉落结果
         </label>
         <select id="debugMonsterSelect" class="mode-btn" style="width:100%; margin-bottom:6px;">
-            <option value="normal">调试怪：妖兽</option>
-            <option value="elite">调试怪：精英妖将</option>
-            <option value="boss">调试怪：天劫妖王</option>
+            <option value="normal">调试怪：裂地凶兽</option>
+            <option value="elite">调试怪：玄甲统领</option>
+            <option value="boss">调试怪：天罚魔龙</option>
             <option value="nearby">调试怪：当前位置怪物</option>
         </select>
         <button id="debugBattleBtn" class="control-btn">⚔ 一键触发战斗</button>
@@ -1552,7 +1780,10 @@
 <div id="codex-panel" class="hidden">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
         <strong>📚 物品图鉴</strong>
-        <button id="codexCloseBtn" class="mini-btn">关闭</button>
+        <div style="display:flex; gap:6px; align-items:center;">
+            <button id="storyBtn" class="mini-btn">背景故事</button>
+            <button id="codexCloseBtn" class="mini-btn">关闭</button>
+        </div>
     </div>
     <div id="codexSummary"></div>
 </div>
@@ -1560,11 +1791,20 @@
 <div id="item-menu" class="hidden"></div>
 <div id="chest-modal" class="hidden"></div>
 <div id="item-codex-modal" class="hidden"></div>
+<div id="monster-codex-modal" class="hidden"></div>
+<div id="story-modal" class="hidden"></div>
 <div id="equip-slot-menu" class="hidden"></div>
+<div id="social-panel" class="hidden">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <strong>🏆 排行榜 · 名片</strong>
+        <button id="socialCloseBtn" class="mini-btn">关闭</button>
+    </div>
+    <div id="socialSummary"></div>
+</div>
 <div id="battle-panel" class="hidden">
     <div class="battle-panel-head">
         <div id="battleSummary" style="font-size:13px; margin-bottom:0;"></div>
-        <button id="battleInfoModeBtn" class="battle-mode-btn">简化模式</button>
+        <button id="battleInfoModeBtn" class="battle-mode-btn" title="切换战斗信息展示密度">战斗视图：简洁</button>
     </div>
     <div class="battle-arena">
         <div id="battleSelfCard" class="battle-unit-card self">
@@ -1645,7 +1885,7 @@ const BODY_CULTIVATION_TICK_MS = 20000;
 const AVATAR_MAX_ONLINE_MS = 12 * 60 * 60 * 1000;
 const DAILY_MOVE_RADIUS = 15;
 const BOSS_SPAWN_MAX_HOME_DISTANCE = 12;
-const CULTIVATION_MAX_LEVEL = 10;
+const CULTIVATION_MAX_LEVEL = 100;
 const BUILDING_PRODUCTION_TICK_MS = 5000;
 const MONSTER_RESPAWN_MS = 45000;
 const AVATAR_REVIVE_COOLDOWN_MS = 600000;
@@ -1810,21 +2050,21 @@ function getItemIconMarkup(itemId) {
 }
 
 const MONSTER_ICON_SVG = {
-    邪祟: `<svg viewBox="0 0 32 32"><path d="M7 24c0-8 4-15 9-15s9 7 9 15z" fill="#8ea0c7"/><circle cx="13" cy="17" r="1.5" fill="#f2f6ff"/><circle cx="19" cy="17" r="1.5" fill="#f2f6ff"/></svg>`,
-    夜蝠: `<svg viewBox="0 0 32 32"><path d="M4 18c5-7 8-10 12-10s7 3 12 10c-4-2-6-2-8-1-2-2-4-2-8 0-2-1-4-1-8 1z" fill="#7f87c4"/><circle cx="16" cy="15" r="2" fill="#dce3ff"/></svg>`,
-    石甲妖: `<svg viewBox="0 0 32 32"><rect x="7" y="8" width="18" height="18" rx="4" fill="#7b8a96"/><path d="M10 12h12M10 16h12M10 20h12" stroke="#cad7e0" stroke-width="1.3"/></svg>`,
-    林魈: `<svg viewBox="0 0 32 32"><path d="M16 5l8 8-8 14-8-14z" fill="#4fae67"/><path d="M16 10v10" stroke="#e4ffea" stroke-width="1.5"/><circle cx="16" cy="17" r="2" fill="#e4ffea"/></svg>`,
-    妖兽: `<svg viewBox="0 0 32 32"><path d="M6 22c1-7 6-12 10-12s9 5 10 12z" fill="#b17d5a"/><circle cx="13" cy="16" r="1.6" fill="#fff2da"/><circle cx="19" cy="16" r="1.6" fill="#fff2da"/></svg>`,
-    毒沼蛛后: `<svg viewBox="0 0 32 32"><circle cx="16" cy="17" r="6" fill="#5e6f44"/><path d="M10 9l3 4M22 9l-3 4M8 15h5M24 15h-5M9 24l4-4M23 24l-4-4" stroke="#afcf73" stroke-width="1.6"/></svg>`,
-    妖将: `<svg viewBox="0 0 32 32"><path d="M16 5l8 5v9c0 5-3 8-8 10-5-2-8-5-8-10v-9z" fill="#7f4f95"/><path d="M12 16h8" stroke="#f4d2ff" stroke-width="1.6"/></svg>`,
-    精英妖将: `<svg viewBox="0 0 32 32"><path d="M16 4l9 5v10c0 5-4 8-9 9-5-1-9-4-9-9V9z" fill="#be6a48"/><path d="M11 15h10M16 10v10" stroke="#ffe1c8" stroke-width="1.6"/></svg>`,
-    深渊魔主: `<svg viewBox="0 0 32 32"><rect x="7" y="6" width="18" height="20" rx="5" fill="#4b4f91"/><circle cx="13" cy="16" r="2" fill="#f3f5ff"/><circle cx="19" cy="16" r="2" fill="#f3f5ff"/><path d="M12 21h8" stroke="#f3f5ff" stroke-width="1.5"/></svg>`,
-    天劫妖王: `<svg viewBox="0 0 32 32"><path d="M16 3l10 7-4 16H10L6 10z" fill="#2f6fa6"/><path d="M16 8l3 6h-4l2 4-6-7h4z" fill="#e8f7ff"/></svg>`
+    荒原魔兵: "assets/monsters/huangyuan_mobing.svg",
+    夜翼蝠: "assets/monsters/yeyi_fu.svg",
+    岩甲战兽: "assets/monsters/yanjia_zhanshou.svg",
+    丛林狼王: "assets/monsters/conglin_langwang.svg",
+    裂地凶兽: "assets/monsters/liedi_xiongshou.svg",
+    毒刺蛛后: "assets/monsters/duci_zhuhou.svg",
+    狂刃魔将: "assets/monsters/kuangren_mojiang.svg",
+    玄甲统领: "assets/monsters/xuanjia_tongling.svg",
+    深渊君王: "assets/monsters/shenyuan_junwang.svg",
+    天罚魔龙: "assets/monsters/tianfa_molong.svg"
 };
 
 function getMonsterIconMarkup(type) {
-    const svg = MONSTER_ICON_SVG[type] || MONSTER_ICON_SVG.邪祟;
-    return `<span class="monster-icon-wrap" aria-hidden="true">${svg}</span>`;
+    const src = MONSTER_ICON_SVG[type] || MONSTER_ICON_SVG.荒原魔兵;
+    return `<span class="monster-icon-wrap" aria-hidden="true"><img src="${src}" alt="${type}" loading="lazy" decoding="async"></span>`;
 }
 
 function formatBonusText(bonus) {
@@ -1840,9 +2080,12 @@ function formatBonusText(bonus) {
 
 const MONSTER_CODEX = [
     {
-        type: "邪祟",
+        type: "荒原魔兵",
         levelRange: "Lv.1-2",
         tier: 1,
+        source: "荒原边境、古战场废墟",
+        intro: "昔日战修执念凝形而成，成群巡游，擅长正面冲撞。",
+        stats: { hp: "90-140", atk: "14-20", def: "6-10", speed: "2.8-3.1s" },
         drops: [
             { id: "spiritStone", chance: "100%" },
             { id: "herb", chance: "35%" },
@@ -1850,9 +2093,12 @@ const MONSTER_CODEX = [
         ]
     },
     {
-        type: "夜蝠",
+        type: "夜翼蝠",
         levelRange: "Lv.1-3",
         tier: 1,
+        source: "阴风峡谷、夜色林地",
+        intro: "以血气为引，夜行伏击，常在薄暮时成群突袭。",
+        stats: { hp: "80-130", atk: "16-22", def: "5-9", speed: "2.9-3.2s" },
         drops: [
             { id: "spiritStone", chance: "100%" },
             { id: "healingSalve", chance: "10%" },
@@ -1860,9 +2106,12 @@ const MONSTER_CODEX = [
         ]
     },
     {
-        type: "石甲妖",
+        type: "岩甲战兽",
         levelRange: "Lv.2-3",
         tier: 2,
+        source: "矿脉丘陵、碎岩高地",
+        intro: "甲壳如石，耐打难退，常守在矿脉节点附近。",
+        stats: { hp: "150-220", atk: "20-28", def: "12-18", speed: "3.1-3.5s" },
         drops: [
             { id: "spiritStone", chance: "100%" },
             { id: "wood", chance: "40%" },
@@ -1870,9 +2119,12 @@ const MONSTER_CODEX = [
         ]
     },
     {
-        type: "林魈",
+        type: "丛林狼王",
         levelRange: "Lv.2-4",
         tier: 2,
+        source: "密林深处、古木兽径",
+        intro: "号令狼群，擅长绕后扑杀，连续压制能力强。",
+        stats: { hp: "140-240", atk: "22-32", def: "9-14", speed: "3.0-3.4s" },
         drops: [
             { id: "herb", chance: "100%" },
             { id: "demonCore", chance: "16%" },
@@ -1880,9 +2132,12 @@ const MONSTER_CODEX = [
         ]
     },
     {
-        type: "妖兽",
+        type: "裂地凶兽",
         levelRange: "Lv.2-3",
         tier: 2,
+        source: "裂谷平原、干涸河床",
+        intro: "体型庞大，冲锋时可震裂地面，爆发极高。",
+        stats: { hp: "180-260", atk: "24-34", def: "10-16", speed: "3.2-3.6s" },
         drops: [
             { id: "spiritStone", chance: "100%" },
             { id: "herb", chance: "45%" },
@@ -1891,9 +2146,12 @@ const MONSTER_CODEX = [
         ]
     },
     {
-        type: "毒沼蛛后",
+        type: "毒刺蛛后",
         levelRange: "Lv.3-4",
         tier: 3,
+        source: "毒沼深坑、腐木巢穴",
+        intro: "以毒丝封路，耗血能力强，适合持久战。",
+        stats: { hp: "230-320", atk: "30-40", def: "14-20", speed: "3.4-3.8s" },
         drops: [
             { id: "demonCore", chance: "100%" },
             { id: "rareCrystal", chance: "26%" },
@@ -1901,9 +2159,12 @@ const MONSTER_CODEX = [
         ]
     },
     {
-        type: "妖将",
+        type: "狂刃魔将",
         levelRange: "Lv.3-5",
         tier: 3,
+        source: "边关战场、魔军前哨",
+        intro: "双刃连斩，进攻欲极强，是中阶最常见统兵将领。",
+        stats: { hp: "260-360", atk: "34-46", def: "15-22", speed: "3.6-4.0s" },
         drops: [
             { id: "spiritStone", chance: "100%" },
             { id: "demonCore", chance: "22%" },
@@ -1911,9 +2172,12 @@ const MONSTER_CODEX = [
         ]
     },
     {
-        type: "精英妖将",
+        type: "玄甲统领",
         levelRange: "Lv.5-7",
         tier: 4,
+        source: "黑甲军营、王城外围",
+        intro: "统兵有序，攻防俱强，常携稀有战装出战。",
+        stats: { hp: "380-560", atk: "48-66", def: "22-34", speed: "4.0-4.4s" },
         drops: [
             { id: "demonCore", chance: "100%" },
             { id: "rareCrystal", chance: "55%" },
@@ -1925,9 +2189,12 @@ const MONSTER_CODEX = [
         ]
     },
     {
-        type: "深渊魔主",
+        type: "深渊君王",
         levelRange: "Lv.7-9",
         tier: 4,
+        source: "深渊祭坛、破界裂缝",
+        intro: "深渊意志化身，具极高韧性与压迫感。",
+        stats: { hp: "520-760", atk: "62-84", def: "30-44", speed: "4.3-4.7s" },
         drops: [
             { id: "rareCrystal", chance: "100%" },
             { id: "soulRobe", chance: "14%" },
@@ -1936,9 +2203,12 @@ const MONSTER_CODEX = [
         ]
     },
     {
-        type: "天劫妖王",
+        type: "天罚魔龙",
         levelRange: "Lv.8-10",
         tier: 5,
+        source: "天罚禁域、雷渊之巅",
+        intro: "终局霸主，挟雷而至，掉落顶级神兵与遗宝。",
+        stats: { hp: "760-1100", atk: "86-118", def: "42-62", speed: "4.7-5.0s" },
         drops: [
             { id: "rareCrystal", chance: "100%" },
             { id: "dragonRelic", chance: "20%" },
@@ -1948,6 +2218,30 @@ const MONSTER_CODEX = [
             { id: "soulRobe", chance: "16%" },
             { id: "warDrum", chance: "14%" }
         ]
+    }
+];
+
+const STORY_CHAPTERS = [
+    {
+        id: "prologue",
+        title: "序章 · 断脉之夜",
+        subtitle: "励志起点",
+        theme: "prologue",
+        body: "天门崩裂后的九州，灵脉枯竭，万宗沉寂。你只是一名出身寒微的弟子，洞府破旧、资源匮乏，却在废墟中看见了希望。别人等待救世之人，你选择从自己开始。你立下誓言：哪怕从一块灵石、一株灵草起步，也要一步步把断掉的修行之路重新接上。"
+    },
+    {
+        id: "journey",
+        title: "中章 · 万里历战",
+        subtitle: "冒险征途",
+        theme: "journey",
+        body: "化身踏出洞府，穿越荒原、密林与深渊裂缝。每一次外出，都可能遭遇狂刃魔将与玄甲统领；每一次胜利，都在为下一次远行积蓄底气。你学会了在危机中判断、在逆境中取舍，把一次次险胜变成成长。冒险不再只是远行，而是让你在风暴里练成真正的锋芒。"
+    },
+    {
+        id: "finale",
+        title: "终章 · 重启天门",
+        subtitle: "热血决战",
+        theme: "finale",
+        body: "当你踏上雷渊之巅，天罚魔龙遮天而来，九州最后的试炼就此开启。你背后是洞府积累的希望，身前是必须跨越的绝境。你明白，热血不是一时冲动，而是在无数次跌倒后依旧向前。若此战能胜，灵脉将再度苏醒；若此战不退，你的名字也将成为后来者的火种。"
     }
 ];
 
@@ -2092,13 +2386,17 @@ const CHEST_LOOT_TABLES = {
     ]
 };
 
-const REALM_NAMES = ["练气初期", "练气中期", "练气后期", "筑基初期", "筑基中期", "筑基后期", "金丹初期", "金丹中期", "金丹后期", "元婴初期"];
+const REALM_MAJOR_STAGES = ["凡体", "练气", "筑基", "金丹", "元婴", "化神", "炼虚", "合体", "大乘", "飞升"];
+const REALM_PHASE_NAMES = ["前期", "中期", "后期"];
 const BUILDING_TYPES = [
     { id: "none", label: "查看模式", icon: "·", buildCost: null, upgradeCost: null, effect: "不操作，仅查看" },
     { id: "herbGarden", label: "灵草圃", icon: "🌿", buildCost: { spiritStone: 28, wood: 6, herb: 4 }, upgradeCost: { spiritStone: 20, wood: 4, herb: 3 }, effect: "每周期产出灵草，且打坐效率 +4%/级" },
     { id: "woodWorkshop", label: "灵木坊", icon: "🪵", buildCost: { spiritStone: 26, wood: 8, herb: 2 }, upgradeCost: { spiritStone: 22, wood: 5, herb: 2 }, effect: "每周期产出灵木" },
     { id: "spiritWell", label: "聚灵井", icon: "⛲", buildCost: { spiritStone: 40, wood: 4, herb: 6 }, upgradeCost: { spiritStone: 30, wood: 3, herb: 4 }, effect: "消耗灵草产出灵石，仓储 +12/级" },
-    { id: "trainingRoom", label: "悟道室", icon: "🕯", buildCost: { spiritStone: 34, wood: 5, herb: 5 }, upgradeCost: { spiritStone: 26, wood: 4, herb: 4 }, effect: "消耗灵石促生灵草，打坐经验 +8%/级" }
+    { id: "trainingRoom", label: "悟道室", icon: "🕯", buildCost: { spiritStone: 34, wood: 5, herb: 5 }, upgradeCost: { spiritStone: 26, wood: 4, herb: 4 }, effect: "消耗灵石促生灵草，打坐经验 +8%/级" },
+    { id: "skyArray", label: "天罡阵", icon: "⚚", buildCost: { spiritStone: 56, wood: 6, herb: 8, rareCrystal: 1 }, upgradeCost: { spiritStone: 42, wood: 5, herb: 5, rareCrystal: 1 }, effect: "战斗攻击 +6%/级，掉落倍率 +4%/级" },
+    { id: "earthArray", label: "玄武阵", icon: "🜃", buildCost: { spiritStone: 52, wood: 7, herb: 6, rareCrystal: 1 }, upgradeCost: { spiritStone: 38, wood: 5, herb: 5, rareCrystal: 1 }, effect: "战斗防御 +6%/级，自动用药治疗 +5%/级" },
+    { id: "furyArray", label: "烈魄阵", icon: "✹", buildCost: { spiritStone: 64, wood: 6, herb: 10, rareCrystal: 2 }, upgradeCost: { spiritStone: 48, wood: 5, herb: 7, rareCrystal: 1 }, effect: "暴击率 +2%/级，暴击伤害 +8%/级" }
 ];
 
 let avatarX = HOME_X;
@@ -2141,8 +2439,16 @@ let avatarHp = 140;
 let avatarMp = 120;
 let battleState = null;
 let dayCombatWins = 0;
+let totalBattleWins = 0;
+let totalEliteKills = 0;
+let totalBossKills = 0;
+let totalMoveCount = 0;
+let totalGatherUnits = 0;
 let rightPanelTab = "resource";
 let resourcePanelTab = "inventory";
+let codexTab = "items";
+let storyChapterIndex = 0;
+let storyTypeTimer = 0;
 let showEquipAttrDetail = false;
 let showWorldSummary = false;
 let battleSummaryData = null;
@@ -2151,6 +2457,8 @@ let battleUiSelfHpDisplay = 0;
 let battleMetrics = null;
 let battleInfoMode = "simple";
 let lastDamageSnapshot = { selfLoss: 0, enemyLoss: 0 };
+let battleKeyframes = [];
+let recentBattleHistory = [];
 let devForceMonster = false;
 let devFixedDrops = false;
 let baitBoostUntilMs = 0;
@@ -2176,6 +2484,14 @@ let avatarSessionExpired = false;
 let worldEventId = "";
 let worldEventUntilMs = 0;
 let nextWorldEventRollMs = 90000;
+let newbieGuideStepIndex = 0;
+let newbieGuideClaimed = {};
+const newbieGuideFlags = {
+    meditationStarted: false,
+    autoStarted: false,
+    boughtBloodPill: false,
+    enhancedOnce: false
+};
 let cameraMode = "follow";
 let cameraX = HOME_X;
 let cameraY = HOME_Y;
@@ -2317,11 +2633,13 @@ const tooltip = document.getElementById("tooltip");
 const logContainer = document.getElementById("log-container");
 const autoBtn = document.getElementById("autoBtn");
 const returnBtn = document.getElementById("returnBtn");
+const reloginBtn = document.getElementById("reloginBtn");
 const meditateBtn = document.getElementById("meditateBtn");
 const cultivationMetaEl = document.getElementById("cultivationMeta");
 const cultivationTickRingEl = document.getElementById("cultivationTickRing");
 const helpBtn = document.getElementById("helpBtn");
 const changelogBtn = document.getElementById("changelogBtn");
+const homeBuildBtn = document.getElementById("homeBuildBtn");
 const saveBtn = document.getElementById("saveBtn");
 const loadBtn = document.getElementById("loadBtn");
 const rebirthBtn = document.getElementById("rebirthBtn");
@@ -2344,10 +2662,13 @@ const resourceSummaryEl = document.getElementById("resourceSummary");
 const attributeSummaryEl = document.getElementById("attributeSummary");
 const codexSummaryEl = document.getElementById("codexSummary");
 const codexPanelEl = document.getElementById("codex-panel");
+const storyBtn = document.getElementById("storyBtn");
 const itemDetailEl = document.getElementById("item-detail");
 const itemMenuEl = document.getElementById("item-menu");
 const chestModalEl = document.getElementById("chest-modal");
 const itemCodexModalEl = document.getElementById("item-codex-modal");
+const monsterCodexModalEl = document.getElementById("monster-codex-modal");
+const storyModalEl = document.getElementById("story-modal");
 const equipSlotMenuEl = document.getElementById("equip-slot-menu");
 const battlePanelEl = document.getElementById("battle-panel");
 const battleSummaryEl = document.getElementById("battleSummary");
@@ -2399,6 +2720,12 @@ const shopBtn = document.getElementById("shopBtn");
 const shopCloseBtn = document.getElementById("shopCloseBtn");
 const enhanceBtn = document.getElementById("enhanceBtn");
 const enhanceCloseBtn = document.getElementById("enhanceCloseBtn");
+const socialBtn = document.getElementById("socialBtn");
+const socialPanelEl = document.getElementById("social-panel");
+const socialCloseBtn = document.getElementById("socialCloseBtn");
+const socialSummaryEl = document.getElementById("socialSummary");
+const newbieGuideSummaryEl = document.getElementById("newbieGuideSummary");
+const newbieGuideClaimBtn = document.getElementById("newbieGuideClaimBtn");
 const forceMonsterToggle = document.getElementById("forceMonsterToggle");
 const fixedDropToggle = document.getElementById("fixedDropToggle");
 const debugMonsterSelect = document.getElementById("debugMonsterSelect");
@@ -2657,6 +2984,12 @@ function getBuildingBonuses() {
     let meditateExp = 1;
     let maintenanceDiscount = 0;
     let storageBonus = 0;
+    let battleAtkMul = 0;
+    let battleDefMul = 0;
+    let battleDropMul = 0;
+    let battleCritRate = 0;
+    let battleCritDmgMul = 0;
+    let battleHealMul = 0;
 
     homeBuildingMap.forEach((building) => {
         const lvl = building.level || 1;
@@ -2664,12 +2997,30 @@ function getBuildingBonuses() {
         if (building.type === "trainingRoom") meditateExp += 0.08 * lvl;
         if (building.type === "woodWorkshop") maintenanceDiscount += 0.06 * lvl;
         if (building.type === "spiritWell") storageBonus += 12 * lvl;
+        if (building.type === "skyArray") {
+            battleAtkMul += 0.06 * lvl;
+            battleDropMul += 0.04 * lvl;
+        }
+        if (building.type === "earthArray") {
+            battleDefMul += 0.06 * lvl;
+            battleHealMul += 0.05 * lvl;
+        }
+        if (building.type === "furyArray") {
+            battleCritRate += 0.02 * lvl;
+            battleCritDmgMul += 0.08 * lvl;
+        }
     });
     return {
         meditateSpeed,
         meditateExp,
         maintenanceDiscount: Math.min(0.6, maintenanceDiscount),
-        storageBonus
+        storageBonus,
+        battleAtkMul: Math.min(0.72, battleAtkMul),
+        battleDefMul: Math.min(0.72, battleDefMul),
+        battleDropMul: Math.min(0.5, battleDropMul),
+        battleCritRate: Math.min(0.25, battleCritRate),
+        battleCritDmgMul: Math.min(0.8, battleCritDmgMul),
+        battleHealMul: Math.min(0.55, battleHealMul)
     };
 }
 
@@ -2753,7 +3104,8 @@ function getMeditationExpNeed(level) {
 }
 
 function getBodyCultivationExpNeed(level) {
-    return 36 + level * 24;
+    const lv = Math.max(1, Math.min(CULTIVATION_MAX_LEVEL, level));
+    return Math.floor(40 + Math.pow(lv, 2.05) * 6 + lv * 18);
 }
 
 function getCultivationRateMultiplier() {
@@ -2791,6 +3143,7 @@ function startMeditation() {
     const bonuses = getBuildingBonuses();
     const duration = Math.max(4000, Math.floor(MEDITATE_BASE_MS / bonuses.meditateSpeed));
     isMeditating = true;
+    newbieGuideFlags.meditationStarted = true;
     meditateTotalMs = duration;
     meditateRemainingMs = duration;
     addLog(`开始打坐，预计 ${Math.ceil(duration / 1000)} 秒`);
@@ -2936,6 +3289,7 @@ function enhanceEquipment(itemId) {
     }
     goldCoins -= cost;
     equipmentEnhanceLevels[itemId] = level + 1;
+    newbieGuideFlags.enhancedOnce = true;
     addLog(`强化成功：${ITEM_DEFS[itemId]?.label || itemId} +${equipmentEnhanceLevels[itemId]}`);
     return true;
 }
@@ -2947,6 +3301,7 @@ function buyFromShop(itemId, cost, qty = 1) {
     }
     goldCoins -= cost;
     homeInventory[itemId] = (homeInventory[itemId] || 0) + qty;
+    if (itemId === "bloodPill" && qty > 0) newbieGuideFlags.boughtBloodPill = true;
     discoveredItemSet.add(itemId);
     addLog(`商店购买：${ITEM_DEFS[itemId]?.label || itemId} x${qty}（花费 ${cost} 金币）`);
     return true;
@@ -2989,14 +3344,15 @@ function getAvatarMaxMp() {
 
 function getAvatarCombatPower() {
     const eq = getEquipmentBonus();
+    const b = getBuildingBonuses();
     const wardBonus = Math.min(6, (homeInventory.wardCharm || 0));
     const focusBonus = Math.min(6, (homeInventory.focusCharm || 0));
     const ironBodyActive = simulationTimeMs < ironBodyBuffUntilMs ? 2 : 0;
     const swiftActive = simulationTimeMs < swiftTalismanBuffUntilMs ? 0.03 : 0;
     const swiftHit = simulationTimeMs < swiftTalismanBuffUntilMs ? 0.01 : 0;
     return {
-        atk: 10 + Math.floor(sharedStats.spirit * 1.4) + Math.floor(sharedStats.control * 0.9) + Math.floor(eq.atk),
-        def: 4 + Math.floor(sharedStats.body * 0.9) + Math.floor(sharedStats.control * 0.4) + Math.floor(eq.def) + wardBonus + ironBodyActive,
+        atk: Math.max(1, Math.floor((10 + Math.floor(sharedStats.spirit * 1.4) + Math.floor(sharedStats.control * 0.9) + Math.floor(eq.atk)) * (1 + b.battleAtkMul))),
+        def: Math.max(1, Math.floor((4 + Math.floor(sharedStats.body * 0.9) + Math.floor(sharedStats.control * 0.4) + Math.floor(eq.def) + wardBonus + ironBodyActive) * (1 + b.battleDefMul))),
         hit: Math.min(0.97, 0.78 + sharedStats.mind * 0.008 + sharedStats.control * 0.004 + eq.hit + focusBonus * 0.005 + swiftHit),
         dodge: Math.min(0.42, 0.06 + sharedStats.body * 0.008 + sharedStats.mind * 0.004 + eq.dodge + swiftActive)
     };
@@ -3128,10 +3484,154 @@ function openItemCodexDetail(itemId) {
     });
 }
 
+function openMonsterCodexDetail(type) {
+    const monster = MONSTER_CODEX.find((m) => m.type === type);
+    if (!monster || !monsterCodexModalEl) return;
+    const dropRows = monster.drops.map((d) => {
+        const def = ITEM_DEFS[d.id];
+        return `<span class="drop-chip rarity-${def?.rarity || "common"}">${def?.label || d.id} ${d.chance}</span>`;
+    }).join("");
+    monsterCodexModalEl.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <strong>👹 ${monster.type}</strong>
+            <button class="mini-btn" data-monster-codex-close>关闭</button>
+        </div>
+        <div style="display:flex; gap:12px; align-items:flex-start; margin:10px 0;">
+            ${getMonsterIconMarkup(monster.type)}
+            <div class="small-note" style="line-height:1.6;">
+                等级段：${monster.levelRange}<br>
+                威胁层级：T${monster.tier || 1}<br>
+                来源区域：${monster.source || "未知地带"}<br>
+                怪物简介：${monster.intro || "暂无资料"}
+            </div>
+        </div>
+        <div class="codex-detail-columns" style="grid-template-columns:repeat(2,minmax(0,1fr));">
+            <div class="codex-col">
+                <strong>战斗属性</strong>
+                <div style="margin-top:6px; line-height:1.6;">
+                    生命区间：${monster.stats?.hp || "未知"}<br>
+                    攻击区间：${monster.stats?.atk || "未知"}<br>
+                    防御区间：${monster.stats?.def || "未知"}<br>
+                    攻击节奏：${monster.stats?.speed || "未知"}
+                </div>
+            </div>
+            <div class="codex-col">
+                <strong>掉落总览</strong>
+                <div class="drop-chips" style="margin-top:8px;">${dropRows}</div>
+            </div>
+        </div>
+    `;
+    monsterCodexModalEl.classList.remove("hidden");
+    monsterCodexModalEl.querySelectorAll("button[data-monster-codex-close]").forEach((btn) => {
+        btn.addEventListener("click", () => monsterCodexModalEl.classList.add("hidden"));
+    });
+}
+
+function openStoryModal() {
+    if (!storyModalEl || STORY_CHAPTERS.length === 0) return;
+    storyChapterIndex = Math.max(0, Math.min(STORY_CHAPTERS.length - 1, storyChapterIndex));
+    const chapter = STORY_CHAPTERS[storyChapterIndex];
+    const chapterNo = storyChapterIndex + 1;
+    storyModalEl.innerHTML = `
+        <div class="story-head">
+            <strong>📜 世界背景 · 热血修行纪</strong>
+            <button class="mini-btn" data-story-close>关闭</button>
+        </div>
+        <div class="story-chapter theme-${chapter.theme || "prologue"}">
+            <div class="story-title">${chapter.title}</div>
+            <div class="story-meta">${chapter.subtitle} · 第 ${chapterNo}/${STORY_CHAPTERS.length} 章</div>
+            <div class="story-body" data-story-body></div>
+        </div>
+        <div class="story-actions">
+            <button class="mini-btn" data-story-nav="prev" ${storyChapterIndex <= 0 ? "disabled" : ""}>← 上一章</button>
+            <span class="small-note">点击正文可跳过打字动画</span>
+            <button class="mini-btn" data-story-nav="next" ${storyChapterIndex >= STORY_CHAPTERS.length - 1 ? "disabled" : ""}>下一章 →</button>
+        </div>
+    `;
+    if (storyTypeTimer) {
+        clearInterval(storyTypeTimer);
+        storyTypeTimer = 0;
+    }
+    const storyBodyEl = storyModalEl.querySelector("[data-story-body]");
+    if (storyBodyEl) {
+        let idx = 0;
+        const full = chapter.body || "";
+        const paint = (done = false) => {
+            const safe = full.slice(0, idx).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            storyBodyEl.innerHTML = done ? safe : `${safe}<span class="story-cursor">|</span>`;
+        };
+        paint();
+        storyTypeTimer = setInterval(() => {
+            idx += 2;
+            if (idx >= full.length) {
+                idx = full.length;
+                paint(true);
+                clearInterval(storyTypeTimer);
+                storyTypeTimer = 0;
+                return;
+            }
+            paint();
+        }, 22);
+        storyBodyEl.addEventListener("click", () => {
+            idx = full.length;
+            paint(true);
+            if (storyTypeTimer) {
+                clearInterval(storyTypeTimer);
+                storyTypeTimer = 0;
+            }
+        });
+    }
+    storyModalEl.classList.remove("hidden");
+    storyModalEl.querySelectorAll("button[data-story-close]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            if (storyTypeTimer) {
+                clearInterval(storyTypeTimer);
+                storyTypeTimer = 0;
+            }
+            storyModalEl.classList.add("hidden");
+        });
+    });
+    storyModalEl.querySelectorAll("button[data-story-nav]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const nav = btn.dataset.storyNav;
+            if (nav === "prev") storyChapterIndex = Math.max(0, storyChapterIndex - 1);
+            else if (nav === "next") storyChapterIndex = Math.min(STORY_CHAPTERS.length - 1, storyChapterIndex + 1);
+            openStoryModal();
+        });
+    });
+}
+
 function closeEquipSlotMenu() {
     if (!equipSlotMenuEl) return;
     equipSlotMenuEl.classList.add("hidden");
     equipSlotMenuEl.innerHTML = "";
+}
+
+function enforceNonStackEquipCounts(showLog = false) {
+    let totalGoldCompensation = 0;
+    Object.keys(ITEM_EQUIP_SLOT).forEach((itemId) => {
+        const equippedCount = Object.values(equippedSlots).includes(itemId) ? 1 : 0;
+        const totalCount = (avatarInventory[itemId] || 0) + (homeInventory[itemId] || 0) + (equipmentInventory[itemId] || 0) + equippedCount;
+        if (totalCount <= 1) return;
+        let surplus = totalCount - 1;
+        const consume = (bag, key) => {
+            if (surplus <= 0) return;
+            const cur = bag[key] || 0;
+            if (cur <= 0) return;
+            const cut = Math.min(cur, surplus);
+            bag[key] = cur - cut;
+            surplus -= cut;
+        };
+        consume(avatarInventory, itemId);
+        consume(homeInventory, itemId);
+        consume(equipmentInventory, itemId);
+        const unitGold = ITEM_DEFS[itemId]?.sellValue || 0;
+        totalGoldCompensation += (totalCount - 1) * unitGold;
+    });
+    if (totalGoldCompensation > 0) {
+        goldCoins += totalGoldCompensation;
+        if (showLog) addLog(`装备不可叠加：多余装备已折算金币 ${totalGoldCompensation}`);
+    }
 }
 
 function openEquipSlotMenu(slotId, anchorEvent) {
@@ -3177,6 +3677,7 @@ function openChest(chestId, count = 1) {
     }
     const rewardText = Object.entries(rewards).map(([id, qty]) => `${ITEM_DEFS[id]?.label || id}×${qty}`).join(" / ");
     addLog(`开启${ITEM_DEFS[chestId]?.label || "宝箱"} x${openCount}：${rewardText}`);
+    enforceNonStackEquipCounts(true);
     showChestOpenModal(chestId, openCount, rewards);
     updateSidePanels();
     updateStatus();
@@ -3412,11 +3913,16 @@ function triggerEnemyKillBarClearFx() {
 
 function monsterLevelAt(x, y) {
     const dist = Math.abs(x - HOME_X) + Math.abs(y - HOME_Y);
-    if (dist <= 5) return 1;
-    if (dist <= 9) return 2;
-    if (dist <= 13) return 3;
-    if (dist <= 18) return 4;
-    return 5;
+    if (dist <= 3) return 1;
+    if (dist <= 6) return 2;
+    if (dist <= 9) return 3;
+    if (dist <= 12) return 4;
+    if (dist <= 15) return 5;
+    if (dist <= 18) return 6;
+    if (dist <= 22) return 7;
+    if (dist <= 26) return 8;
+    if (dist <= 30) return 9;
+    return 10;
 }
 
 function getMonsterDropProfile(type) {
@@ -3424,28 +3930,19 @@ function getMonsterDropProfile(type) {
 }
 
 function getMonsterAvatar(type) {
-    if (type === "天劫妖王") return "🐲";
-    if (type === "深渊魔主") return "👹";
-    if (type === "精英妖将") return "🦔";
-    if (type === "毒沼蛛后") return "🕷";
-    if (type === "石甲妖") return "🪨";
-    if (type === "夜蝠") return "🦇";
-    if (type === "林魈") return "🌲";
-    if (type === "妖将") return "🦂";
-    if (type === "妖兽") return "🦇";
-    return "🐭";
+    return getMonsterIconMarkup(type);
 }
 
 function getMonsterAttackCdMs(type, level = 1) {
-    const byType = type === "天劫妖王" ? 5000
-        : type === "深渊魔主" ? 4700
-            : type === "精英妖将" ? 4400
-                : type === "妖将" ? 3900
-                    : type === "毒沼蛛后" ? 3700
-                        : type === "妖兽" ? 3400
-                            : type === "林魈" ? 3250
-                                : type === "石甲妖" ? 3100
-                                    : type === "夜蝠" ? 2950
+    const byType = type === "天罚魔龙" ? 5000
+        : type === "深渊君王" ? 4700
+            : type === "玄甲统领" ? 4400
+                : type === "狂刃魔将" ? 3900
+                    : type === "毒刺蛛后" ? 3700
+                        : type === "裂地凶兽" ? 3400
+                            : type === "丛林狼王" ? 3250
+                                : type === "岩甲战兽" ? 3100
+                                    : type === "夜翼蝠" ? 2950
                                         : 2800;
     const levelAdj = Math.max(0, Math.min(600, (level - 1) * 60));
     return Math.max(2200, Math.min(5000, byType - levelAdj));
@@ -3458,14 +3955,14 @@ function getMonsterSeed(x, y) {
     if (isHomeBuildTile(x, y)) return null;
     if (devForceMonster) {
         const level = Math.max(1, monsterLevelAt(x, y));
-        const type = level >= 5 ? "天劫妖王" : level >= 4 ? "精英妖将" : level >= 3 ? "妖将" : level >= 2 ? "妖兽" : "邪祟";
-        const devMul = type === "天劫妖王" ? 3.1 : type === "深渊魔主" ? 2.6 : type === "精英妖将" ? 2.1 : 1;
+        const type = level >= 9 ? "天罚魔龙" : level >= 7 ? "深渊君王" : level >= 6 ? "玄甲统领" : level >= 5 ? "狂刃魔将" : level >= 3 ? "裂地凶兽" : "荒原魔兵";
+        const devMul = type === "天罚魔龙" ? 3.1 : type === "深渊君王" ? 2.6 : type === "玄甲统领" ? 2.1 : 1;
         return {
             type,
             level,
             maxHp: Math.floor((34 + level * 24) * BALANCE_CONFIG.combat.monsterHpScale * devMul),
-            atk: Math.floor((8 + level * 3 + (level >= 6 ? 7 : 0)) * (type === "天劫妖王" ? 2.2 : type === "深渊魔主" ? 1.9 : type === "精英妖将" ? 1.55 : 1)),
-            def: Math.floor((2 + level * 2 + (level >= 6 ? 4 : 0)) * (type === "天劫妖王" ? 2.0 : type === "深渊魔主" ? 1.75 : type === "精英妖将" ? 1.5 : 1))
+            atk: Math.floor((8 + level * 3 + (level >= 6 ? 7 : 0)) * (type === "天罚魔龙" ? 2.2 : type === "深渊君王" ? 1.9 : type === "玄甲统领" ? 1.55 : 1)),
+            def: Math.floor((2 + level * 2 + (level >= 6 ? 4 : 0)) * (type === "天罚魔龙" ? 2.0 : type === "深渊君王" ? 1.75 : type === "玄甲统领" ? 1.5 : 1))
         };
     }
     const baitBoost = simulationTimeMs < baitBoostUntilMs ? 0.2 : 0;
@@ -3475,22 +3972,22 @@ function getMonsterSeed(x, y) {
     const level = monsterLevelAt(x, y);
     const homeDist = Math.abs(x - HOME_X) + Math.abs(y - HOME_Y);
     const rareRoll = ((h >> 10) % 1000) / 1000;
-    let type = "邪祟";
-    if (level <= 1) type = rareRoll < 0.45 ? "夜蝠" : "邪祟";
-    else if (level === 2) type = rareRoll < 0.24 ? "林魈" : rareRoll < 0.52 ? "石甲妖" : rareRoll < 0.8 ? "妖兽" : "夜蝠";
-    else if (level === 3) type = rareRoll < 0.2 ? "毒沼蛛后" : rareRoll < 0.44 ? "林魈" : rareRoll < 0.72 ? "妖兽" : "石甲妖";
-    else if (level === 4) type = rareRoll < 0.2 ? "精英妖将" : rareRoll < 0.36 ? "毒沼蛛后" : rareRoll < 0.66 ? "妖将" : "妖兽";
-    else type = rareRoll < 0.06 ? "天劫妖王" : rareRoll < 0.16 ? "深渊魔主" : rareRoll < 0.36 ? "精英妖将" : "妖将";
-    if (terrain === "forest" && level <= 4 && rareRoll < 0.32) type = "林魈";
-    if (terrain === "hill" && level <= 4 && rareRoll < 0.28) type = "石甲妖";
-    if (terrain === "mountain" && level >= 4 && rareRoll < 0.2) type = "精英妖将";
-    if (type === "天劫妖王" && homeDist > BOSS_SPAWN_MAX_HOME_DISTANCE) {
-        type = level >= 5 ? "深渊魔主" : "精英妖将";
+    let type = "荒原魔兵";
+    if (level <= 2) type = rareRoll < 0.4 ? "夜翼蝠" : "荒原魔兵";
+    else if (level <= 4) type = rareRoll < 0.2 ? "毒刺蛛后" : rareRoll < 0.42 ? "丛林狼王" : rareRoll < 0.72 ? "岩甲战兽" : "裂地凶兽";
+    else if (level <= 6) type = rareRoll < 0.28 ? "玄甲统领" : rareRoll < 0.62 ? "狂刃魔将" : "裂地凶兽";
+    else if (level <= 8) type = rareRoll < 0.26 ? "深渊君王" : rareRoll < 0.62 ? "玄甲统领" : "狂刃魔将";
+    else type = rareRoll < 0.34 ? "天罚魔龙" : rareRoll < 0.64 ? "深渊君王" : "玄甲统领";
+    if (terrain === "forest" && level <= 5 && rareRoll < 0.32) type = "丛林狼王";
+    if (terrain === "hill" && level <= 5 && rareRoll < 0.28) type = "岩甲战兽";
+    if (terrain === "mountain" && level >= 6 && rareRoll < 0.25) type = "玄甲统领";
+    if (type === "天罚魔龙" && homeDist > BOSS_SPAWN_MAX_HOME_DISTANCE) {
+        type = level >= 5 ? "深渊君王" : "玄甲统领";
     }
-    const eliteMul = type === "精英妖将" ? 2.0 : type === "深渊魔主" ? 2.45 : type === "天劫妖王" ? 3.0 : 1;
+    const eliteMul = type === "玄甲统领" ? 2.0 : type === "深渊君王" ? 2.45 : type === "天罚魔龙" ? 3.0 : 1;
     const maxHp = Math.floor((32 + level * 22 + (h % 9)) * BALANCE_CONFIG.combat.monsterHpScale * eliteMul);
-    const atk = Math.floor((8 + level * 3 + (h % 4)) * (type === "天劫妖王" ? 2.4 : type === "深渊魔主" ? 2.0 : type === "精英妖将" ? 1.75 : 1));
-    const def = Math.floor((2 + level * 2) * (type === "天劫妖王" ? 2.3 : type === "深渊魔主" ? 1.9 : type === "精英妖将" ? 1.7 : 1));
+    const atk = Math.floor((8 + level * 3 + (h % 4)) * (type === "天罚魔龙" ? 2.4 : type === "深渊君王" ? 2.0 : type === "玄甲统领" ? 1.75 : 1));
+    const def = Math.floor((2 + level * 2) * (type === "天罚魔龙" ? 2.3 : type === "深渊君王" ? 1.9 : type === "玄甲统领" ? 1.7 : 1));
     return { type, level, maxHp, atk, def };
 }
 
@@ -3555,6 +4052,7 @@ function startBattleWith(monster) {
     battleUiSelfHpDisplay = avatarHp;
     battleMetrics = { dealt: 0, taken: 0, crits: 0, heals: 0, startMs: simulationTimeMs };
     lastDamageSnapshot = { selfLoss: 0, enemyLoss: 0 };
+    battleKeyframes = [];
     lastBattleFrame = null;
     movementStatusText = `遭遇 ${monster.type} Lv.${monster.level}，进入战斗`;
     return true;
@@ -3562,7 +4060,8 @@ function startBattleWith(monster) {
 
 function grantBattleLoot(monster) {
     const riskBonus = getRiskRewardBonusAt(monster.x, monster.y);
-    const eventDropMul = 1 + (getWorldEventEffects().dropMul || 0);
+    const buildBonus = getBuildingBonuses();
+    const eventDropMul = 1 + (getWorldEventEffects().dropMul || 0) + (buildBonus.battleDropMul || 0);
     const rewardBoost = 1.6;
     const profile = getMonsterDropProfile(monster.type);
     const monsterTier = profile?.tier || 1;
@@ -3634,8 +4133,12 @@ function grantBattleLoot(monster) {
     if (gainQilinRing > 0) discoveredItemSet.add("qilinRing");
     if (gainWarDrum > 0) discoveredItemSet.add("warDrum");
     if (gainDragonRelic > 0) discoveredItemSet.add("dragonRelic");
+    enforceNonStackEquipCounts(true);
     dayCombatWins += 1;
-    const lootText = `灵石×${gainStone}${gainHerb ? ` / 灵草×${gainHerb}` : ""}${gainCore ? ` / 妖丹×${gainCore}` : ""}${gainRare ? ` / 异晶×${gainRare}` : ""}${gainSmallChest ? ` / 小宝箱×${gainSmallChest}` : ""}${gainMediumChest ? ` / 中宝箱×${gainMediumChest}` : ""}${gainLargeChest ? ` / 大宝箱×${gainLargeChest}` : ""}${gainThunderBlade ? " / 雷劫断岳×1" : ""}${gainPhoenixBow ? " / 赤凰长弓×1" : ""}${gainVoidArmor ? " / 太虚战铠×1" : ""}${gainSpiritBlade ? " / 玄霄灵刃×1" : ""}${gainSoulRobe ? " / 玄冥法衣×1" : ""}${gainQilinRing ? " / 麒麟戒×1" : ""}${gainWarDrum ? " / 战魂鼓×1" : ""}${gainDragonRelic ? " / 天龙遗宝×1" : ""}`;
+    totalBattleWins += 1;
+    if (monsterTier >= 4) totalEliteKills += 1;
+    if (monsterTier >= 5) totalBossKills += 1;
+    const lootText = `灵石×${gainStone}${gainHerb ? ` / 灵草×${gainHerb}` : ""}${gainCore ? ` / 妖丹×${gainCore}` : ""}${gainRare ? ` / 异晶×${gainRare}` : ""}${gainSmallChest ? ` / 小宝箱×${gainSmallChest}` : ""}${gainMediumChest ? ` / 中宝箱×${gainMediumChest}` : ""}${gainLargeChest ? ` / 大宝箱×${gainLargeChest}` : ""}${gainThunderBlade ? " / 雷劫断岳×1" : ""}${gainPhoenixBow ? " / 赤凰长弓×1" : ""}${gainVoidArmor ? " / 太虚战铠×1" : ""}${gainSpiritBlade ? " / 玄霄灵刃×1" : ""}${gainSoulRobe ? " / 玄冥法衣×1" : ""}${gainQilinRing ? " / 麒麟戒×1" : ""}${gainWarDrum ? " / 战魂鼓×1" : ""}${gainDragonRelic ? " / 天龙遗宝×1" : ""}${buildBonus.battleDropMul > 0 ? ` / 阵法加成 +${Math.round(buildBonus.battleDropMul * 100)}%` : ""}`;
     addLog(`战斗胜利：${monster.type}，掉落 ${lootText}`);
     return lootText;
 }
@@ -3644,6 +4147,7 @@ function resolveBattleStep(elapsedMs = 100) {
     if (!battleState) return;
     if (avatarHp <= 0) return;
     const tactic = currentBattleTactic();
+    const buildBonus = getBuildingBonuses();
     const debuffActive = simulationTimeMs < injuryDebuffUntilMs;
     const meBase = getAvatarCombatPower();
     const debuffMul = debuffActive ? BALANCE_CONFIG.combat.injuryDebuffRatio : 1;
@@ -3669,9 +4173,9 @@ function resolveBattleStep(elapsedMs = 100) {
         const avatarHit = rollHit <= me.hit;
         const avatarDmgBase = avatarHit ? Math.max(1, me.atk - battleState.def + (battleState.rounds % 3)) : 0;
         const critRoll = (simpleHash(battleState.x + seed * 5, battleState.y + dayCount * 5) % 1000) / 1000;
-        const didCrit = avatarHit && critRoll < (0.1 + tactic.critBonus);
+        const didCrit = avatarHit && critRoll < (0.1 + tactic.critBonus + (buildBonus.battleCritRate || 0));
         const avatarScaled = Math.max(0, Math.floor(avatarDmgBase * BALANCE_CONFIG.combat.playerDamageScale));
-        const finalAvatarDmg = didCrit ? Math.max(1, Math.floor(avatarScaled * 1.6)) : avatarScaled;
+        const finalAvatarDmg = didCrit ? Math.max(1, Math.floor(avatarScaled * (1.6 + (buildBonus.battleCritDmgMul || 0)))) : avatarScaled;
         const hpBeforeEnemy = battleState.hp;
         battleState.hp = Math.max(0, battleState.hp - finalAvatarDmg);
         lastEnemyLoss = Math.max(0, hpBeforeEnemy - battleState.hp);
@@ -3752,8 +4256,11 @@ function resolveBattleStep(elapsedMs = 100) {
             taken: battleMetrics ? battleMetrics.taken : Math.max(0, getAvatarMaxHp() - avatarHp),
             crits: battleMetrics ? battleMetrics.crits : 0,
             healed: battleMetrics ? battleMetrics.heals : 0,
-            loot: lootText
+            loot: lootText,
+            keyframes: battleKeyframes.slice(-8)
         };
+        recentBattleHistory.push({ result: "胜利", durationSec: battleSummaryData.durationSec, dealt: battleSummaryData.dealt, taken: battleSummaryData.taken, healed: battleSummaryData.healed || 0 });
+        if (recentBattleHistory.length > 20) recentBattleHistory.shift();
         battleMetrics = null;
         battleState = null;
         if (shouldReturnHome()) autoObjective = "return_home";
@@ -3761,14 +4268,14 @@ function resolveBattleStep(elapsedMs = 100) {
     }
     if (avatarHp <= Math.floor(getAvatarMaxHp() * autoUsePillRatio) && (avatarInventory.spiritPill || 0) > 0) {
         avatarInventory.spiritPill -= 1;
-        const heal = Math.floor(getAvatarMaxHp() * 0.32);
+        const heal = Math.floor(getAvatarMaxHp() * 0.32 * (1 + (buildBonus.battleHealMul || 0)));
         avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
         if (battleMetrics) battleMetrics.heals += heal;
         spawnCombatFx(`+${heal}`, "heal", 12);
         itemEvents.push(`聚灵丹 +${heal}HP`);
     } else if (avatarHp <= Math.floor(getAvatarMaxHp() * autoUsePillRatio) && (avatarInventory.bloodPill || 0) > 0) {
         avatarInventory.bloodPill -= 1;
-        const heal = Math.floor(getAvatarMaxHp() * 0.42);
+        const heal = Math.floor(getAvatarMaxHp() * 0.42 * (1 + (buildBonus.battleHealMul || 0)));
         avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
         if (battleMetrics) battleMetrics.heals += heal;
         spawnCombatFx(`+${heal}`, "heal", 12);
@@ -3776,7 +4283,7 @@ function resolveBattleStep(elapsedMs = 100) {
     }
     if (avatarHp <= Math.floor(getAvatarMaxHp() * autoUseSalveRatio) && (avatarInventory.healingSalve || 0) > 0) {
         avatarInventory.healingSalve -= 1;
-        const heal = Math.floor(getAvatarMaxHp() * 0.22);
+        const heal = Math.floor(getAvatarMaxHp() * 0.22 * (1 + (buildBonus.battleHealMul || 0)));
         avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
         if (battleMetrics) battleMetrics.heals += heal;
         spawnCombatFx(`+${heal}`, "heal", 16);
@@ -3785,6 +4292,16 @@ function resolveBattleStep(elapsedMs = 100) {
     if (lastBattleFrame) {
         lastBattleFrame.itemText = itemEvents.join("；");
         lastBattleFrame.crit = lastCrit;
+        if ((lastBattleFrame.avatarDmg || 0) > 0 || (lastBattleFrame.monsterDmg || 0) > 0 || (lastBattleFrame.itemText || "").length > 0) {
+            battleKeyframes.push({
+                round: lastBattleFrame.round,
+                text: lastBattleFrame.eventText || "双方蓄力中",
+                dealt: lastBattleFrame.avatarDmg || 0,
+                taken: lastBattleFrame.monsterDmg || 0,
+                item: lastBattleFrame.itemText || ""
+            });
+            if (battleKeyframes.length > 12) battleKeyframes.shift();
+        }
         if ((lastBattleFrame.monsterDmg || 0) > 0 || (lastBattleFrame.avatarDmg || 0) > 0) {
             lastDamageSnapshot = {
                 selfLoss: lastBattleFrame.monsterDmg || 0,
@@ -3817,8 +4334,11 @@ function resolveBattleStep(elapsedMs = 100) {
             taken: battleMetrics ? battleMetrics.taken : Math.max(0, getAvatarMaxHp() - avatarHp),
             crits: battleMetrics ? battleMetrics.crits : 0,
             healed: battleMetrics ? battleMetrics.heals : 0,
-            loot: `损失灵石 ${lostStone}${lostCore ? ` / 妖丹 ${lostCore}` : ""}`
+            loot: `损失灵石 ${lostStone}${lostCore ? ` / 妖丹 ${lostCore}` : ""}`,
+            keyframes: battleKeyframes.slice(-8)
         };
+        recentBattleHistory.push({ result: "战败", durationSec: battleSummaryData.durationSec, dealt: battleSummaryData.dealt, taken: battleSummaryData.taken, healed: battleSummaryData.healed || 0 });
+        if (recentBattleHistory.length > 20) recentBattleHistory.shift();
         battleMetrics = null;
         battleState = null;
         autoObjective = "return_home";
@@ -3848,19 +4368,219 @@ function resolveBattleStep(elapsedMs = 100) {
     }
 }
 
-function getRealmName() {
-    const idx = Math.max(0, Math.min(cultivationLevel - 1, REALM_NAMES.length - 1));
-    return REALM_NAMES[idx];
+function getRealmName(level = cultivationLevel) {
+    const lv = Math.max(1, Math.min(CULTIVATION_MAX_LEVEL, level));
+    const majorIdx = Math.max(0, Math.min(REALM_MAJOR_STAGES.length - 1, Math.floor((lv - 1) / 10)));
+    const inBand = (lv - 1) % 10;
+    const phaseIdx = inBand <= 2 ? 0 : inBand <= 6 ? 1 : 2;
+    return `${REALM_MAJOR_STAGES[majorIdx]}${REALM_PHASE_NAMES[phaseIdx]}`;
 }
 
 function getRealmStyleClass(level = cultivationLevel) {
-    if (level >= 7) return "realm-style-high";
-    if (level >= 4) return "realm-style-mid";
+    if (level >= 81) return "realm-style-high";
+    if (level >= 41) return "realm-style-mid";
     return "realm-style-low";
 }
 
 function getRealmStyledText(level = cultivationLevel) {
-    return `<span class="${getRealmStyleClass(level)}">Lv.${level} ${getRealmName()}</span>`;
+    return `<span class="${getRealmStyleClass(level)}">Lv.${level} ${getRealmName(level)}</span>`;
+}
+
+const SOCIAL_TITLE_DEFS = [
+    { id: "seed", label: "破晓新苗", cond: () => cultivationLevel >= 1 },
+    { id: "pathfinder", label: "荒野开拓者", cond: () => totalMoveCount >= 1000 },
+    { id: "slayer", label: "妖潮斩将", cond: () => totalEliteKills >= 20 },
+    { id: "dragon", label: "屠龙者", cond: () => totalBossKills >= 5 },
+    { id: "sage", label: "洞府宗师", cond: () => calcHomeScore() >= 220 }
+];
+
+function calcHomeScore() {
+    let score = 0;
+    homeBuildingMap.forEach((b) => { score += (b.level || 1) * 12; });
+    score += countBuildingsByType("spiritWell") * 8 + countBuildingsByType("trainingRoom") * 8;
+    return score;
+}
+
+function getUnlockedTitles() {
+    return SOCIAL_TITLE_DEFS.filter((t) => t.cond()).map((t) => t.label);
+}
+
+function getActiveTitle() {
+    const unlocked = getUnlockedTitles();
+    return unlocked[unlocked.length - 1] || "无名散修";
+}
+
+function getSocialPlayerSnapshot() {
+    const eq = getEquipmentBonus();
+    return {
+        name: "ark1",
+        title: getActiveTitle(),
+        realmScore: cultivationLevel * 1000 + bodyCultivationExp,
+        powerScore: getSharedPowerScore() * 100 + Math.floor(eq.atk * 20 + eq.def * 20),
+        huntScore: totalBattleWins * 30 + totalEliteKills * 90 + totalBossKills * 220
+    };
+}
+
+function getRivalSocialSnapshots() {
+    const me = getSocialPlayerSnapshot();
+    const names = ["玄霄", "孤峰", "北辰", "焚岳", "青璃", "赤霆"];
+    return names.map((n, i) => {
+        const drift = ((simpleHash(dayCount + i * 7, totalBattleWins + i * 13) % 41) - 20) / 100;
+        const mul = 1 + drift;
+        return {
+            name: n,
+            title: ["游侠", "剑修", "战将", "道尊", "宗主", "王侯"][i] || "修士",
+            realmScore: Math.max(300, Math.floor(me.realmScore * (0.75 + i * 0.08) * mul)),
+            powerScore: Math.max(500, Math.floor(me.powerScore * (0.72 + i * 0.07) * mul)),
+            huntScore: Math.max(120, Math.floor(me.huntScore * (0.7 + i * 0.08) * mul))
+        };
+    });
+}
+
+function rankBy(list, key) {
+    return [...list].sort((a, b) => (b[key] || 0) - (a[key] || 0));
+}
+
+function formatRankRows(list, key) {
+    return list.map((row, idx) => `
+        <div class="rank-row ${row.name === "ark1" ? "me" : ""}">
+            <span>#${idx + 1} ${row.name} · ${row.title || "-"}</span>
+            <span>${row[key] || 0}</span>
+        </div>
+    `).join("");
+}
+
+function buildSocialProfileCode() {
+    const me = getSocialPlayerSnapshot();
+    return JSON.stringify({
+        name: me.name,
+        title: me.title,
+        realmLv: cultivationLevel,
+        realmScore: me.realmScore,
+        power: me.powerScore,
+        hunt: me.huntScore,
+        homeScore: calcHomeScore(),
+        battle: { wins: totalBattleWins, elite: totalEliteKills, boss: totalBossKills },
+        explore: { moves: totalMoveCount, gathers: totalGatherUnits }
+    }, null, 2);
+}
+
+function openSocialPanel() {
+    if (!socialPanelEl || !socialSummaryEl) return;
+    const me = getSocialPlayerSnapshot();
+    const rows = [me, ...getRivalSocialSnapshots()];
+    const rankRealm = rankBy(rows, "realmScore");
+    const rankPower = rankBy(rows, "powerScore");
+    const rankHunt = rankBy(rows, "huntScore");
+    const titles = getUnlockedTitles();
+    socialSummaryEl.innerHTML = `
+        <div class="small-note">当前名号：<strong>${me.title}</strong> · 洞府评分 ${calcHomeScore()} · 战斗胜场 ${totalBattleWins}</div>
+        <div class="social-grid">
+            <div class="social-card"><strong>境界榜</strong><div style="margin-top:6px;">${formatRankRows(rankRealm, "realmScore")}</div></div>
+            <div class="social-card"><strong>战力榜</strong><div style="margin-top:6px;">${formatRankRows(rankPower, "powerScore")}</div></div>
+            <div class="social-card"><strong>讨伐榜</strong><div style="margin-top:6px;">${formatRankRows(rankHunt, "huntScore")}</div></div>
+        </div>
+        <div class="social-card" style="margin-top:8px;">
+            <strong>称号收集</strong>
+            <div style="margin-top:6px;">${SOCIAL_TITLE_DEFS.map((t) => `<span class="title-chip ${titles.includes(t.label) ? "unlocked" : ""}">${t.label}</span>`).join("")}</div>
+        </div>
+        <div class="social-card" style="margin-top:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                <strong>洞府名片码</strong>
+                <button class="mini-btn" data-social-copy>复制名片</button>
+            </div>
+            <textarea id="socialProfileCode" readonly>${buildSocialProfileCode()}</textarea>
+        </div>
+    `;
+    socialPanelEl.classList.remove("hidden");
+    socialSummaryEl.querySelectorAll("button[data-social-copy]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            const text = buildSocialProfileCode();
+            try {
+                await navigator.clipboard.writeText(text);
+                addLog("已复制洞府名片码");
+            } catch {
+                addLog("复制失败，请手动复制名片文本");
+            }
+        });
+    });
+}
+
+const NEWBIE_GUIDE_STEPS = [
+    { id: "start_meditation", title: "开始打坐一次", desc: "点击“开始打坐”进入修炼状态", check: () => newbieGuideFlags.meditationStarted, reward: { gold: 80, spiritStone: 30 } },
+    { id: "start_explore", title: "开启自动探索", desc: "点击“自动探索”让化身外出", check: () => newbieGuideFlags.autoStarted, reward: { gold: 100, herb: 8 } },
+    { id: "win_first_battle", title: "获得首次战斗胜利", desc: "击败任意怪物1次", check: () => totalBattleWins >= 1, reward: { gold: 140, demonCore: 2 } },
+    { id: "build_first_home", title: "建造首个洞府建筑", desc: "在洞府5x5内建造任意建筑/阵法", check: () => homeBuildingMap.size >= 1, reward: { gold: 180, wood: 12 } },
+    { id: "buy_blood_pill", title: "购买回血丹", desc: "在丹药商店购买回血丹至少1枚", check: () => newbieGuideFlags.boughtBloodPill, reward: { gold: 180, bloodPill: 2 } },
+    { id: "enhance_equipment", title: "完成一次装备强化", desc: "任意装备强化 +1", check: () => newbieGuideFlags.enhancedOnce, reward: { gold: 260, rareCrystal: 2 } },
+    { id: "reach_lv5", title: "修为达到 Lv.5", desc: "继续打坐与战斗，提升到Lv.5", check: () => cultivationLevel >= 5, reward: { gold: 300, chestSmall: 2 } }
+];
+
+function grantNewbieGuideReward(reward) {
+    if (!reward) return;
+    if ((reward.gold || 0) > 0) goldCoins += reward.gold;
+    const pack = { spiritStone: avatarInventory, herb: avatarInventory, wood: avatarInventory, demonCore: avatarInventory, bloodPill: avatarInventory, rareCrystal: avatarInventory, chestSmall: avatarInventory };
+    Object.entries(pack).forEach(([id, bag]) => {
+        const amount = reward[id] || 0;
+        if (amount > 0) {
+            bag[id] = (bag[id] || 0) + amount;
+            discoveredItemSet.add(id);
+        }
+    });
+}
+
+function tryClaimNewbieGuideStep() {
+    const step = NEWBIE_GUIDE_STEPS[newbieGuideStepIndex];
+    if (!step) return false;
+    if (!step.check()) {
+        addLog(`当前任务未完成：${step.title}`);
+        return false;
+    }
+    if (newbieGuideClaimed[step.id]) return false;
+    newbieGuideClaimed[step.id] = true;
+    grantNewbieGuideReward(step.reward);
+    addLog(`新手任务完成：${step.title}`);
+    const rewardText = [
+        step.reward.gold ? `金币+${step.reward.gold}` : "",
+        step.reward.spiritStone ? `灵石+${step.reward.spiritStone}` : "",
+        step.reward.herb ? `灵草+${step.reward.herb}` : "",
+        step.reward.wood ? `灵木+${step.reward.wood}` : "",
+        step.reward.demonCore ? `妖丹+${step.reward.demonCore}` : "",
+        step.reward.bloodPill ? `回血丹+${step.reward.bloodPill}` : "",
+        step.reward.rareCrystal ? `异晶+${step.reward.rareCrystal}` : "",
+        step.reward.chestSmall ? `小宝箱+${step.reward.chestSmall}` : ""
+    ].filter(Boolean).join(" / ");
+    if (rewardText) addLog(`领取引导奖励：${rewardText}`);
+    newbieGuideStepIndex = Math.min(NEWBIE_GUIDE_STEPS.length, newbieGuideStepIndex + 1);
+    return true;
+}
+
+function updateNewbieGuidePanel() {
+    if (!newbieGuideSummaryEl || !newbieGuideClaimBtn) return;
+    const total = NEWBIE_GUIDE_STEPS.length;
+    const done = Math.min(total, newbieGuideStepIndex);
+    const current = NEWBIE_GUIDE_STEPS[newbieGuideStepIndex];
+    if (!current) {
+        newbieGuideSummaryEl.innerHTML = `已完成全部 ${total} 步任务链，建议进入精英/BOSS循环。`;
+        newbieGuideClaimBtn.disabled = true;
+        newbieGuideClaimBtn.textContent = "已完成";
+        return;
+    }
+    const ready = current.check();
+    const reward = current.reward || {};
+    const rewardText = [
+        reward.gold ? `金币+${reward.gold}` : "",
+        reward.spiritStone ? `灵石+${reward.spiritStone}` : "",
+        reward.herb ? `灵草+${reward.herb}` : "",
+        reward.wood ? `灵木+${reward.wood}` : "",
+        reward.demonCore ? `妖丹+${reward.demonCore}` : "",
+        reward.bloodPill ? `回血丹+${reward.bloodPill}` : "",
+        reward.rareCrystal ? `异晶+${reward.rareCrystal}` : "",
+        reward.chestSmall ? `小宝箱+${reward.chestSmall}` : ""
+    ].filter(Boolean).join(" / ");
+    newbieGuideSummaryEl.innerHTML = `进度 ${done}/${total}<br>当前：<strong>${current.title}</strong><br>${current.desc}<br>奖励：${rewardText || "无"}<br>状态：${ready ? "<span style=\"color:#74d18d\">可领取</span>" : "进行中"}`;
+    newbieGuideClaimBtn.disabled = !ready;
+    newbieGuideClaimBtn.textContent = ready ? "领取奖励" : "未完成";
 }
 
 function totalInventoryLoad() {
@@ -4054,6 +4774,7 @@ function moveOneStep(targetX, targetY) {
     avatarY = step.y;
     lastMoveAtMs = simulationTimeMs;
     dayMoveCount += 1;
+    totalMoveCount += 1;
     dayMoveLogBatch += 1;
     if (dayMoveLogBatch >= 5 || autoObjective === "return_home") dayMoveLogBatch = 0;
     movementStatusText = `今日已移动 ${dayMoveCount} 格，当前位置 (${avatarX}, ${avatarY})`;
@@ -4155,6 +4876,7 @@ function finishGathering() {
         state.depletion += amount;
         avatarInventory[resourceKey] += amount;
         dayGatherUnits += amount;
+        totalGatherUnits += amount;
         addChunkHeatAt(x, y, 1 + amount * 0.6);
         updateSidePanels();
         updateStatus();
@@ -4315,11 +5037,6 @@ function performHomeBuildAction(wx, wy, action, targetType = null) {
         addLog("只能在洞府 5x5 范围内建设");
         return false;
     }
-    if (isGathering || isMeditating) {
-        addLog("当前行为进行中，暂不能建设");
-        return false;
-    }
-
     const current = getHomeBuilding(wx, wy);
     if (action === "inspect") {
         if (current) {
@@ -4387,6 +5104,7 @@ function openBuildPanel(wx, wy) {
 
     let html = `<div style="font-weight:700; margin-bottom:6px;">洞府建设面板</div>`;
     html += `<div class="build-meta">主角驻守洞府执事中，支持远程建设（化身可在外探索）</div>`;
+    html += `<div class="build-meta">入口提示：点击左侧“🏗 洞府建设”后，再点击洞府5x5内任意高亮瓦片进行建造/升级</div>`;
     html += `<div class="build-meta">目标瓦片: (${wx}, ${wy}) · 当前建筑: ${currentTitle}</div>`;
     html += `<div class="build-meta" style="margin:6px 0 10px;">洞府库存: 灵石 ${homeInventory.spiritStone} / 灵木 ${homeInventory.wood} / 灵草 ${homeInventory.herb} / 异晶 ${homeInventory.rareCrystal}</div>`;
 
@@ -4413,7 +5131,26 @@ function openBuildPanel(wx, wy) {
             </div>
         `;
     } else {
-        for (const conf of BUILDING_TYPES.filter((item) => item.id !== "none")) {
+        const normalList = BUILDING_TYPES.filter((item) => !["none", "skyArray", "earthArray", "furyArray"].includes(item.id));
+        const arrayList = BUILDING_TYPES.filter((item) => ["skyArray", "earthArray", "furyArray"].includes(item.id));
+        html += `<div class="build-meta" style="margin:6px 0 4px;"><strong>基础建筑</strong></div>`;
+        for (const conf of normalList) {
+            const canBuild = canAffordCost(conf.buildCost);
+            html += `
+                <div class="build-row">
+                    <div>
+                        <div><strong>${conf.icon} ${conf.label}</strong></div>
+                        <div class="build-meta">需求: ${formatCostLine(conf.buildCost)}</div>
+                        ${formatCostStockLine(conf.buildCost)}
+                        <div class="build-meta ${canBuild ? "" : "mini-meta-warn"}">${canBuild ? "库存满足" : "材料不足，点击可查看提示"}</div>
+                        <div class="build-meta">效果: ${conf.effect}</div>
+                    </div>
+                    <button class="mini-btn" data-build-action="build" data-build-type="${conf.id}">建造</button>
+                </div>
+            `;
+        }
+        html += `<div class="build-meta" style="margin:8px 0 4px;"><strong>战斗阵法（新增）</strong></div>`;
+        for (const conf of arrayList) {
             const canBuild = canAffordCost(conf.buildCost);
             html += `
                 <div class="build-row">
@@ -4728,7 +5465,7 @@ function updateMovementStatus() {
 }
 
 function updateBattlePanel() {
-    if (battleInfoModeBtn) battleInfoModeBtn.textContent = battleInfoMode === "detail" ? "完整模式" : "简化模式";
+    if (battleInfoModeBtn) battleInfoModeBtn.textContent = battleInfoMode === "detail" ? "战斗视图：完整" : "战斗视图：简洁";
     if (battlePanelEl) battlePanelEl.classList.toggle("simple-mode", battleInfoMode === "simple");
     if (!battleState) {
         if (!battleSummaryData || simulationTimeMs - battleSummaryData.atMs > 10000) {
@@ -4740,8 +5477,10 @@ function updateBattlePanel() {
         if (battleTurnBannerEl) battleTurnBannerEl.textContent = "战斗已结束";
         if (battleSelfStatusEl) battleSelfStatusEl.textContent = "待命";
         if (battleEnemyStatusEl) battleEnemyStatusEl.textContent = "已结算";
-        battleSummaryEl.innerHTML = `⚔ 战斗结算 · ${battleSummaryData.result}`;
-        battleRoundResultEl.textContent = `${battleSummaryData.result} · ${battleSummaryData.enemy}`;
+        const isWin = battleSummaryData.result === "胜利";
+        const settleText = isWin ? `胜利，已击败 ${battleSummaryData.enemy}` : `${battleSummaryData.result} · ${battleSummaryData.enemy}`;
+        battleSummaryEl.innerHTML = `⚔ 战斗结算 · ${settleText}`;
+        battleRoundResultEl.textContent = settleText;
         battleRoundResultEl.classList.toggle("minor", battleSummaryData.result !== "胜利");
         battleLogListEl.innerHTML = "";
         battleLogListEl.style.display = "none";
@@ -4755,9 +5494,28 @@ function updateBattlePanel() {
         battleUiEnemyHpDisplay = enemyHpEnd;
         if (battleEnemyCdFillEl) battleEnemyCdFillEl.style.transform = "scaleX(0)";
         if (battleSelfCdFillEl) battleSelfCdFillEl.style.transform = "scaleX(0)";
+        const recent = recentBattleHistory.slice(-5);
+        const avg = recent.length
+            ? {
+                durationSec: Math.round(recent.reduce((s, b) => s + (b.durationSec || 0), 0) / recent.length),
+                dealt: Math.round(recent.reduce((s, b) => s + (b.dealt || 0), 0) / recent.length),
+                taken: Math.round(recent.reduce((s, b) => s + (b.taken || 0), 0) / recent.length),
+                healed: Math.round(recent.reduce((s, b) => s + (b.healed || 0), 0) / recent.length)
+            }
+            : null;
+        let replayLine = "关键帧回放：无";
+        const keyframes = battleSummaryData.keyframes || [];
+        if (keyframes.length) {
+            const replayAge = Math.max(0, simulationTimeMs - battleSummaryData.atMs);
+            const idx = Math.min(keyframes.length - 1, Math.floor((replayAge % 3000) / 600));
+            const frame = keyframes[idx];
+            replayLine = `关键帧回放：R${frame.round} ${frame.text}${frame.item ? `｜${frame.item}` : ""}`;
+        }
         battleResultCardEl.innerHTML = `
             时长 ${battleSummaryData.durationSec || battleSummaryData.rounds}s ｜ 回合 ${battleSummaryData.rounds} ｜ 总伤害 ${battleSummaryData.dealt} ｜ 承伤 ${battleSummaryData.taken} ｜ 暴击 ${battleSummaryData.crits} ｜ 治疗 ${battleSummaryData.healed || 0}<br>
-            战利品：${battleSummaryData.loot}
+            战利品：${battleSummaryData.loot}<br>
+            ${replayLine}<br>
+            ${avg ? `对比近5场均值：时长 ${battleSummaryData.durationSec - avg.durationSec >= 0 ? "+" : ""}${battleSummaryData.durationSec - avg.durationSec}s ｜ 伤害 ${battleSummaryData.dealt - avg.dealt >= 0 ? "+" : ""}${battleSummaryData.dealt - avg.dealt} ｜ 承伤 ${battleSummaryData.taken - avg.taken >= 0 ? "+" : ""}${battleSummaryData.taken - avg.taken} ｜ 治疗 ${battleSummaryData.healed - avg.healed >= 0 ? "+" : ""}${battleSummaryData.healed - avg.healed}` : "对比近5场均值：数据不足"}
         `;
         if (battleInfoMode === "detail") {
             battleResultCardEl.innerHTML += `<br>结算时间：第 ${dayCount} 天 · ${Math.floor(simulationTimeMs / 1000)}s`;
@@ -4773,8 +5531,15 @@ function updateBattlePanel() {
     const battleTier = profile?.tier || 1;
     const isBossTier = battleTier >= 4;
     const bossTag = battleTier >= 5 ? "【BOSS】" : battleTier >= 4 ? "【精英】" : "";
+    const buildingBonus = getBuildingBonuses();
+    const formationText = [
+        buildingBonus.battleAtkMul > 0 ? `攻+${Math.round(buildingBonus.battleAtkMul * 100)}%` : null,
+        buildingBonus.battleDefMul > 0 ? `防+${Math.round(buildingBonus.battleDefMul * 100)}%` : null,
+        buildingBonus.battleDropMul > 0 ? `掉落+${Math.round(buildingBonus.battleDropMul * 100)}%` : null,
+        buildingBonus.battleCritRate > 0 ? `暴击+${Math.round(buildingBonus.battleCritRate * 100)}%` : null
+    ].filter(Boolean).join(" · ") || "无";
     battleSummaryEl.innerHTML = battleInfoMode === "detail"
-        ? `⚔ ${bossTag} ${battleState.type} Lv.${battleState.level} · 回合 ${battleState.rounds} · CD模式<br><span class="small-note">战术：${currentBattleTactic().label}｜掉落预览：${dropPreview}</span>`
+        ? `⚔ ${bossTag} ${battleState.type} Lv.${battleState.level} · 回合 ${battleState.rounds} · CD模式<br><span class="small-note">战术：${currentBattleTactic().label}｜阵法：${formationText}｜掉落预览：${dropPreview}</span>`
         : `⚔ ${battleState.type} Lv.${battleState.level}｜CD战斗中`;
     if (battleSelfNameEl) battleSelfNameEl.textContent = "ark1";
     if (battleEnemyLabelEl) battleEnemyLabelEl.textContent = `${bossTag || ""}${battleState.type}`;
@@ -4784,7 +5549,7 @@ function updateBattlePanel() {
     if (battleSelfCardEl) battleSelfCardEl.classList.toggle("active", (battleState.playerCdMs || 0) <= 0);
     if (battleEnemyCardEl) battleEnemyCardEl.classList.toggle("active", (battleState.enemyCdMs || 0) <= 0);
     if (battleSelfAvatarEl) battleSelfAvatarEl.textContent = "🧍";
-    if (battleEnemyAvatarEl) battleEnemyAvatarEl.textContent = getMonsterAvatar(battleState.type);
+    if (battleEnemyAvatarEl) battleEnemyAvatarEl.innerHTML = getMonsterAvatar(battleState.type);
     let roundResult = "双方蓄力中...";
     let minor = true;
     if (lastBattleFrame) {
@@ -4909,6 +5674,7 @@ function updateSidePanels() {
     Object.values(equippedSlots).forEach((id) => { if (id) discoveredItemSet.add(id); });
     const totalLoad = totalInventoryLoad();
     const storageLoad = Object.values(homeInventory).reduce((sum, value) => sum + (Number(value) || 0), 0);
+    const b = getBuildingBonuses();
     const categorizedInventory = [
         { key: "currency", label: "货币", ids: ["gold", "spiritStone", "demonCore"] },
         { key: "food", label: "食物", ids: ["herb"] },
@@ -4925,6 +5691,7 @@ function updateSidePanels() {
             <span class="pill">背包 ${totalLoad}/${avatarBagCap}</span>
             <span class="pill">仓储 ${storageLoad}/${town.storageCap}</span>
             <span class="pill">效率 x${getCultivationRateMultiplier().toFixed(1)}</span>
+            <span class="pill">阵法 攻+${Math.round((b.battleAtkMul || 0) * 100)}% 防+${Math.round((b.battleDefMul || 0) * 100)}% 掉落+${Math.round((b.battleDropMul || 0) * 100)}%</span>
         </div>
         <div class="bag-tabs">
             <button class="mode-btn ${resourcePanelTab === "inventory" ? "active" : ""}" data-res-tab="inventory">库存</button>
@@ -5050,37 +5817,49 @@ function updateSidePanels() {
         const discovered = discoveredItemSet.has(id);
         return { id, ...def, owned, discovered };
     });
+    const isItemTab = codexTab !== "monsters";
     codexSummaryEl.innerHTML = `
-        <div style="margin-bottom:8px;"><strong>物品图鉴</strong></div>
-        <div class="small-note">已发现 ${codexItems.filter((i) => i.discovered).length}/${codexItems.length}</div>
-        <div class="codex-grid" style="margin-top:8px;">
-            ${codexItems.map((item) => `
-                <div class="codex-item rarity-${item.rarity} ${item.discovered ? "" : "locked"}" data-item-id="${item.id}" data-item-count="${item.owned}">
-                    <div class="codex-item-head">
-                        <div><strong>${getItemIconMarkup(item.id)} ${item.discovered ? item.label : "？？？"}</strong></div>
-                        <div class="small-note">${item.rarity.toUpperCase()} · ${item.owned}</div>
-                    </div>
-                    <div class="codex-item-meta">${item.category} · ${item.discovered ? item.source : "未解锁"}</div>
-                    <div class="codex-tags">
-                        <span class="codex-tag">属性 ${item.discovered ? formatBonusText(item.bonus) : "???"}</span>
-                        ${item.buff ? `<span class="codex-tag">增益 ${Math.floor((item.buff.durationMs || 0) / 1000)}s</span>` : ""}
-                        ${item.usable ? `<span class="codex-tag">可使用</span>` : ""}
-                    </div>
-                </div>
-            `).join("")}
+        <div style="margin-bottom:4px;"><strong>图鉴总览</strong></div>
+        <div class="small-note">物品已发现 ${codexItems.filter((i) => i.discovered).length}/${codexItems.length} · 怪物已收录 ${MONSTER_CODEX.length}/${MONSTER_CODEX.length}</div>
+        <div class="codex-tab-row">
+            <button class="mini-btn codex-tab-btn ${isItemTab ? "active" : ""}" data-codex-tab="items">📦 物品图鉴</button>
+            <button class="mini-btn codex-tab-btn ${!isItemTab ? "active" : ""}" data-codex-tab="monsters">👹 怪物图鉴</button>
         </div>
-        <div style="margin:12px 0 6px;"><strong>怪物图鉴（掉落几率）</strong></div>
-        <div class="codex-grid">
-            ${MONSTER_CODEX.map((m) => `
-                <div class="codex-item">
-                    <div class="codex-item-head">
-                        <strong>${getMonsterIconMarkup(m.type)} ${m.type}</strong>
-                        <span class="small-note">${m.levelRange}</span>
+        <div class="${isItemTab ? "" : "hidden"}" data-codex-pane="items">
+            <div class="codex-grid" style="margin-top:4px;">
+                ${codexItems.map((item) => `
+                    <div class="codex-item rarity-${item.rarity} ${item.discovered ? "" : "locked"}" data-item-id="${item.id}" data-item-count="${item.owned}">
+                        <div class="codex-item-head">
+                            <div><strong>${getItemIconMarkup(item.id)} ${item.discovered ? item.label : "？？？"}</strong></div>
+                            <div class="small-note">${item.rarity.toUpperCase()} · ${item.owned}</div>
+                        </div>
+                        <div class="codex-item-meta">${item.category} · ${item.discovered ? item.source : "未解锁"}</div>
+                        <div class="codex-tags">
+                            <span class="codex-tag">属性 ${item.discovered ? formatBonusText(item.bonus) : "???"}</span>
+                            ${item.buff ? `<span class="codex-tag">增益 ${Math.floor((item.buff.durationMs || 0) / 1000)}s</span>` : ""}
+                            ${item.usable ? `<span class="codex-tag">可使用</span>` : ""}
+                        </div>
                     </div>
-                    <div class="codex-item-meta">威胁层级 T${m.tier || 1}</div>
-                    <div class="monster-drop-row">${m.drops.map((d) => `${ITEM_DEFS[d.id]?.label || d.id} ${d.chance}`).join(" / ")}</div>
-                </div>
-            `).join("")}
+                `).join("")}
+            </div>
+        </div>
+        <div class="${isItemTab ? "hidden" : ""}" data-codex-pane="monsters">
+            <div class="codex-grid" style="margin-top:4px;">
+                ${MONSTER_CODEX.map((m) => `
+                    <div class="monster-codex-item" data-monster-type="${m.type}">
+                        <div class="monster-head">
+                            <div class="monster-title">${getMonsterIconMarkup(m.type)} ${m.type}</div>
+                            <span class="small-note">${m.levelRange}</span>
+                        </div>
+                        <div class="codex-item-meta">威胁层级 T${m.tier || 1} · ${m.source || "未知区域"}</div>
+                        <div class="small-note" style="margin-top:4px;">${m.intro || "暂无资料"}</div>
+                        <div class="small-note" style="margin-top:2px;">HP ${m.stats?.hp || "?"} · 攻 ${m.stats?.atk || "?"} · 防 ${m.stats?.def || "?"}</div>
+                        <div class="drop-chips">
+                            ${m.drops.map((d) => `<span class="drop-chip rarity-${ITEM_DEFS[d.id]?.rarity || "common"}">${ITEM_DEFS[d.id]?.label || d.id} ${d.chance}</span>`).join("")}
+                        </div>
+                    </div>
+                `).join("")}
+            </div>
         </div>
     `;
     craftSummaryEl.innerHTML = `
@@ -5214,6 +5993,17 @@ function updateSidePanels() {
     });
     bindItemHover(resourceSummaryEl);
     bindItemHover(codexSummaryEl);
+    codexSummaryEl.querySelectorAll("button[data-codex-tab]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            codexTab = btn.dataset.codexTab === "monsters" ? "monsters" : "items";
+            updateSidePanels();
+        });
+    });
+    codexSummaryEl.querySelectorAll(".monster-codex-item[data-monster-type]").forEach((el) => {
+        el.addEventListener("click", () => {
+            openMonsterCodexDetail(el.dataset.monsterType);
+        });
+    });
 
     resourceSummaryEl.classList.toggle("hidden", rightPanelTab !== "resource");
     attributeSummaryEl.classList.toggle("hidden", rightPanelTab !== "attributes");
@@ -5264,6 +6054,7 @@ function renderAll() {
     updateCultivationPanel();
     updateStatus();
     updateMovementStatus();
+    updateNewbieGuidePanel();
     updateBattlePanel();
     if (!battleState) {
         updateSidePanels();
@@ -5350,6 +6141,9 @@ function renderButtons() {
     autoBtn.classList.toggle("active", isAutoMode);
     autoBtn.textContent = avatarSessionExpired ? "⛔ 需重新登录" : (isAutoMode ? "■ 停止自动探索" : "▶ 开始自动探索");
     returnBtn.classList.toggle("active", autoObjective === "return_home");
+    if (reloginBtn) {
+        reloginBtn.classList.toggle("hidden", !avatarSessionExpired);
+    }
     cameraResetBtn.classList.toggle("active", cameraMode === "follow");
     cameraResetBtn.textContent = cameraMode === "follow" ? "🎯 视角跟随中" : "🎯 回到化身";
     meditateBtn.classList.toggle("active", isMeditating);
@@ -5518,6 +6312,18 @@ function renderGameToText() {
             avatarOnlineLimitMs: AVATAR_MAX_ONLINE_MS,
             avatarSessionExpired
         },
+        social: {
+            title: getActiveTitle(),
+            homeScore: calcHomeScore(),
+            battle: { wins: totalBattleWins, elite: totalEliteKills, boss: totalBossKills },
+            explore: { moves: totalMoveCount, gathers: totalGatherUnits }
+        },
+        newbieGuide: {
+            stepIndex: newbieGuideStepIndex,
+            totalSteps: NEWBIE_GUIDE_STEPS.length,
+            currentStep: NEWBIE_GUIDE_STEPS[newbieGuideStepIndex]?.id || null,
+            claimReady: NEWBIE_GUIDE_STEPS[newbieGuideStepIndex] ? NEWBIE_GUIDE_STEPS[newbieGuideStepIndex].check() : false
+        },
         town,
         currencies: { goldCoins },
         avatarInventory,
@@ -5575,12 +6381,24 @@ function buildSavePayload() {
             avatarOnlineAccumMs,
             avatarSessionExpired,
             cultivationBuffUntilMs,
+            newbieGuide: {
+                stepIndex: newbieGuideStepIndex,
+                claimed: { ...newbieGuideClaimed },
+                flags: { ...newbieGuideFlags }
+            },
+            social: {
+                totalBattleWins,
+                totalEliteKills,
+                totalBossKills,
+                totalMoveCount,
+                totalGatherUnits
+            },
             equippedSlots: { ...equippedSlots },
             equipmentEnhanceLevels: { ...equipmentEnhanceLevels }
         },
         inventories: { avatar: { ...avatarInventory }, home: { ...homeInventory }, equipment: { ...equipmentInventory } },
         town: { ...town },
-        ui: { rightPanelTab, resourcePanelTab, showEquipAttrDetail, showWorldSummary, inspectText, cameraMode, cameraX, cameraY, battleInfoMode },
+        ui: { rightPanelTab, resourcePanelTab, codexTab, showEquipAttrDetail, showWorldSummary, inspectText, cameraMode, cameraX, cameraY, battleInfoMode },
         maps: {
             reservations: reservationBackend.list(),
             homeBuildings: Array.from(homeBuildingMap.entries()),
@@ -5644,6 +6462,14 @@ function applySavePayload(payload) {
     avatarOnlineAccumMs = payload.progression?.avatarOnlineAccumMs ?? avatarOnlineAccumMs;
     avatarSessionExpired = payload.progression?.avatarSessionExpired ?? avatarSessionExpired;
     cultivationBuffUntilMs = payload.progression?.cultivationBuffUntilMs ?? cultivationBuffUntilMs;
+    newbieGuideStepIndex = payload.progression?.newbieGuide?.stepIndex ?? newbieGuideStepIndex;
+    newbieGuideClaimed = { ...(payload.progression?.newbieGuide?.claimed || newbieGuideClaimed) };
+    Object.assign(newbieGuideFlags, payload.progression?.newbieGuide?.flags || {});
+    totalBattleWins = payload.progression?.social?.totalBattleWins ?? totalBattleWins;
+    totalEliteKills = payload.progression?.social?.totalEliteKills ?? totalEliteKills;
+    totalBossKills = payload.progression?.social?.totalBossKills ?? totalBossKills;
+    totalMoveCount = payload.progression?.social?.totalMoveCount ?? totalMoveCount;
+    totalGatherUnits = payload.progression?.social?.totalGatherUnits ?? totalGatherUnits;
     Object.assign(equippedSlots, payload.progression?.equippedSlots || {});
     Object.assign(equipmentEnhanceLevels, payload.progression?.equipmentEnhanceLevels || {});
     Object.assign(sharedStats, payload.progression?.sharedStats || {});
@@ -5653,9 +6479,11 @@ function applySavePayload(payload) {
     Object.assign(avatarInventory, payload.inventories?.avatar || {});
     Object.assign(homeInventory, payload.inventories?.home || {});
     Object.assign(equipmentInventory, payload.inventories?.equipment || {});
+    enforceNonStackEquipCounts(true);
     Object.assign(town, payload.town || {});
     rightPanelTab = payload.ui?.rightPanelTab || rightPanelTab;
     resourcePanelTab = payload.ui?.resourcePanelTab || resourcePanelTab;
+    codexTab = payload.ui?.codexTab === "monsters" ? "monsters" : "items";
     showEquipAttrDetail = payload.ui?.showEquipAttrDetail ?? showEquipAttrDetail;
     showWorldSummary = payload.ui?.showWorldSummary ?? showWorldSummary;
     inspectText = payload.ui?.inspectText || "";
@@ -5663,6 +6491,7 @@ function applySavePayload(payload) {
     cameraX = Number.isFinite(payload.ui?.cameraX) ? payload.ui.cameraX : cameraX;
     cameraY = Number.isFinite(payload.ui?.cameraY) ? payload.ui.cameraY : cameraY;
     battleInfoMode = payload.ui?.battleInfoMode === "detail" ? "detail" : "simple";
+    newbieGuideStepIndex = Math.max(0, Math.min(NEWBIE_GUIDE_STEPS.length, newbieGuideStepIndex));
     if (!["inventory", "bag", "equip"].includes(resourcePanelTab)) resourcePanelTab = "inventory";
     if (cameraMode !== "follow" && cameraMode !== "free") cameraMode = "follow";
     EQUIP_SLOT_DEFS.forEach((slot) => {
@@ -5738,6 +6567,60 @@ function advanceTime(ms) {
     renderAll();
 }
 
+function runNewbieGuideSimulation(options = {}) {
+    const restore = options.restore !== false;
+    const snapshot = buildSavePayload();
+    const logs = [];
+    const pushStep = (label) => {
+        const current = NEWBIE_GUIDE_STEPS[newbieGuideStepIndex];
+        logs.push({ label, stepIndex: newbieGuideStepIndex, currentStep: current ? current.id : null });
+    };
+    try {
+        newbieGuideFlags.meditationStarted = true;
+        tryClaimNewbieGuideStep();
+        pushStep("meditation");
+
+        newbieGuideFlags.autoStarted = true;
+        tryClaimNewbieGuideStep();
+        pushStep("auto");
+
+        totalBattleWins = Math.max(1, totalBattleWins);
+        tryClaimNewbieGuideStep();
+        pushStep("battle");
+
+        if (homeBuildingMap.size <= 0) {
+            setHomeBuilding(HOME_X, HOME_Y, { type: "herbGarden", level: 1 });
+        }
+        tryClaimNewbieGuideStep();
+        pushStep("build");
+
+        newbieGuideFlags.boughtBloodPill = true;
+        tryClaimNewbieGuideStep();
+        pushStep("shop");
+
+        newbieGuideFlags.enhancedOnce = true;
+        tryClaimNewbieGuideStep();
+        pushStep("enhance");
+
+        cultivationLevel = Math.max(5, cultivationLevel);
+        tryClaimNewbieGuideStep();
+        pushStep("lv5");
+
+        renderAll();
+        return JSON.stringify({
+            ok: newbieGuideStepIndex >= NEWBIE_GUIDE_STEPS.length,
+            stepIndex: newbieGuideStepIndex,
+            totalSteps: NEWBIE_GUIDE_STEPS.length,
+            logs
+        });
+    } finally {
+        if (restore) {
+            applySavePayload(snapshot);
+            renderAll();
+        }
+    }
+}
+
 autoBtn.addEventListener("click", () => {
     if (avatarSessionExpired) {
         addLog("化身在线已达12小时，请重新登录后继续");
@@ -5746,6 +6629,7 @@ autoBtn.addEventListener("click", () => {
     }
     if (isBuildFocus) closeBuildPanel();
     isAutoMode = !isAutoMode;
+    if (isAutoMode) newbieGuideFlags.autoStarted = true;
     if (!isAutoMode) {
         releaseExploreTargetReservation();
         exploreTarget = null;
@@ -5753,6 +6637,23 @@ autoBtn.addEventListener("click", () => {
     addLog(isAutoMode ? "自动探索已启动" : "自动探索已停止");
     renderAll();
 });
+
+if (reloginBtn) {
+    reloginBtn.addEventListener("click", () => {
+        avatarSessionExpired = false;
+        avatarOnlineAccumMs = 0;
+        movementStatusText = "化身已重新登录激活，可继续探索";
+        addLog("化身重新登录成功，在线时长已重置");
+        renderAll();
+    });
+}
+
+if (newbieGuideClaimBtn) {
+    newbieGuideClaimBtn.addEventListener("click", () => {
+        const ok = tryClaimNewbieGuideStep();
+        if (ok) renderAll();
+    });
+}
 
 returnBtn.addEventListener("click", () => {
     if (isBuildFocus) closeBuildPanel();
@@ -5767,7 +6668,7 @@ returnBtn.addEventListener("click", () => {
 if (battleInfoModeBtn) {
     battleInfoModeBtn.addEventListener("click", () => {
         battleInfoMode = battleInfoMode === "detail" ? "simple" : "detail";
-        addLog(`战斗信息模式：${battleInfoMode === "detail" ? "完整" : "简化"}`);
+        addLog(`战斗视图切换：${battleInfoMode === "detail" ? "完整（含卡片与关键细节）" : "简洁（两行概要）"}`);
         renderAll();
     });
 }
@@ -5785,7 +6686,7 @@ meditateBtn.addEventListener("click", () => {
 });
 
 helpBtn.addEventListener("click", () => {
-    window.open("GAME_HELP.md", "_blank", "noopener,noreferrer");
+    window.open("WIKI.html", "_blank", "noopener,noreferrer");
 });
 
 changelogBtn.addEventListener("click", () => {
@@ -5793,6 +6694,7 @@ changelogBtn.addEventListener("click", () => {
 });
 
 craftBtn.addEventListener("click", () => {
+    updateSidePanels();
     craftPanelEl.classList.remove("hidden");
 });
 
@@ -5801,6 +6703,7 @@ craftCloseBtn.addEventListener("click", () => {
 });
 
 shopBtn.addEventListener("click", () => {
+    updateSidePanels();
     shopPanelEl.classList.remove("hidden");
 });
 
@@ -5809,8 +6712,19 @@ shopCloseBtn.addEventListener("click", () => {
 });
 
 enhanceBtn.addEventListener("click", () => {
+    updateSidePanels();
     enhancePanelEl.classList.remove("hidden");
 });
+
+if (homeBuildBtn) {
+    homeBuildBtn.addEventListener("click", () => {
+        if (isBuildFocus || zoomLevel !== 1) {
+            zoomLevel = 1;
+        }
+        openBuildPanel(HOME_X, HOME_Y);
+        renderAll();
+    });
+}
 
 enhanceCloseBtn.addEventListener("click", () => {
     enhancePanelEl.classList.add("hidden");
@@ -5901,12 +6815,12 @@ debugBattleBtn.addEventListener("click", () => {
     if (isGathering) return;
     const pick = debugMonsterSelect?.value || "normal";
     const testMonster = pick === "nearby"
-        ? (getMonsterAt(avatarX, avatarY) || { x: avatarX, y: avatarY, type: "妖兽", level: 2, hp: 72, maxHp: 72, atk: 14, def: 5 })
-        : pick === "elite"
-            ? { x: avatarX, y: avatarY, type: "精英妖将", level: 7, hp: 340, maxHp: 340, atk: 56, def: 28 }
+        ? (getMonsterAt(avatarX, avatarY) || { x: avatarX, y: avatarY, type: "裂地凶兽", level: 2, hp: 72, maxHp: 72, atk: 14, def: 5 })
+            : pick === "elite"
+            ? { x: avatarX, y: avatarY, type: "玄甲统领", level: 7, hp: 340, maxHp: 340, atk: 56, def: 28 }
             : pick === "boss"
-                ? { x: avatarX, y: avatarY, type: "天劫妖王", level: 10, hp: 620, maxHp: 620, atk: 92, def: 42 }
-                : { x: avatarX, y: avatarY, type: "妖兽", level: 2, hp: 72, maxHp: 72, atk: 14, def: 5 };
+                ? { x: avatarX, y: avatarY, type: "天罚魔龙", level: 10, hp: 620, maxHp: 620, atk: 92, def: 42 }
+                : { x: avatarX, y: avatarY, type: "裂地凶兽", level: 2, hp: 72, maxHp: 72, atk: 14, def: 5 };
     startBattleWith(testMonster);
     isAutoMode = true;
     addLog(`测试：已触发即时战斗（${testMonster.type}）`);
@@ -6051,9 +6965,33 @@ codexBtn.addEventListener("click", () => {
     codexPanelEl.classList.remove("hidden");
 });
 
+if (socialBtn) {
+    socialBtn.addEventListener("click", () => {
+        openSocialPanel();
+    });
+}
+
+if (socialCloseBtn) {
+    socialCloseBtn.addEventListener("click", () => {
+        socialPanelEl.classList.add("hidden");
+    });
+}
+
+if (storyBtn) {
+    storyBtn.addEventListener("click", () => {
+        openStoryModal();
+    });
+}
+
 codexCloseBtn.addEventListener("click", () => {
     codexPanelEl.classList.add("hidden");
     itemDetailEl.classList.add("hidden");
+    if (monsterCodexModalEl) monsterCodexModalEl.classList.add("hidden");
+    if (storyModalEl) storyModalEl.classList.add("hidden");
+    if (storyTypeTimer) {
+        clearInterval(storyTypeTimer);
+        storyTypeTimer = 0;
+    }
 });
 
 grid.addEventListener("mousemove", (e) => {
@@ -6161,6 +7099,7 @@ window.getReservationSnapshot = () => reservationBackend.exportSnapshot();
 window.applyReservationSnapshot = (snapshot, options = {}) => reservationBackend.importSnapshot(snapshot, options);
 window.saveGame = () => saveToLocal();
 window.loadGame = () => loadFromLocal();
+window.runNewbieGuideSimulation = runNewbieGuideSimulation;
 
 setInterval(() => updateSimulation(100), 100);
 setInterval(() => saveToLocal(), 15000);
