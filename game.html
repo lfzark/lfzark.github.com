@@ -2502,6 +2502,10 @@ let dragStartCameraX = HOME_X;
 let dragStartCameraY = HOME_Y;
 let suppressNextMapClick = false;
 let sidePanelRefreshRaf = 0;
+let inSimulationTick = false;
+let deferredRenderInTick = false;
+let lastCultivationUiUpdateMs = -1;
+let simulationTimer = 0;
 const equipmentEnhanceLevels = { sword: 0, bow: 0, shield: 0, artifact: 0, thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, warDrum: 0 };
 
 const avatarInventory = {
@@ -6049,7 +6053,11 @@ function scheduleSidePanelRefresh() {
     });
 }
 
-function renderAll() {
+function renderAll(force = false) {
+    if (inSimulationTick && !force) {
+        deferredRenderInTick = true;
+        return;
+    }
     renderMap();
     updateCultivationPanel();
     updateStatus();
@@ -6152,6 +6160,9 @@ function renderButtons() {
 }
 
 function updateSimulation(ms) {
+    inSimulationTick = true;
+    deferredRenderInTick = false;
+    try {
     const scaledMs = ms * timeScale;
     simulationTimeMs += scaledMs;
     if (!avatarSessionExpired) {
@@ -6191,7 +6202,10 @@ function updateSimulation(ms) {
         renderAll();
     }
     bodyCultivationAccumMs += scaledMs;
-    updateCultivationPanel();
+    if (simulationTimeMs - lastCultivationUiUpdateMs >= 1000 || isMeditating) {
+        updateCultivationPanel();
+        lastCultivationUiUpdateMs = simulationTimeMs;
+    }
     while (bodyCultivationAccumMs >= BODY_CULTIVATION_TICK_MS) {
         bodyCultivationAccumMs -= BODY_CULTIVATION_TICK_MS;
         applyBodyCultivationTick();
@@ -6237,6 +6251,31 @@ function updateSimulation(ms) {
             if (isGathering) break;
         }
     }
+    } finally {
+        inSimulationTick = false;
+        if (deferredRenderInTick) {
+            deferredRenderInTick = false;
+            renderAll(true);
+        }
+    }
+}
+
+function currentSimulationTickMs() {
+    if (document.hidden) return 1000;
+    if (battleState || isGathering) return 100;
+    if (isAutoMode) return 120;
+    if (isMeditating) return 200;
+    return 500;
+}
+
+function startSimulationLoop() {
+    if (simulationTimer) clearTimeout(simulationTimer);
+    const run = () => {
+        const tick = currentSimulationTickMs();
+        updateSimulation(tick);
+        simulationTimer = setTimeout(run, tick);
+    };
+    simulationTimer = setTimeout(run, currentSimulationTickMs());
 }
 
 function renderGameToText() {
@@ -7101,7 +7140,7 @@ window.saveGame = () => saveToLocal();
 window.loadGame = () => loadFromLocal();
 window.runNewbieGuideSimulation = runNewbieGuideSimulation;
 
-setInterval(() => updateSimulation(100), 100);
+startSimulationLoop();
 setInterval(() => saveToLocal(), 15000);
 
 avatarHp = getAvatarMaxHp();
