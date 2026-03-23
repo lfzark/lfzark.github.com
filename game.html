@@ -1723,6 +1723,10 @@
             <button id="loadBtn" class="mode-btn speed-btn">📂 读档</button>
             <button id="helpBtn" class="mode-btn speed-btn">📘 游戏百科</button>
         </div>
+        <div class="card" style="margin:8px 0 0; padding:8px;">
+            <div class="small-note" id="saveSizeInfo">存档体积：--</div>
+            <button id="compactSaveBtn" class="mini-btn" style="margin-top:6px; width:100%;">🧹 一键瘦身存档</button>
+        </div>
         <button id="rebirthBtn" class="control-btn">♻ 重生（清档）</button>
         <button id="shopBtn" class="control-btn">🛒 丹药商店</button>
         <button id="enhanceBtn" class="control-btn">⚒ 装备强化</button>
@@ -2646,6 +2650,8 @@ const changelogBtn = document.getElementById("changelogBtn");
 const homeBuildBtn = document.getElementById("homeBuildBtn");
 const saveBtn = document.getElementById("saveBtn");
 const loadBtn = document.getElementById("loadBtn");
+const compactSaveBtn = document.getElementById("compactSaveBtn");
+const saveSizeInfoEl = document.getElementById("saveSizeInfo");
 const rebirthBtn = document.getElementById("rebirthBtn");
 const bagCapInput = document.getElementById("bagCapInput");
 const bagReturnInput = document.getElementById("bagReturnInput");
@@ -6401,7 +6407,7 @@ function renderGameToText() {
 
 function buildSavePayload() {
     return {
-        v: 2,
+        v: 3,
         ts: Date.now(),
         home: { x: HOME_X, y: HOME_Y },
         avatar: { x: avatarX, y: avatarY, hp: avatarHp, mp: avatarMp, reviveUntilMs: avatarReviveUntilMs },
@@ -6439,20 +6445,21 @@ function buildSavePayload() {
         town: { ...town },
         ui: { rightPanelTab, resourcePanelTab, codexTab, showEquipAttrDetail, showWorldSummary, inspectText, cameraMode, cameraX, cameraY, battleInfoMode },
         maps: {
-            reservations: reservationBackend.list(),
             homeBuildings: Array.from(homeBuildingMap.entries()),
-            seedEntries: Array.from(seedMap.entries()),
-            stateEntries: Array.from(stateMap.entries()),
-            heatEntries: Array.from(chunkHeatMap.entries()),
-            monsterEntries: Array.from(monsterStateMap.entries()),
-            backoffEntries: Array.from(targetBackoffMap.entries())
+            // 轻量存档：不保存大规模世界运行时缓存，避免读档后CPU飙升
+            reservations: [],
+            seedEntries: [],
+            stateEntries: [],
+            heatEntries: [],
+            monsterEntries: [],
+            backoffEntries: []
         },
         discoveredItems: Array.from(discoveredItemSet)
     };
 }
 
 function applySavePayload(payload) {
-    if (!payload || (payload.v && ![1, 2].includes(payload.v))) return false;
+    if (!payload || (payload.v && ![1, 2, 3].includes(payload.v))) return false;
     if (Number.isFinite(payload.home?.x) && Number.isFinite(payload.home?.y)) {
         HOME_X = payload.home.x;
         HOME_Y = payload.home.y;
@@ -6571,6 +6578,7 @@ function applySavePayload(payload) {
 function saveToLocal() {
     try {
         localStorage.setItem(SAVE_KEY, JSON.stringify(buildSavePayload()));
+        updateSaveSizeInfo();
         return true;
     } catch {
         return false;
@@ -6585,14 +6593,51 @@ function loadFromLocal() {
             if (!raw) continue;
             const payload = JSON.parse(raw);
             if (applySavePayload(payload)) {
-                if (key !== SAVE_KEY) saveToLocal();
+                const hasHeavyWorldCache = Boolean((payload.maps?.seedEntries?.length || 0) + (payload.maps?.stateEntries?.length || 0) + (payload.maps?.heatEntries?.length || 0) + (payload.maps?.monsterEntries?.length || 0) + (payload.maps?.backoffEntries?.length || 0) + (payload.maps?.reservations?.length || 0));
+                if (key !== SAVE_KEY || payload.v !== 3 || hasHeavyWorldCache) saveToLocal();
+                updateSaveSizeInfo();
                 return true;
             }
         }
+        updateSaveSizeInfo();
         return false;
     } catch {
+        updateSaveSizeInfo();
         return false;
     }
+}
+
+function formatBytes(bytes) {
+    const b = Math.max(0, Number(bytes) || 0);
+    if (b < 1024) return `${b} B`;
+    if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+    return `${(b / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function getCurrentSaveSizeBytes() {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return 0;
+    return new Blob([raw]).size;
+}
+
+function updateSaveSizeInfo() {
+    if (!saveSizeInfoEl) return;
+    const size = getCurrentSaveSizeBytes();
+    saveSizeInfoEl.textContent = `存档体积：${formatBytes(size)}`;
+}
+
+function compactSaveNow() {
+    const before = getCurrentSaveSizeBytes();
+    const ok = saveToLocal();
+    const after = getCurrentSaveSizeBytes();
+    const ratio = before > 0 ? Math.round(((before - after) / before) * 100) : 0;
+    updateSaveSizeInfo();
+    if (!ok) {
+        addLog("存档瘦身失败：写入异常");
+        return false;
+    }
+    addLog(`存档瘦身完成：${formatBytes(before)} -> ${formatBytes(after)}（压缩 ${ratio}%）`);
+    return true;
 }
 
 function advanceTime(ms) {
@@ -6877,6 +6922,13 @@ loadBtn.addEventListener("click", () => {
     if (ok) renderAll();
 });
 
+if (compactSaveBtn) {
+    compactSaveBtn.addEventListener("click", () => {
+        compactSaveNow();
+        renderAll();
+    });
+}
+
 if (rebirthBtn) {
     rebirthBtn.addEventListener("click", () => {
         const ok = window.confirm("重生会清除本地存档并随机重建洞府坐标，是否继续？");
@@ -7155,6 +7207,7 @@ if (loadFromLocal()) {
     avatarMp = getAvatarMaxMp();
     addLog(`新账号已建立，洞府坐标 (${nx}, ${ny})`);
 }
+updateSaveSizeInfo();
 pillThresholdInput.value = String(Math.round(autoUsePillRatio * 100));
 salveThresholdInput.value = String(Math.round(autoUseSalveRatio * 100));
 pillThresholdLabel.textContent = String(Math.round(autoUsePillRatio * 100));
