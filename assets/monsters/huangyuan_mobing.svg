@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="荒原魔兵">
+  <rect x="22" y="16" width="84" height="92" rx="20" fill="#6b7f96"/>
+  <path d="M64 18l14 10v16H50V28z" fill="#4c5f74"/>
+  <rect x="36" y="44" width="56" height="50" rx="16" fill="#8397ad"/>
+  <circle cx="53" cy="54" r="5" fill="#ffd978"/>
+  <circle cx="75" cy="54" r="5" fill="#ffd978"/>
+  <rect x="54" y="63" width="20" height="5" rx="2.5" fill="#405163"/>
+  <rect x="44" y="92" width="14" height="18" rx="7" fill="#5d7188"/>
+  <rect x="70" y="92" width="14" height="18" rx="7" fill="#5d7188"/>
+</svg>

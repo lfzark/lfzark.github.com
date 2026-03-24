@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="裂地凶兽">
+  <ellipse cx="66" cy="72" rx="38" ry="24" fill="#9f623e"/>
+  <ellipse cx="46" cy="60" rx="20" ry="16" fill="#b3734e"/>
+  <path d="M32 54l8-12 10 9z" fill="#7f4b2f"/>
+  <path d="M49 54l8-12 10 9z" fill="#7f4b2f"/>
+  <path d="M60 74h24l-5 11H63z" fill="#d29a6b"/>
+  <rect x="40" y="90" width="14" height="18" rx="6" fill="#7f4b2f"/>
+  <rect x="64" y="90" width="14" height="18" rx="6" fill="#7f4b2f"/>
+  <path d="M94 72c12 2 16 10 12 18-6-2-10-7-12-12z" fill="#8f5737"/>
+  <circle cx="40" cy="60" r="3.5" fill="#ffb55b"/>
+  <circle cx="53" cy="60" r="3.5" fill="#ffb55b"/>
+</svg>

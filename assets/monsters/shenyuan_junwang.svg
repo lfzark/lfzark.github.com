@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="深渊君王">
+  <rect x="28" y="14" width="72" height="98" rx="22" fill="#4d5c9a"/>
+  <path d="M44 20l20-10 20 10-4 12H48z" fill="#364276"/>
+  <rect x="38" y="42" width="52" height="44" rx="14" fill="#6575b6"/>
+  <circle cx="52" cy="52" r="4" fill="#ffd97f"/>
+  <circle cx="76" cy="52" r="4" fill="#ffd97f"/>
+  <rect x="56" y="63" width="16" height="5" rx="2.5" fill="#364276"/>
+  <path d="M28 70l-14 18 14 4z" fill="#8395da"/>
+  <path d="M100 70l14 18-14 4z" fill="#8395da"/>
+  <rect x="44" y="94" width="14" height="16" rx="6" fill="#445289"/>
+  <rect x="70" y="94" width="14" height="16" rx="6" fill="#445289"/>
+</svg>

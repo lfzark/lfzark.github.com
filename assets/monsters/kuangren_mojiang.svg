@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="狂刃魔将">
+  <rect x="34" y="20" width="60" height="86" rx="18" fill="#415f80"/>
+  <path d="M46 24l8-14 10 10zM72 24l8-14 10 10z" fill="#2f4662"/>
+  <rect x="42" y="44" width="44" height="40" rx="12" fill="#57779e"/>
+  <circle cx="54" cy="52" r="4" fill="#ffbe66"/>
+  <circle cx="74" cy="52" r="4" fill="#ffbe66"/>
+  <rect x="56" y="62" width="16" height="5" rx="2.5" fill="#2f4662"/>
+  <path d="M34 70l-16 18 16 4z" fill="#7aa1cf"/>
+  <path d="M94 70l16 18-16 4z" fill="#7aa1cf"/>
+  <rect x="46" y="92" width="12" height="16" rx="6" fill="#38516c"/>
+  <rect x="70" y="92" width="12" height="16" rx="6" fill="#38516c"/>
+</svg>

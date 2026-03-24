@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="玄甲统领">
+  <rect x="30" y="18" width="68" height="90" rx="20" fill="#a66546"/>
+  <path d="M64 18l14 10v14H50V28z" fill="#7f4a32"/>
+  <rect x="40" y="42" width="48" height="42" rx="12" fill="#bf7f5d"/>
+  <circle cx="53" cy="52" r="4" fill="#ffd27a"/>
+  <circle cx="75" cy="52" r="4" fill="#ffd27a"/>
+  <rect x="56" y="62" width="16" height="5" rx="2.5" fill="#6d3f2b"/>
+  <path d="M30 64l-12 16 12 4z" fill="#d79f78"/>
+  <path d="M98 64l12 16-12 4z" fill="#d79f78"/>
+  <rect x="44" y="92" width="14" height="18" rx="6" fill="#8f563c"/>
+  <rect x="70" y="92" width="14" height="18" rx="6" fill="#8f563c"/>
+</svg>

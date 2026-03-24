@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="毒刺蛛后">
+  <ellipse cx="64" cy="72" rx="26" ry="22" fill="#61754b"/>
+  <ellipse cx="64" cy="48" rx="18" ry="14" fill="#7f965f"/>
+  <path d="M36 54L18 44M38 66H16M38 78L18 88" stroke="#8fb16b" stroke-width="6" stroke-linecap="round"/>
+  <path d="M92 54l18-10M90 66h22M90 78l20 10" stroke="#8fb16b" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="57" cy="47" r="3" fill="#ffd76b"/>
+  <circle cx="71" cy="47" r="3" fill="#ffd76b"/>
+  <ellipse cx="64" cy="57" rx="6" ry="4" fill="#4f5f3d"/>
+</svg>

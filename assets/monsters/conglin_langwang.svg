@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="丛林狼王">
+  <ellipse cx="66" cy="70" rx="34" ry="24" fill="#4f9e8f"/>
+  <ellipse cx="44" cy="58" rx="18" ry="14" fill="#5bb09f"/>
+  <path d="M32 52l8-14 10 10z" fill="#3d7f73"/>
+  <path d="M50 52l8-14 10 10z" fill="#3d7f73"/>
+  <path d="M58 76h22l-4 10H62z" fill="#b89b4c"/>
+  <rect x="44" y="90" width="13" height="18" rx="6" fill="#3f7f72"/>
+  <rect x="65" y="90" width="13" height="18" rx="6" fill="#3f7f72"/>
+  <path d="M92 70c14 2 18 12 12 20-6-3-10-8-12-14z" fill="#458e80"/>
+  <circle cx="38" cy="58" r="3.5" fill="#ffd36d"/>
+  <circle cx="51" cy="58" r="3.5" fill="#ffd36d"/>
+</svg>

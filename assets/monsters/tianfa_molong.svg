@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="天罚魔龙">
+  <ellipse cx="62" cy="72" rx="30" ry="24" fill="#3f667d"/>
+  <ellipse cx="44" cy="58" rx="18" ry="14" fill="#4f7e99"/>
+  <path d="M32 52l8-14 10 10zM50 52l8-14 10 10z" fill="#2f4e62"/>
+  <path d="M78 62l18-18 16 10-22 20z" fill="#c97445"/>
+  <path d="M78 70l22 4 10 14-24-4z" fill="#4f7e99"/>
+  <path d="M56 76h20l-3 10H59z" fill="#d3a56a"/>
+  <rect x="42" y="90" width="13" height="18" rx="6" fill="#315164"/>
+  <rect x="62" y="90" width="13" height="18" rx="6" fill="#315164"/>
+  <path d="M92 72c14 2 18 12 12 20-6-3-10-8-12-14z" fill="#3a5f74"/>
+  <circle cx="38" cy="58" r="3.5" fill="#ffbf62"/>
+  <circle cx="51" cy="58" r="3.5" fill="#ffbf62"/>
+</svg>

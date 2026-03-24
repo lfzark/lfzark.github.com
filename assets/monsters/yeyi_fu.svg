@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="夜翼蝠">
+  <ellipse cx="64" cy="64" rx="24" ry="26" fill="#3f5f83"/>
+  <path d="M40 66L12 52v26l28-6z" fill="#5a78a1"/>
+  <path d="M88 66l28-14v26l-28-6z" fill="#5a78a1"/>
+  <path d="M40 70L8 88l20 8 16-10z" fill="#445f83"/>
+  <path d="M88 70l32 18-20 8-16-10z" fill="#445f83"/>
+  <path d="M54 42l6-12 6 8 8-8 6 12z" fill="#2f4865"/>
+  <circle cx="56" cy="60" r="4" fill="#ffbe66"/>
+  <circle cx="72" cy="60" r="4" fill="#ffbe66"/>
+  <ellipse cx="64" cy="72" rx="8" ry="5" fill="#2f4865"/>
+</svg>
