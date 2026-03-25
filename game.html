@@ -1789,17 +1789,21 @@
         <div class="section-title" style="margin-top:10px;">战斗策略</div>
         <div id="tacticButtons"></div>
         <div class="card" style="margin:8px 0 0;">
-            <div class="small-note">用药阈值：丹 <span id="pillThresholdLabel">50</span>% / 散 <span id="salveThresholdLabel">32</span>%</div>
-            <input id="pillThresholdInput" type="range" min="30" max="85" step="5" value="50" style="width:100%; margin-top:6px;">
-            <input id="salveThresholdInput" type="range" min="15" max="65" step="5" value="32" style="width:100%; margin-top:6px;">
+            <div class="small-note">用药阈值：丹 <span id="pillThresholdLabel">42</span>% / 散 <span id="salveThresholdLabel">26</span>%</div>
+            <input id="pillThresholdInput" type="range" min="30" max="85" step="5" value="42" style="width:100%; margin-top:6px;">
+            <input id="salveThresholdInput" type="range" min="15" max="65" step="5" value="26" style="width:100%; margin-top:6px;">
         </div>
         <div class="card" style="margin:8px 0 0;">
-            <div class="small-note">回血丹补给：目标 <span id="bloodPillCarryTargetLabel">10</span> / 回城阈值 <span id="bloodPillReturnThresholdLabel">3</span></div>
+            <div class="small-note">回血丹补给：目标 <span id="bloodPillCarryTargetLabel">10</span> / 回城阈值 <span id="bloodPillReturnThresholdLabel">1</span></div>
             <input id="bloodPillCarryTargetInput" type="range" min="0" max="40" step="1" value="10" style="width:100%; margin-top:6px;">
-            <input id="bloodPillReturnThresholdInput" type="range" min="0" max="20" step="1" value="3" style="width:100%; margin-top:6px;">
+            <input id="bloodPillReturnThresholdInput" type="range" min="0" max="20" step="1" value="1" style="width:100%; margin-top:6px;">
             <label class="small-note" style="display:block; margin-top:6px;">
                 <input id="autoBuyBloodPillToggle" type="checkbox" checked> 库存不足时自动金币购买
             </label>
+        </div>
+        <div class="card" style="margin:8px 0 0;">
+            <div style="font-size:1.02em; color:#a8d0ff; margin-bottom:6px;">📈 北极星指标</div>
+            <div id="northStarSummary" class="small-note">指标载入中...</div>
         </div>
 
         <div class="section-title" style="margin-top:10px;">地图缩放</div>
@@ -1994,7 +1998,7 @@ const SAVE_KEY = "simpleworld_save_v2";
 const BALANCE_CONFIG = {
     timing: {
         autoStepMs: AUTO_STEP_MS,
-        battleStepMs: 2300,
+        battleStepMs: 2500,
         gatherBaseMs: GATHER_BASE_MS,
         buildingTickMs: BUILDING_PRODUCTION_TICK_MS,
         monsterRespawnMs: MONSTER_RESPAWN_MS
@@ -2002,18 +2006,23 @@ const BALANCE_CONFIG = {
     combat: {
         lowHpRetreatRatio: 0.35,
         lowHpReturnRatio: 0.42,
-        monsterHpScale: 2.15,
-        playerDamageScale: 0.42,
-        monsterDamageScale: 1.18,
+        monsterHpScale: 2.5,
+        playerDamageScale: 0.34,
+        monsterDamageScale: 1.34,
         injuryDebuffRatio: 0.85,
         injuryDurationMs: 120000
     },
     drops: {
-        rareBase: 12,
-        rareMax: 45,
-        chestSmallBase: 12,
-        chestMediumBase: 6,
-        chestLargeBase: 2
+        rareBase: 18,
+        rareMax: 52,
+        chestSmallBase: 18,
+        chestMediumBase: 10,
+        chestLargeBase: 4
+    },
+    northStar: {
+        ttkSec: { normal: [20, 35], elite: [45, 75], boss: [90, 150] },
+        lossRate: [0.08, 0.15],
+        returnHomeMinutes: [8, 15]
     },
     crafting: {
         tierUnlock: {
@@ -2071,6 +2080,7 @@ const ITEM_DEFS = {
     wardCharm: { label: "护体符", icon: "☉", rarity: "rare", category: "符咒", source: "合成配置", bonus: { def: 2 }, sellValue: 22, usable: true },
     focusCharm: { label: "凝神符", icon: "✶", rarity: "rare", category: "符咒", source: "合成配置", bonus: { hit: 0.02, luck: 2 }, sellValue: 24, usable: true },
     baitFlag: { label: "引妖旗", icon: "⚑", rarity: "uncommon", category: "道具", source: "合成配置", sellValue: 16, usable: true },
+    bossSummonSigil: { label: "BOSS召唤符", icon: "🜂", rarity: "epic", category: "道具", source: "精英/BOSS稀有掉落", sellValue: 66, usable: true },
     chestSmall: { label: "小宝箱", icon: "🧰", rarity: "uncommon", category: "战利品", source: "战斗掉落", sellValue: 20, usable: true },
     chestMedium: { label: "中宝箱", icon: "🎁", rarity: "rare", category: "战利品", source: "战斗掉落", sellValue: 45, usable: true },
     chestLarge: { label: "大宝箱", icon: "🗃️", rarity: "epic", category: "战利品", source: "战斗掉落", sellValue: 100, usable: true },
@@ -2156,6 +2166,7 @@ const ITEM_ICON_SVG = {
     wardCharm: `<svg viewBox="0 0 32 32"><path d="M16 4l10 4v8c0 6-4 10-10 12C10 26 6 22 6 16V8l10-4Z" fill="#8fb9ff"/><path d="M12 16h8M16 12v8" stroke="#f3f7ff" stroke-width="1.8"/></svg>`,
     focusCharm: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="10" fill="#ffce6a"/><circle cx="16" cy="16" r="4" fill="#7f5a1f"/><path d="M16 4v6M16 22v6M4 16h6M22 16h6" stroke="#ffd98b" stroke-width="1.5"/></svg>`,
     baitFlag: `<svg viewBox="0 0 32 32"><rect x="7" y="5" width="2" height="22" fill="#c7d0e8"/><path d="M9 7h14l-4 4 4 4H9Z" fill="#e55a63"/></svg>`,
+    bossSummonSigil: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="#30244d"/><circle cx="16" cy="16" r="8" fill="#8f6be8"/><path d="M16 7l2.8 5.8L25 14l-4.5 4 1 6-5.5-3-5.5 3 1-6L7 14l6.2-1.2Z" fill="#ffe08e"/></svg>`,
     chestSmall: `<svg viewBox="0 0 32 32"><rect x="7" y="11" width="18" height="13" rx="2" fill="#b4814a"/><rect x="7" y="11" width="18" height="5" rx="2" fill="#d8a96a"/><rect x="14" y="11" width="4" height="13" fill="#f4db9b"/></svg>`,
     chestMedium: `<svg viewBox="0 0 32 32"><rect x="6" y="10" width="20" height="14" rx="2" fill="#8a6be0"/><rect x="6" y="10" width="20" height="5" rx="2" fill="#aa8cff"/><rect x="14" y="10" width="4" height="14" fill="#e6d6ff"/></svg>`,
     chestLarge: `<svg viewBox="0 0 32 32"><rect x="5" y="9" width="22" height="15" rx="2" fill="#5f8cff"/><rect x="5" y="9" width="22" height="5" rx="2" fill="#9eb7ff"/><rect x="14" y="9" width="4" height="15" fill="#e9f0ff"/></svg>`,
@@ -2380,6 +2391,7 @@ const MONSTER_CODEX = [
             { id: "rareCrystal", chance: "100%" },
             { id: "soulRobe", chance: "14%" },
             { id: "warDrum", chance: "10%" },
+            { id: "bossSummonSigil", chance: "14%" },
             { id: "chestLarge", chance: "25%" }
         ]
     },
@@ -2397,7 +2409,8 @@ const MONSTER_CODEX = [
             { id: "phoenixBow", chance: "18%" },
             { id: "voidArmor", chance: "18%" },
             { id: "soulRobe", chance: "16%" },
-            { id: "warDrum", chance: "14%" }
+            { id: "warDrum", chance: "14%" },
+            { id: "bossSummonSigil", chance: "32%" }
         ]
     }
 ];
@@ -2551,6 +2564,7 @@ const ITEM_USAGE_HINTS = {
     wardCharm: "护体符。转化为洞府护持层数，提升防御表现。",
     focusCharm: "凝神符。转化为洞府凝神层数，提升命中与掉率。",
     baitFlag: "引怪道具。短时提高遭遇怪物概率，便于刷图鉴。",
+    bossSummonSigil: "可立即召唤高阶BOSS并进入战斗，适合定向冲击稀有掉落。",
     chestSmall: "基础战利品箱。可开出资源与常见消耗品。",
     chestMedium: "进阶战利品箱。可开出中稀有材料与功能道具。",
     chestLarge: "高阶战利品箱。可开出稀有装备与关键材料。",
@@ -2583,7 +2597,8 @@ const CHEST_LOOT_TABLES = {
         { id: "wood", weight: 18, min: 3, max: 7 },
         { id: "spiritPill", weight: 7, min: 1, max: 2 },
         { id: "demonCore", weight: 6, min: 1, max: 2 },
-        { id: "rareCrystal", weight: 3, min: 1, max: 1 }
+        { id: "rareCrystal", weight: 3, min: 1, max: 1 },
+        { id: "bossSummonSigil", weight: 1, min: 1, max: 1 }
     ],
     chestMedium: [
         { id: "spiritStone", weight: 28, min: 38, max: 72 },
@@ -2593,7 +2608,8 @@ const CHEST_LOOT_TABLES = {
         { id: "healingSalve", weight: 9, min: 1, max: 2 },
         { id: "ironBodyPill", weight: 8, min: 1, max: 2 },
         { id: "focusCharm", weight: 7, min: 1, max: 1 },
-        { id: "rareCrystal", weight: 9, min: 1, max: 2 }
+        { id: "rareCrystal", weight: 9, min: 1, max: 2 },
+        { id: "bossSummonSigil", weight: 3, min: 1, max: 1 }
     ],
     chestLarge: [
         { id: "spiritStone", weight: 20, min: 80, max: 140 },
@@ -2605,7 +2621,8 @@ const CHEST_LOOT_TABLES = {
         { id: "qilinRing", weight: 5, min: 1, max: 1 },
         { id: "spiritBlade", weight: 5, min: 1, max: 1 },
         { id: "wardCharm", weight: 7, min: 1, max: 2 },
-        { id: "ascendSeal", weight: 7, min: 1, max: 1 }
+        { id: "ascendSeal", weight: 7, min: 1, max: 1 },
+        { id: "bossSummonSigil", weight: 8, min: 1, max: 1 }
     ]
 };
 
@@ -2656,7 +2673,7 @@ let dayMoveLogBatch = 0;
 let timeScale = 1;
 let buildingProductionAccumMs = 0;
 let avatarBagCap = 320;
-let bagReturnRatio = 0.9;
+let bagReturnRatio = 0.95;
 let dayGatherUnits = 0;
 let dayStartMs = 0;
 let avatarHp = 140;
@@ -2688,10 +2705,10 @@ let devFixedDrops = false;
 let baitBoostUntilMs = 0;
 let lastMoveAtMs = -99999;
 let battleTacticId = "balanced";
-let autoUsePillRatio = 0.5;
-let autoUseSalveRatio = 0.32;
+let autoUsePillRatio = 0.42;
+let autoUseSalveRatio = 0.26;
 let bloodPillCarryTarget = 10;
-let bloodPillReturnThreshold = 3;
+let bloodPillReturnThreshold = 1;
 let autoBuyBloodPill = true;
 let nextBattleAvailableAtMs = 0;
 let hoveredMapCellEl = null;
@@ -2746,14 +2763,14 @@ const avatarInventory = {
     spiritStone: 0, herb: 0, wood: 0, rareCrystal: 0, demonCore: 0,
     spiritPill: 0, healingSalve: 0, bloodPill: 0, wardCharm: 0, focusCharm: 0, baitFlag: 0, coreElixir: 0, starShard: 0, ascendSeal: 0,
     ironBodyPill: 0, swiftTalisman: 0,
-    chestSmall: 0, chestMedium: 0, chestLarge: 0,
+    chestSmall: 0, chestMedium: 0, chestLarge: 0, bossSummonSigil: 0,
     thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, skyEarring: 0, cloudBoots: 0, warDrum: 0, koiNecklace: 0, koiFish: 0
 };
 const homeInventory = {
     spiritStone: 156, herb: 11, wood: 0, rareCrystal: 0, demonCore: 0,
     spiritPill: 0, healingSalve: 0, bloodPill: 0, wardCharm: 0, focusCharm: 0, baitFlag: 0, coreElixir: 0, starShard: 0, ascendSeal: 0,
     ironBodyPill: 0, swiftTalisman: 0,
-    chestSmall: 0, chestMedium: 0, chestLarge: 0,
+    chestSmall: 0, chestMedium: 0, chestLarge: 0, bossSummonSigil: 0,
     thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, skyEarring: 0, cloudBoots: 0, warDrum: 0, koiNecklace: 0, koiFish: 0
 };
 const equipmentInventory = { sword: 0, bow: 0, shield: 0, artifact: 0, thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, skyEarring: 0, cloudBoots: 0, warDrum: 0, koiNecklace: 0 };
@@ -2901,6 +2918,7 @@ const pillThresholdLabel = document.getElementById("pillThresholdLabel");
 const salveThresholdLabel = document.getElementById("salveThresholdLabel");
 const bloodPillCarryTargetLabel = document.getElementById("bloodPillCarryTargetLabel");
 const bloodPillReturnThresholdLabel = document.getElementById("bloodPillReturnThresholdLabel");
+const northStarSummaryEl = document.getElementById("northStarSummary");
 const buildPanel = document.getElementById("build-panel");
 const statusEl = document.getElementById("avatarStatus");
 const resourceSummaryEl = document.getElementById("resourceSummary");
@@ -2984,6 +3002,7 @@ let itemMenuQty = 1;
 let controlButtonsInited = false;
 let manualMarkedTarget = null;
 let resourceTrendSamples = [];
+let returnHomeVisitMs = [];
 
 function simpleHash(x, y) {
     let n = x * 374761393 + y * 668265263;
@@ -3609,16 +3628,26 @@ function getEquipmentBonus() {
 
 function getEnhanceCost(itemId, level = 0) {
     if (itemId === "koiNecklace") {
+        const stageMul = level >= 9 ? 1.85 : level >= 7 ? 1.45 : level >= 4 ? 1.2 : 1;
         return {
             gold: 0,
-            spiritStone: 18 + level * 6,
-            demonCore: Math.floor(level / 4),
-            rareCrystal: 1 + Math.floor(level / 3),
-            merit: 16 + level * 12
+            spiritStone: Math.floor((18 + level * 6) * stageMul),
+            demonCore: Math.floor(level / 4) + (level >= 7 ? 1 : 0) + (level >= 9 ? 1 : 0),
+            rareCrystal: 1 + Math.floor(level / 3) + (level >= 4 ? 1 : 0) + (level >= 7 ? 1 : 0) + (level >= 9 ? 2 : 0),
+            merit: Math.floor((16 + level * 12) * (level >= 9 ? 1.65 : level >= 7 ? 1.35 : level >= 4 ? 1.15 : 1))
         };
     }
     const rarity = ITEM_DEFS[itemId]?.rarity || "common";
-    return SimpleWorldEquipCore.calcEnhanceCost(rarity, level);
+    const base = SimpleWorldEquipCore.calcEnhanceCost(rarity, level);
+    const stageMul = level >= 9 ? 2 : level >= 7 ? 1.55 : level >= 4 ? 1.25 : 1;
+    const rareAdd = (level >= 4 ? 1 : 0) + (level >= 7 ? 1 : 0) + (level >= 9 ? 2 : 0);
+    const coreAdd = (level >= 7 ? 1 : 0) + (level >= 9 ? 1 : 0);
+    return {
+        gold: Math.floor(base.gold * stageMul),
+        spiritStone: Math.floor(base.spiritStone * stageMul),
+        demonCore: (base.demonCore || 0) + coreAdd,
+        rareCrystal: (base.rareCrystal || 0) + rareAdd
+    };
 }
 
 function canAffordEnhance(itemId, level = 0) {
@@ -4269,6 +4298,23 @@ function useItemFrom(source, itemId, count = 1) {
         addLog(`使用引妖旗 x${useCount}：刷怪率提升 ${120 * useCount} 秒`);
         return true;
     }
+    if (itemId === "bossSummonSigil") {
+        if (battleState) {
+            addLog("当前正在战斗，无法再次召唤BOSS");
+            return false;
+        }
+        if ((bag[itemId] || 0) <= 0) return false;
+        bag[itemId] -= 1;
+        nextBattleAvailableAtMs = 0;
+        const summoned = createSummonedBossAtAvatar();
+        const ok = startBattleWith(summoned);
+        if (!ok) {
+            bag[itemId] += 1;
+            return false;
+        }
+        addLog(`祭出BOSS召唤符：${summoned.type} Lv.${summoned.level} 降临，立即开战`);
+        return true;
+    }
     if (itemId === "wardCharm") {
         bag[itemId] -= useCount;
         homeInventory.wardCharm = (homeInventory.wardCharm || 0) + useCount;
@@ -4486,6 +4532,9 @@ function trackResourceTrendSample(force = false) {
         wood: (avatarInventory.wood || 0) + (homeInventory.wood || 0),
         rareCrystal: (avatarInventory.rareCrystal || 0) + (homeInventory.rareCrystal || 0),
         demonCore: (avatarInventory.demonCore || 0) + (homeInventory.demonCore || 0),
+        chestSmall: (avatarInventory.chestSmall || 0) + (homeInventory.chestSmall || 0),
+        chestMedium: (avatarInventory.chestMedium || 0) + (homeInventory.chestMedium || 0),
+        chestLarge: (avatarInventory.chestLarge || 0) + (homeInventory.chestLarge || 0),
         goldCoins
     });
     const cutoff = now - 10 * 60 * 1000;
@@ -4502,6 +4551,9 @@ function getResourceTrendDelta10m() {
         wood: last.wood - first.wood,
         rareCrystal: last.rareCrystal - first.rareCrystal,
         demonCore: last.demonCore - first.demonCore,
+        chestSmall: (last.chestSmall || 0) - (first.chestSmall || 0),
+        chestMedium: (last.chestMedium || 0) - (first.chestMedium || 0),
+        chestLarge: (last.chestLarge || 0) - (first.chestLarge || 0),
         goldCoins: last.goldCoins - first.goldCoins
     };
 }
@@ -4628,6 +4680,7 @@ function startBattleWith(monster) {
         rounds: 0,
         playerCdMs: 0,
         enemyCdMs: 0,
+        autoStart: isAutoMode,
         playerAttackCdMs: 5000,
         enemyAttackCdMs: getMonsterAttackCdMs(monster.type, monster.level)
     };
@@ -4640,6 +4693,20 @@ function startBattleWith(monster) {
     lastBattleFrame = null;
     movementStatusText = `遭遇 ${monster.type} Lv.${monster.level}，进入战斗`;
     return true;
+}
+
+function createSummonedBossAtAvatar() {
+    const tier = cultivationLevel >= 80 ? 3 : cultivationLevel >= 55 ? 2 : 1;
+    const type = tier >= 3 ? "天罚魔龙" : tier >= 2 ? "深渊君王" : "玄甲统领";
+    const levelBase = type === "天罚魔龙" ? 10 : type === "深渊君王" ? 8 : 6;
+    const level = Math.max(levelBase, Math.min(10, Math.floor(cultivationLevel / 10) + 3));
+    const hpScale = type === "天罚魔龙" ? 3.05 : type === "深渊君王" ? 2.45 : 2.05;
+    const atkScale = type === "天罚魔龙" ? 2.4 : type === "深渊君王" ? 2.0 : 1.75;
+    const defScale = type === "天罚魔龙" ? 2.3 : type === "深渊君王" ? 1.9 : 1.7;
+    const maxHp = Math.floor((44 + level * 26) * BALANCE_CONFIG.combat.monsterHpScale * hpScale);
+    const atk = Math.floor((10 + level * 4) * atkScale);
+    const def = Math.floor((4 + level * 2.5) * defScale);
+    return { x: avatarX, y: avatarY, type, level, maxHp, hp: maxHp, atk, def };
 }
 
 function grantBattleLoot(monster) {
@@ -4685,6 +4752,7 @@ function grantBattleLoot(monster) {
     let gainQilinRing = 0;
     let gainWarDrum = 0;
     let gainDragonRelic = 0;
+    let gainBossSummonSigil = 0;
     if (isEliteTier) {
         if (dropWeaponRoll < 90) gainThunderBlade = 1;
         else if (dropWeaponRoll < 170) gainPhoenixBow = 1;
@@ -4699,6 +4767,11 @@ function grantBattleLoot(monster) {
     if (isBossTier && (devFixedDrops || (simpleHash(monster.x + 173, monster.y + dayCombatWins * 59) % 100 < 18))) {
         gainWarDrum = 1;
     }
+    if (isBossTier && (devFixedDrops || (simpleHash(monster.x + 263, monster.y + dayCombatWins * 67) % 100 < 32))) {
+        gainBossSummonSigil = 1;
+    } else if (isEliteTier && (devFixedDrops || (simpleHash(monster.x + 239, monster.y + dayCombatWins * 61) % 100 < 14))) {
+        gainBossSummonSigil = 1;
+    }
     avatarInventory.spiritStone += gainStone;
     avatarInventory.herb += gainHerb;
     avatarInventory.rareCrystal += gainRare;
@@ -4706,6 +4779,7 @@ function grantBattleLoot(monster) {
     avatarInventory.chestSmall += gainSmallChest;
     avatarInventory.chestMedium += gainMediumChest;
     avatarInventory.chestLarge += gainLargeChest;
+    avatarInventory.bossSummonSigil += gainBossSummonSigil;
     ensureEquipInstancesBootstrapped();
     for (let i = 0; i < gainThunderBlade; i++) createEquipInstance("thunderBlade", "avatar", 0);
     for (let i = 0; i < gainPhoenixBow; i++) createEquipInstance("phoenixBow", "avatar", 0);
@@ -4721,6 +4795,7 @@ function grantBattleLoot(monster) {
     if (gainSmallChest > 0) discoveredItemSet.add("chestSmall");
     if (gainMediumChest > 0) discoveredItemSet.add("chestMedium");
     if (gainLargeChest > 0) discoveredItemSet.add("chestLarge");
+    if (gainBossSummonSigil > 0) discoveredItemSet.add("bossSummonSigil");
     if (gainThunderBlade > 0) discoveredItemSet.add("thunderBlade");
     if (gainPhoenixBow > 0) discoveredItemSet.add("phoenixBow");
     if (gainVoidArmor > 0) discoveredItemSet.add("voidArmor");
@@ -4735,7 +4810,7 @@ function grantBattleLoot(monster) {
     if (monsterTier >= 4) totalEliteKills += 1;
     if (monsterTier >= 5) totalBossKills += 1;
     tryDropKoiFromAction("战斗中");
-    const lootText = `灵石×${gainStone}${gainHerb ? ` / 灵草×${gainHerb}` : ""}${gainCore ? ` / 妖丹×${gainCore}` : ""}${gainRare ? ` / 异晶×${gainRare}` : ""}${gainSmallChest ? ` / 小宝箱×${gainSmallChest}` : ""}${gainMediumChest ? ` / 中宝箱×${gainMediumChest}` : ""}${gainLargeChest ? ` / 大宝箱×${gainLargeChest}` : ""}${gainThunderBlade ? " / 雷劫断岳×1" : ""}${gainPhoenixBow ? " / 赤凰长弓×1" : ""}${gainVoidArmor ? " / 太虚战铠×1" : ""}${gainSpiritBlade ? " / 玄霄灵刃×1" : ""}${gainSoulRobe ? " / 玄冥法衣×1" : ""}${gainQilinRing ? " / 麒麟戒×1" : ""}${gainWarDrum ? " / 战魂鼓×1" : ""}${gainDragonRelic ? " / 天龙遗宝×1" : ""}${buildBonus.battleDropMul > 0 ? ` / 阵法加成 +${Math.round(buildBonus.battleDropMul * 100)}%` : ""}`;
+    const lootText = `灵石×${gainStone}${gainHerb ? ` / 灵草×${gainHerb}` : ""}${gainCore ? ` / 妖丹×${gainCore}` : ""}${gainRare ? ` / 异晶×${gainRare}` : ""}${gainSmallChest ? ` / 小宝箱×${gainSmallChest}` : ""}${gainMediumChest ? ` / 中宝箱×${gainMediumChest}` : ""}${gainLargeChest ? ` / 大宝箱×${gainLargeChest}` : ""}${gainBossSummonSigil ? " / BOSS召唤符×1" : ""}${gainThunderBlade ? " / 雷劫断岳×1" : ""}${gainPhoenixBow ? " / 赤凰长弓×1" : ""}${gainVoidArmor ? " / 太虚战铠×1" : ""}${gainSpiritBlade ? " / 玄霄灵刃×1" : ""}${gainSoulRobe ? " / 玄冥法衣×1" : ""}${gainQilinRing ? " / 麒麟戒×1" : ""}${gainWarDrum ? " / 战魂鼓×1" : ""}${gainDragonRelic ? " / 天龙遗宝×1" : ""}${buildBonus.battleDropMul > 0 ? ` / 阵法加成 +${Math.round(buildBonus.battleDropMul * 100)}%` : ""}`;
     addLog(`战斗胜利：${monster.type}，掉落 ${lootText}`);
     return lootText;
 }
@@ -4863,8 +4938,16 @@ function resolveBattleStep(elapsedMs = 100) {
             loot: lootText,
             keyframes: battleKeyframes.slice(-8)
         };
-        recentBattleHistory.push({ result: "胜利", durationSec: battleSummaryData.durationSec, dealt: battleSummaryData.dealt, taken: battleSummaryData.taken, healed: battleSummaryData.healed || 0 });
-        if (recentBattleHistory.length > 20) recentBattleHistory.shift();
+        recentBattleHistory.push({
+            result: "胜利",
+            durationSec: battleSummaryData.durationSec,
+            dealt: battleSummaryData.dealt,
+            taken: battleSummaryData.taken,
+            healed: battleSummaryData.healed || 0,
+            tier: getMonsterDropProfile(battleState.type)?.tier || 1,
+            auto: battleState.autoStart === true
+        });
+        if (recentBattleHistory.length > 40) recentBattleHistory.shift();
         battleMetrics = null;
         battleState = null;
         nextBattleAvailableAtMs = simulationTimeMs + BATTLE_GAP_CD_MS;
@@ -4952,8 +5035,16 @@ function resolveBattleStep(elapsedMs = 100) {
             loot: `损失灵石 ${lostStone}${lostCore ? ` / 妖丹 ${lostCore}` : ""}`,
             keyframes: battleKeyframes.slice(-8)
         };
-        recentBattleHistory.push({ result: "战败", durationSec: battleSummaryData.durationSec, dealt: battleSummaryData.dealt, taken: battleSummaryData.taken, healed: battleSummaryData.healed || 0 });
-        if (recentBattleHistory.length > 20) recentBattleHistory.shift();
+        recentBattleHistory.push({
+            result: "战败",
+            durationSec: battleSummaryData.durationSec,
+            dealt: battleSummaryData.dealt,
+            taken: battleSummaryData.taken,
+            healed: battleSummaryData.healed || 0,
+            tier: getMonsterDropProfile(battleState.type)?.tier || 1,
+            auto: battleState.autoStart === true
+        });
+        if (recentBattleHistory.length > 40) recentBattleHistory.shift();
         battleMetrics = null;
         battleState = null;
         nextBattleAvailableAtMs = simulationTimeMs + BATTLE_GAP_CD_MS;
@@ -5298,7 +5389,7 @@ function shouldReturnHome() {
         const canBuy = autoBuyBloodPill && goldCoins >= getShopPrice(42);
         if (hasStock || canBuy) return true;
     }
-    if (avatarInventory.rareCrystal >= 3) return true;
+    if (avatarInventory.rareCrystal >= 8) return true;
     return false;
 }
 
@@ -5647,6 +5738,8 @@ function autoExploreStep(elapsedMs = 100) {
             avatarHp = getAvatarMaxHp();
             avatarMp = getAvatarMaxMp();
             autoObjective = "explore";
+            returnHomeVisitMs.push(simulationTimeMs);
+            if (returnHomeVisitMs.length > 60) returnHomeVisitMs.shift();
             addLog("已返回洞府，完成整备");
             return;
         }
@@ -6197,6 +6290,44 @@ function updateStatus() {
         建设状态: ${isBuildFocus ? `建设中 (${buildPanelTile ? `${buildPanelTile.x},${buildPanelTile.y}` : "选中瓦片"})` : "未进入"}<br>
         速度规则: 化身每秒 1 格；每日相对起点活动半径 <= ${DAILY_MOVE_RADIUS} 格<br>
         模拟倍速: ${timeScale}x
+    `;
+    updateNorthStarPanel();
+}
+
+function avgFrom(arr) {
+    if (!arr.length) return 0;
+    return arr.reduce((s, v) => s + v, 0) / arr.length;
+}
+
+function formatRangeHit(value, [minV, maxV], unit = "") {
+    if (!Number.isFinite(value) || value <= 0) return `--`;
+    const txt = `${value.toFixed(unit === "%" ? 1 : 0)}${unit}`;
+    if (value < minV) return `<span class="mini-meta-warn">${txt}（低）</span>`;
+    if (value > maxV) return `<span class="mini-meta-warn">${txt}（高）</span>`;
+    return `<span style="color:#93e0a9;">${txt}（达标）</span>`;
+}
+
+function updateNorthStarPanel() {
+    if (!northStarSummaryEl) return;
+    const hist = recentBattleHistory.slice(-40);
+    const normalDur = hist.filter((h) => (h.tier || 1) <= 3).map((h) => h.durationSec || 0);
+    const eliteDur = hist.filter((h) => (h.tier || 1) === 4).map((h) => h.durationSec || 0);
+    const bossDur = hist.filter((h) => (h.tier || 1) >= 5).map((h) => h.durationSec || 0);
+    const normalTtk = avgFrom(normalDur);
+    const eliteTtk = avgFrom(eliteDur);
+    const bossTtk = avgFrom(bossDur);
+    const trend = getResourceTrendDelta10m();
+    const autoBattles = hist.filter((h) => h.auto === true);
+    const autoLossRate = autoBattles.length ? (autoBattles.filter((h) => h.result === "战败").length / autoBattles.length) : 0;
+    const intervals = [];
+    for (let i = 1; i < returnHomeVisitMs.length; i++) intervals.push((returnHomeVisitMs[i] - returnHomeVisitMs[i - 1]) / 60000);
+    const avgReturnMin = avgFrom(intervals.slice(-8));
+
+    northStarSummaryEl.innerHTML = `
+        TTK 普/精/BOSS：${formatRangeHit(normalTtk, BALANCE_CONFIG.northStar.ttkSec.normal, "s")} / ${formatRangeHit(eliteTtk, BALANCE_CONFIG.northStar.ttkSec.elite, "s")} / ${formatRangeHit(bossTtk, BALANCE_CONFIG.northStar.ttkSec.boss, "s")}<br>
+        10分钟净增：${trend ? `灵石 ${trend.spiritStone >= 0 ? "+" : ""}${trend.spiritStone} / 妖丹 ${trend.demonCore >= 0 ? "+" : ""}${trend.demonCore} / 宝箱 ${(trend.chestSmall || 0) + (trend.chestMedium || 0) + (trend.chestLarge || 0) >= 0 ? "+" : ""}${(trend.chestSmall || 0) + (trend.chestMedium || 0) + (trend.chestLarge || 0)}` : "--"}<br>
+        自动探索战败率：${formatRangeHit(autoLossRate * 100, [BALANCE_CONFIG.northStar.lossRate[0] * 100, BALANCE_CONFIG.northStar.lossRate[1] * 100], "%")}（样本 ${autoBattles.length}）<br>
+        回城间隔均值：${formatRangeHit(avgReturnMin, BALANCE_CONFIG.northStar.returnHomeMinutes, "m")}（近${Math.max(0, intervals.slice(-8).length)}次）
     `;
 }
 

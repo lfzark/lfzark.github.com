@@ -99,6 +99,21 @@
       text-align: left;
     }
     .table th { background: #0f1930; color: #cfe0ff; }
+    details {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel-soft);
+      padding: 8px 10px;
+      margin-top: 8px;
+    }
+    summary {
+      cursor: pointer;
+      color: #cfe0ff;
+      font-size: 14px;
+      font-weight: 600;
+      user-select: none;
+    }
+    summary::marker { color: var(--accent); }
     .footer-note {
       color: var(--muted);
       font-size: 12px;
@@ -167,11 +182,13 @@
         </tbody>
       </table>
       <p>修为需求曲线：<code>needExp(lv) = floor(40 + lv^2.05 * 6 + lv * 18)</code>。</p>
-      <h3>每级所需经验值（Lv1-Lv100）</h3>
-      <table class="table">
-        <thead><tr><th>等级</th><th>本级升下级所需修为</th><th>累计总修为（到达下级）</th></tr></thead>
-        <tbody id="expRows"></tbody>
-      </table>
+      <details>
+        <summary>每级所需经验值（折叠展开：Lv1-Lv100）</summary>
+        <table class="table">
+          <thead><tr><th>等级</th><th>本级升下级所需修为</th><th>累计总修为（到达下级）</th></tr></thead>
+          <tbody id="expRows"></tbody>
+        </table>
+      </details>
     </section>
 
     <section id="avatar">
@@ -221,7 +238,22 @@
         <li>天罡阵：攻击提升、掉落提升。</li>
         <li>玄武阵：防御提升、自动用药治疗提升。</li>
         <li>烈魄阵：暴击率提升、暴击伤害提升。</li>
+        <li>聚灵阵：修炼效率提升、打坐经验提升。</li>
       </ul>
+      <h3>洞府建设材料与属性加成</h3>
+      <table class="table">
+        <thead><tr><th>建筑</th><th>建造需求</th><th>升级需求（每级基础）</th><th>核心收益/加成</th></tr></thead>
+        <tbody>
+          <tr><td>灵草圃</td><td>灵石28 / 灵木6 / 灵草4</td><td>灵石20 / 灵木4 / 灵草3</td><td>周期产灵草；打坐速度 +4%/级</td></tr>
+          <tr><td>灵木坊</td><td>灵石26 / 灵木8 / 灵草2</td><td>灵石22 / 灵木5 / 灵草2</td><td>周期产灵木</td></tr>
+          <tr><td>聚灵井</td><td>灵石40 / 灵木4 / 灵草6</td><td>灵石30 / 灵木3 / 灵草4</td><td>消耗灵草产灵石；仓储 +12/级</td></tr>
+          <tr><td>悟道室</td><td>灵石34 / 灵木5 / 灵草5</td><td>灵石26 / 灵木4 / 灵草4</td><td>消耗灵石促生灵草；打坐经验 +8%/级</td></tr>
+          <tr><td>天罡阵</td><td>灵石56 / 灵木6 / 灵草8 / 异晶1</td><td>灵石42 / 灵木5 / 灵草5 / 异晶1</td><td>战斗攻击 +6%/级；掉落倍率 +4%/级</td></tr>
+          <tr><td>玄武阵</td><td>灵石52 / 灵木7 / 灵草6 / 异晶1</td><td>灵石38 / 灵木5 / 灵草5 / 异晶1</td><td>战斗防御 +6%/级；自动用药治疗 +5%/级</td></tr>
+          <tr><td>烈魄阵</td><td>灵石64 / 灵木6 / 灵草10 / 异晶2</td><td>灵石48 / 灵木5 / 灵草7 / 异晶1</td><td>暴击率 +2%/级；暴击伤害 +8%/级</td></tr>
+          <tr><td>聚灵阵</td><td>灵石58 / 灵木5 / 灵草12 / 异晶2</td><td>灵石44 / 灵木4 / 灵草8 / 异晶1</td><td>修炼效率 +8%/级；打坐经验 +4%/级</td></tr>
+        </tbody>
+      </table>
     </section>
 
     <section id="items">
@@ -233,6 +265,7 @@
         <li>装备采用实例化：同名装备可并存，强化面板支持“展开”按强化等级堆叠查看。</li>
         <li>大多数装备强化上限 +10；锦鲤项链强化上限 +20（额外消耗功德与稀有材料）。</li>
         <li>小/中/大宝箱按概率产出材料、消耗品、稀有装备。</li>
+        <li>新增 BOSS召唤符：精英/BOSS与宝箱稀有掉落，使用后可立即召唤高阶BOSS开战。</li>
         <li>丹药商店支持金币购买，配合自动补给规则稳定挂机。</li>
         <li>锦鲤机制：采集/战斗随机掉落（1 倍速下每小时约 1-5 条为参考值，不设硬上限），右键可放生获得功德。</li>
         <li>放生锦鲤有概率触发世界事件“锦鲤赐福”，提升全世界修炼效率。</li>
@@ -242,6 +275,7 @@
         <li>功德主要来源：放生锦鲤。</li>
         <li>100 功德可兑换 1 件锦鲤项链。</li>
         <li>可捐献功德推进“天道工程”，进度达标后触发全服限时增益事件。</li>
+        <li>强化成本在 +4 / +7 / +9 出现材料拐点，稀有材料消耗显著抬升。</li>
       </ul>
       <h3>装备穿戴境界要求</h3>
       <table>
@@ -262,6 +296,27 @@
           <tr><td>天龙遗宝</td><td>饰件</td><td>Lv.50</td></tr>
         </tbody>
       </table>
+      <h3>装备与武器属性（核心词条）</h3>
+      <table class="table">
+        <thead><tr><th>装备</th><th>部位</th><th>属性加成</th></tr></thead>
+        <tbody>
+          <tr><td>佩剑</td><td>主手</td><td>攻击 +8，命中 +3%</td></tr>
+          <tr><td>木弓</td><td>副手</td><td>攻击 +4，命中 +2%</td></tr>
+          <tr><td>玄霄灵刃</td><td>主手</td><td>攻击 +11，命中 +3%，吸血 +2%</td></tr>
+          <tr><td>雷劫断岳</td><td>主手</td><td>攻击 +16，命中 +5%，吸血 +5%</td></tr>
+          <tr><td>赤凰长弓</td><td>副手</td><td>攻击 +12，命中 +6%，气运 +2，吸血 +4%</td></tr>
+          <tr><td>护心镜</td><td>衣甲</td><td>防御 +6，闪避 +2%</td></tr>
+          <tr><td>太虚战铠</td><td>衣甲</td><td>防御 +14，闪避 +5%，自动回血 +1</td></tr>
+          <tr><td>玄冥法衣</td><td>衣甲</td><td>防御 +11，闪避 +4%，命中 +1%，自动回血 +1</td></tr>
+          <tr><td>踏云履</td><td>鞋</td><td>防御 +6，闪避 +3%</td></tr>
+          <tr><td>符器</td><td>法器</td><td>气运 +8，攻击 +2，防御 +2</td></tr>
+          <tr><td>战魂鼓</td><td>法器</td><td>攻击 +7，防御 +4，气运 +2</td></tr>
+          <tr><td>麒麟戒</td><td>戒指</td><td>气运 +4，闪避 +2%</td></tr>
+          <tr><td>凌霄耳坠</td><td>耳环</td><td>命中 +2%，闪避 +2%，气运 +2</td></tr>
+          <tr><td>天龙遗宝</td><td>耳环</td><td>攻击 +4，防御 +4，气运 +6</td></tr>
+          <tr><td>锦鲤项链</td><td>项链</td><td>气运 +6，闪避 +2%，濒死 1% 满血逆转</td></tr>
+        </tbody>
+      </table>
     </section>
 
     <section id="ui">
@@ -271,6 +326,7 @@
         <li>中部：可缩放地图、自由拖拽视角、战斗浮层、建设高亮格。</li>
         <li>右侧：资源/属性/图鉴、地图解读（默认可隐藏）。</li>
         <li>战斗中侧栏仍可操作，战斗结束后同步刷新关键数据。</li>
+        <li>新增北极星指标卡：TTK、10分钟资源净增、自动探索战败率、回城间隔均值。</li>
       </ul>
     </section>
 
