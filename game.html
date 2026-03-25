@@ -225,6 +225,58 @@
         pointer-events: none;
     }
 
+    .cell.hovered {
+        outline: 1px solid rgba(130, 220, 255, 0.85);
+        outline-offset: -1px;
+        box-shadow: inset 0 0 0 1px rgba(52, 173, 255, 0.65), 0 0 6px rgba(52, 173, 255, 0.35);
+        z-index: 3;
+    }
+
+    body.work-mode header h1 {
+        font-size: 1.08rem;
+        letter-spacing: 0.04em;
+    }
+
+    body.work-mode header h1::after {
+        content: " · 运营看板";
+        color: #8ca4c8;
+        font-weight: 500;
+    }
+
+    body.work-mode .left-panel .section-title:nth-of-type(n+3),
+    body.work-mode .left-panel #strategyButtons,
+    body.work-mode .left-panel #tacticButtons,
+    body.work-mode .left-panel #speedButtons,
+    body.work-mode .left-panel #zoomButtons,
+    body.work-mode .left-panel #debugBattleBtn,
+    body.work-mode .left-panel #debugMonsterSelect,
+    body.work-mode .left-panel #forceMonsterToggle,
+    body.work-mode .left-panel #fixedDropToggle,
+    body.work-mode #battle-panel,
+    body.work-mode #codex-panel,
+    body.work-mode #story-modal,
+    body.work-mode #chest-modal,
+    body.work-mode #item-codex-modal,
+    body.work-mode #monster-codex-modal,
+    body.work-mode #item-menu,
+    body.work-mode #item-detail,
+    body.work-mode #craft-panel,
+    body.work-mode #shop-panel,
+    body.work-mode #enhance-panel,
+    body.work-mode #social-panel,
+    body.work-mode #build-panel {
+        display: none !important;
+    }
+
+    body.work-mode .cell .avatar,
+    body.work-mode .cell .target-tag,
+    body.work-mode .cell .resource-tag,
+    body.work-mode .cell .home-tag,
+    body.work-mode .cell .chunk-tag {
+        opacity: 0.25;
+        filter: grayscale(1);
+    }
+
     .avatar {
         position: absolute;
         inset: 0;
@@ -1664,6 +1716,7 @@
         <span>观察 (<span id="camera-x">5000</span>, <span id="camera-y">5000</span>)</span>
         <span>缩放 <span id="zoom-label">巡视</span></span>
         <span id="worldEventTop" class="world-event-top">世界事件：无 <span class="q">?</span></span>
+        <button id="bossModeBtn" class="mini-btn" title="F9 一键切换工作模式">🧾 工作模式</button>
     </div>
 </header>
 
@@ -1907,6 +1960,7 @@ const CULTIVATION_MAX_LEVEL = 100;
 const BUILDING_PRODUCTION_TICK_MS = 5000;
 const MONSTER_RESPAWN_MS = 45000;
 const AVATAR_REVIVE_COOLDOWN_MS = 600000;
+const BATTLE_GAP_CD_MS = 5000;
 const SAVE_KEY = "simpleworld_save_v2";
 
 const BALANCE_CONFIG = {
@@ -2110,6 +2164,22 @@ function formatBonusText(bonus) {
         return `${key} +${v}`;
     });
     return rows.length ? rows.join(" / ") : "无";
+}
+
+function getItemUsageText(itemId) {
+    const def = ITEM_DEFS[itemId] || {};
+    return def.use || ITEM_USAGE_HINTS[itemId] || "用于收集、建设、战斗或合成流程。";
+}
+
+function getChestLootChanceRows(chestId) {
+    const table = CHEST_LOOT_TABLES[chestId];
+    if (!table || !table.length) return "";
+    const totalWeight = table.reduce((sum, it) => sum + (it.weight || 0), 0) || 1;
+    return table.map((it) => {
+        const chance = ((it.weight || 0) * 100 / totalWeight).toFixed(1);
+        const label = ITEM_DEFS[it.id]?.label || it.id;
+        return `${label}：${chance}%（${it.min}-${it.max}）`;
+    }).join("<br>");
 }
 
 function rarityLabelZh(rarity) {
@@ -2401,16 +2471,51 @@ const CRAFT_RECIPES = [
 ];
 
 const STRATEGIES = [
-    { id: "balanced", label: "均衡搜索", hint: "综合距离、地形和资源价值。", weights: { herb: 1.0, wood: 1.0, stone: 1.0, rare: 1.7 } },
-    { id: "herb", label: "采药优先", hint: "更偏向灵草和林地。", weights: { herb: 2.2, wood: 0.9, stone: 0.5, rare: 1.2 } },
-    { id: "wood", label: "伐木优先", hint: "优先找灵木和林地区域。", weights: { herb: 0.9, wood: 2.2, stone: 0.5, rare: 1.0 } },
-    { id: "rare", label: "异晶搜寻", hint: "承受更高成本去找稀有资源。", weights: { herb: 0.7, wood: 0.7, stone: 1.2, rare: 2.8 } }
+    { id: "balanced", label: "均衡搜索", hint: "资源与战斗均衡推进。", weights: { herb: 1.0, wood: 1.0, stone: 1.0, rare: 1.6 }, combatBias: 0.4, avoidMonster: 0 },
+    { id: "battle", label: "战斗优先", hint: "优先清怪，资源其次。", weights: { herb: 0.8, wood: 0.8, stone: 0.8, rare: 1.1 }, combatBias: 1.55, avoidMonster: 0 },
+    { id: "herb", label: "采药优先", hint: "偏向灵草与稳定续航。", weights: { herb: 2.3, wood: 0.9, stone: 0.5, rare: 1.2 }, combatBias: 0.25, avoidMonster: 0.35 },
+    { id: "rare", label: "异晶搜寻", hint: "高风险高收益采集。", weights: { herb: 0.7, wood: 0.7, stone: 1.2, rare: 2.9 }, combatBias: 0.95, avoidMonster: 0.1 },
+    { id: "safe", label: "避战搬运", hint: "尽量规避战斗，快速回仓。", weights: { herb: 1.2, wood: 1.3, stone: 1.0, rare: 1.0 }, combatBias: 0.05, avoidMonster: 0.95 }
 ];
 const BATTLE_TACTICS = [
-    { id: "steady", label: "稳健", hint: "更稳更抗，适合远行保命", atkMul: 0.88, defMul: 1.2, hitBonus: 0.01, dodgeBonus: 0.02, critBonus: -0.02, incomingMul: 0.86 },
-    { id: "balanced", label: "均衡", hint: "攻防均衡，默认推荐", atkMul: 1.0, defMul: 1.0, hitBonus: 0.0, dodgeBonus: 0.0, critBonus: 0.0, incomingMul: 1.0 },
-    { id: "aggressive", label: "激进", hint: "高爆发高风险，战斗更快", atkMul: 1.22, defMul: 0.82, hitBonus: 0.02, dodgeBonus: -0.02, critBonus: 0.04, incomingMul: 1.16 }
+    { id: "steady", label: "稳健", hint: "抗压续航，适合挂机远行", atkMul: 0.9, defMul: 1.26, hitBonus: 0.01, dodgeBonus: 0.03, critBonus: -0.03, incomingMul: 0.8, pillRatio: 0.62, salveRatio: 0.4, retreatRatio: 0.34 },
+    { id: "balanced", label: "均衡", hint: "攻防均衡，适配大多数场景", atkMul: 1.03, defMul: 1.03, hitBonus: 0.01, dodgeBonus: 0.0, critBonus: 0.01, incomingMul: 1.0, pillRatio: 0.5, salveRatio: 0.32, retreatRatio: 0.3 },
+    { id: "aggressive", label: "激进", hint: "抢节奏速杀，风险更高", atkMul: 1.28, defMul: 0.8, hitBonus: 0.03, dodgeBonus: -0.03, critBonus: 0.06, incomingMul: 1.24, pillRatio: 0.72, salveRatio: 0.5, retreatRatio: 0.38 }
 ];
+
+const ITEM_USAGE_HINTS = {
+    spiritStone: "基础通用货币。用于建造、炼制、强化与交易。",
+    herb: "常见灵材。用于炼丹、建设和部分阵法消耗。",
+    wood: "建设材料。用于洞府建筑、符旗与制造流程。",
+    rareCrystal: "高阶稀有材料。用于阵法和高阶强化。",
+    demonCore: "怪物精华。用于回血丹、引妖旗和高级合成。",
+    spiritPill: "战斗中自动触发回血；非战斗可短时提升修炼效率。",
+    healingSalve: "中量回复道具。血线危险时用于兜底保命。",
+    bloodPill: "高效回血丹药。支持自动补给规则与战斗自用。",
+    wardCharm: "护体符。转化为洞府护持层数，提升防御表现。",
+    focusCharm: "凝神符。转化为洞府凝神层数，提升命中与掉率。",
+    baitFlag: "引怪道具。短时提高遭遇怪物概率，便于刷图鉴。",
+    chestSmall: "基础战利品箱。可开出资源与常见消耗品。",
+    chestMedium: "进阶战利品箱。可开出中稀有材料与功能道具。",
+    chestLarge: "高阶战利品箱。可开出稀有装备与关键材料。",
+    coreElixir: "高阶炼化材料。用于飞升印等后期合成链。",
+    starShard: "星辉碎片。后期高阶合成的重要核心材料。",
+    ascendSeal: "关键凭证道具。用于后续飞升/终局玩法预留。",
+    sword: "主手武器。前期稳定提升攻击与命中。",
+    bow: "副手武器。提供额外攻击与命中补正。",
+    shield: "防具基础件。提高防御与闪避稳定性。",
+    artifact: "法器位装备。综合补足战斗与收益属性。",
+    thunderBlade: "史诗主手。高攻击并附带吸血能力。",
+    phoenixBow: "史诗副手。高命中并带吸血与气运加成。",
+    voidArmor: "史诗衣甲。高防御并提供战斗自动回血。",
+    dragonRelic: "顶级饰件。综合强化攻防与气运。",
+    spiritBlade: "稀有主手。攻击强于前期武器并附少量吸血。",
+    soulRobe: "史诗法衣。兼顾防御、闪避与自动回血。",
+    qilinRing: "稀有饰件。提升气运并补充闪避。",
+    warDrum: "史诗法器。强化攻击、防御与整体战斗节奏。",
+    ironBodyPill: "战斗增益药。短时提高防御，提升容错。",
+    swiftTalisman: "战斗增益符。短时提升命中与闪避。"
+};
 const CHEST_LOOT_TABLES = {
     chestSmall: [
         { id: "spiritStone", weight: 42, min: 20, max: 44 },
@@ -2527,6 +2632,10 @@ let autoUseSalveRatio = 0.32;
 let bloodPillCarryTarget = 10;
 let bloodPillReturnThreshold = 3;
 let autoBuyBloodPill = true;
+let nextBattleAvailableAtMs = 0;
+let hoveredMapCellEl = null;
+let bossModeActive = false;
+let bossModePrevZoomLevel = 2;
 let injuryDebuffUntilMs = 0;
 let ironBodyBuffUntilMs = 0;
 let swiftTalismanBuffUntilMs = 0;
@@ -2771,6 +2880,7 @@ const enhancePanelEl = document.getElementById("enhance-panel");
 const enhanceSummaryEl = document.getElementById("enhanceSummary");
 const worldSummaryEl = document.getElementById("worldSummary");
 const worldSummaryToggleBtn = document.getElementById("worldSummaryToggleBtn");
+const bossModeBtn = document.getElementById("bossModeBtn");
 const movementStatusEl = document.getElementById("movementStatus");
 const strategyButtonsEl = document.getElementById("strategyButtons");
 const tacticButtonsEl = document.getElementById("tacticButtons");
@@ -2831,6 +2941,51 @@ function setManualMarkedTarget(x, y, reason = "手动标记") {
     addLog(`已标记目标 (${x}, ${y})：${reason}｜${formatTargetEtaText(manualMarkedTarget)}`);
 }
 
+function closeAllFloatingPanels() {
+    if (codexPanelEl) codexPanelEl.classList.add("hidden");
+    if (storyModalEl) storyModalEl.classList.add("hidden");
+    if (chestModalEl) chestModalEl.classList.add("hidden");
+    if (itemCodexModalEl) itemCodexModalEl.classList.add("hidden");
+    if (monsterCodexModalEl) monsterCodexModalEl.classList.add("hidden");
+    if (craftPanelEl) craftPanelEl.classList.add("hidden");
+    if (shopPanelEl) shopPanelEl.classList.add("hidden");
+    if (enhancePanelEl) enhancePanelEl.classList.add("hidden");
+    if (socialPanelEl) socialPanelEl.classList.add("hidden");
+    closeItemMenu();
+    closeEquipSlotMenu();
+    if (buildPanel) {
+        buildPanel.classList.add("hidden");
+        buildPanel.innerHTML = "";
+    }
+    buildPanelTile = null;
+    isBuildFocus = false;
+}
+
+function setBossMode(enabled, silent = false) {
+    const next = Boolean(enabled);
+    if (next === bossModeActive) return;
+    bossModeActive = next;
+    document.body.classList.toggle("work-mode", bossModeActive);
+    if (bossModeActive) {
+        bossModePrevZoomLevel = zoomLevel;
+        zoomLevel = ZOOM_LEVELS.length - 1;
+        cameraMode = "free";
+        cameraX = HOME_X;
+        cameraY = HOME_Y;
+        rightPanelTab = "resource";
+        showWorldSummary = false;
+        closeAllFloatingPanels();
+    } else {
+        zoomLevel = Math.max(0, Math.min(ZOOM_LEVELS.length - 1, bossModePrevZoomLevel));
+        resetCameraToAvatar();
+    }
+    if (bossModeBtn) {
+        bossModeBtn.classList.toggle("active", bossModeActive);
+        bossModeBtn.textContent = bossModeActive ? "🧾 返回游戏" : "🧾 工作模式";
+    }
+    if (!silent) addLog(bossModeActive ? "已切换为工作模式（F9可恢复）" : "已退出工作模式");
+}
+
 function rollRandomHomeCoord() {
     return 4200 + Math.floor(Math.random() * 1601);
 }
@@ -2853,6 +3008,7 @@ function applyHomeCoordinates(x, y) {
     gatheringTarget = null;
     battleState = null;
     battleSummaryData = null;
+    nextBattleAvailableAtMs = 0;
     exploreTarget = null;
     reservationMap.clear();
     targetBackoffMap.clear();
@@ -3201,14 +3357,17 @@ function getBodyCultivationExpNeed(level) {
 
 function getCultivationRateMultiplier() {
     const eventMul = getWorldEventEffects().cultivationMul || 0;
-    return (simulationTimeMs < cultivationBuffUntilMs ? 1.8 : 1) * (1 + eventMul);
+    const base = (simulationTimeMs < cultivationBuffUntilMs ? 1.8 : 1) * (1 + eventMul);
+    const statBonus = 1 + Math.min(0.55, sharedStats.mind * 0.01 + sharedStats.spirit * 0.007);
+    const buildingBonus = 1 + Math.min(0.45, countBuildingsByType("trainingRoom") * 0.06 + countBuildingsByType("herbGarden") * 0.03);
+    const arrayBonus = 1 + Math.min(0.2, countBuildingsByType("skyArray") * 0.02 + countBuildingsByType("furyArray") * 0.015);
+    return base * statBonus * buildingBonus * arrayBonus;
 }
 
-function applyBodyCultivationTick() {
-    const mult = getCultivationRateMultiplier();
-    const expGain = Math.max(1, Math.floor((3 + Math.floor(sharedStats.mind / 4)) * mult));
-    bodyCultivationExp += expGain;
-    addLog(`打坐修炼结算：修为 +${expGain}`);
+function gainCultivationExp(expGain, reason = "修炼") {
+    const gain = Math.max(1, Math.floor(expGain));
+    bodyCultivationExp += gain;
+    addLog(`${reason}：修为 +${gain}`);
     while (cultivationLevel < CULTIVATION_MAX_LEVEL) {
         const needExp = getBodyCultivationExpNeed(cultivationLevel);
         if (bodyCultivationExp < needExp) break;
@@ -3224,17 +3383,30 @@ function applyBodyCultivationTick() {
     if (cultivationLevel >= CULTIVATION_MAX_LEVEL) {
         bodyCultivationExp = Math.min(bodyCultivationExp, getBodyCultivationExpNeed(cultivationLevel));
     }
+    return gain;
+}
+
+function applyBodyCultivationTick() {
+    if (!isMeditating) return 0;
+    const mult = getCultivationRateMultiplier();
+    const expGain = Math.max(1, Math.floor((3 + Math.floor(sharedStats.mind / 4)) * mult));
+    return gainCultivationExp(expGain, "打坐周天结算");
 }
 
 function startMeditation() {
-    if (isMeditating || isGathering) {
-        addLog("当前已有进行中的修炼行为");
+    if (isMeditating) {
+        addLog("已在打坐中");
+        return;
+    }
+    if (isGathering) {
+        addLog("采集中无法进入打坐");
         return;
     }
     const bonuses = getBuildingBonuses();
     const duration = Math.max(4000, Math.floor(MEDITATE_BASE_MS / bonuses.meditateSpeed));
     isMeditating = true;
     newbieGuideFlags.meditationStarted = true;
+    bodyCultivationAccumMs = 0;
     meditateTotalMs = duration;
     meditateRemainingMs = duration;
     addLog(`开始打坐，预计 ${Math.ceil(duration / 1000)} 秒`);
@@ -3244,26 +3416,11 @@ function finishMeditation() {
     const bonuses = getBuildingBonuses();
     const mult = getCultivationRateMultiplier();
     const gain = Math.max(1, Math.floor((4 + Math.floor(sharedStats.mind / 4)) * bonuses.meditateExp * mult));
-    bodyCultivationExp += gain;
-    isMeditating = false;
-    meditateRemainingMs = 0;
-    meditateTotalMs = 0;
-    addLog(`打坐完成，获得修为 ${gain}`);
-    while (cultivationLevel < CULTIVATION_MAX_LEVEL) {
-        const needExp = getBodyCultivationExpNeed(cultivationLevel);
-        if (bodyCultivationExp < needExp) break;
-        bodyCultivationExp -= needExp;
-        cultivationLevel += 1;
-        sharedStats.level += 1;
-        sharedStats.spirit += 1;
-        sharedStats.mind += 1;
-        sharedStats.body += 1;
-        sharedStats.freePoints += 3;
-        addLog(`修为提升：境界达到 Lv.${cultivationLevel} · ${getRealmName()}`);
-    }
-    if (cultivationLevel >= CULTIVATION_MAX_LEVEL) {
-        bodyCultivationExp = Math.min(bodyCultivationExp, getBodyCultivationExpNeed(cultivationLevel));
-    }
+    gainCultivationExp(gain, "打坐完成");
+    if (!isMeditating) return;
+    const duration = Math.max(4000, Math.floor(MEDITATE_BASE_MS / bonuses.meditateSpeed));
+    meditateTotalMs = duration;
+    meditateRemainingMs = duration;
 }
 
 function chunkKeyFromTile(x, y) {
@@ -3363,8 +3520,20 @@ function getEquipmentBonus() {
 function getEnhanceCost(itemId) {
     const level = equipmentEnhanceLevels[itemId] || 0;
     const rarity = ITEM_DEFS[itemId]?.rarity || "common";
-    const rarityMul = rarity === "epic" ? 1.8 : rarity === "rare" ? 1.45 : rarity === "uncommon" ? 1.2 : 1;
-    return Math.floor((28 + level * 16) * rarityMul);
+    const rarityMul = rarity === "epic" ? 2.05 : rarity === "rare" ? 1.62 : rarity === "uncommon" ? 1.28 : 1;
+    const gold = Math.floor((30 + level * 20 + level * level * 3) * rarityMul);
+    const spiritStone = Math.max(6, Math.floor((8 + level * 6) * rarityMul));
+    const demonCore = rarity === "epic" ? Math.max(1, Math.floor((level + 1) / 2)) : level >= 4 ? 1 : 0;
+    const rareCrystal = rarity === "epic" ? Math.max(1, Math.floor((level + 2) / 3)) : rarity === "rare" && level >= 6 ? 1 : 0;
+    return { gold, spiritStone, demonCore, rareCrystal };
+}
+
+function canAffordEnhance(itemId) {
+    const cost = getEnhanceCost(itemId);
+    return goldCoins >= cost.gold
+        && homeInventory.spiritStone >= cost.spiritStone
+        && homeInventory.demonCore >= cost.demonCore
+        && homeInventory.rareCrystal >= cost.rareCrystal;
 }
 
 function enhanceEquipment(itemId) {
@@ -3376,11 +3545,14 @@ function enhanceEquipment(itemId) {
         return false;
     }
     const cost = getEnhanceCost(itemId);
-    if (goldCoins < cost) {
-        addLog(`强化失败：金币不足（需要 ${cost}）`);
+    if (!canAffordEnhance(itemId)) {
+        addLog(`强化失败：材料不足（需金币${cost.gold}/灵石${cost.spiritStone}/妖丹${cost.demonCore}/异晶${cost.rareCrystal}）`);
         return false;
     }
-    goldCoins -= cost;
+    goldCoins -= cost.gold;
+    homeInventory.spiritStone -= cost.spiritStone;
+    homeInventory.demonCore -= cost.demonCore;
+    homeInventory.rareCrystal -= cost.rareCrystal;
     equipmentEnhanceLevels[itemId] = level + 1;
     newbieGuideFlags.enhancedOnce = true;
     addLog(`强化成功：${ITEM_DEFS[itemId]?.label || itemId} +${equipmentEnhanceLevels[itemId]}`);
@@ -3417,7 +3589,8 @@ function bindItemHover(containerEl) {
             const bonus = `加成: ${formatBonusText(def.bonus)}`;
             const reqLine = isEquipItem(itemId) ? `<br>穿戴要求: 境界 Lv.${getEquipRequiredLevel(itemId)}` : "";
             const buff = def.buff ? `<br>增益: ${formatBonusText(def.buff)}（${Math.floor((def.buff.durationMs || 0) / 1000)}s）` : "";
-            itemDetailEl.innerHTML = `<strong>${getItemIconMarkup(itemId)} ${def.label}</strong><br>品质: ${rarity}<br>分类: ${itemGroupLabel(itemId, def)}<br>${bonus}${reqLine}${buff}<br>来源: ${def.source}<br>回收: ${def.sellValue || 0} 金币<br>持有: ${qty}`;
+            const useText = getItemUsageText(itemId);
+            itemDetailEl.innerHTML = `<strong>${getItemIconMarkup(itemId)} ${def.label}</strong><br>品质: ${rarity}<br>分类: ${itemGroupLabel(itemId, def)}<br>${bonus}${reqLine}${buff}<br>用途: ${useText}<br>来源: ${def.source}<br>回收: ${def.sellValue || 0} 金币<br>持有: ${qty}`;
             itemDetailEl.classList.remove("hidden");
             itemDetailEl.style.left = `${e.clientX + 12}px`;
             itemDetailEl.style.top = `${e.clientY + 12}px`;
@@ -3552,6 +3725,7 @@ function openItemCodexDetail(itemId) {
     const usedBy = CRAFT_RECIPES.filter((r) => r.cost[itemId]);
     const dropBy = MONSTER_CODEX.filter((m) => m.drops.some((d) => d.id === itemId));
     const equipNeedLine = isEquipItem(itemId) ? `<br>穿戴要求：境界 Lv.${getEquipRequiredLevel(itemId)}` : "";
+    const chestLootRows = itemId.startsWith("chest") ? getChestLootChanceRows(itemId) : "";
     itemCodexModalEl.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong>${def.label}</strong>
@@ -3572,9 +3746,10 @@ function openItemCodexDetail(itemId) {
             </div>
             <div class="codex-col">
                 <strong>属性与转化</strong>
-                <div style="margin-top:6px;">基础属性：${formatBonusText(def.bonus)}${equipNeedLine}<br>增益效果：${def.buff ? `${formatBonusText(def.buff)}（${Math.floor((def.buff.durationMs || 0) / 1000)}秒）` : "无"}<br>回收金币：${def.sellValue || 0}<br>${canCraft.length ? `可直接合成：${canCraft.map((r) => r.label).join(" / ")}` : "非直接合成产出"}</div>
+                <div style="margin-top:6px;">基础属性：${formatBonusText(def.bonus)}${equipNeedLine}<br>增益效果：${def.buff ? `${formatBonusText(def.buff)}（${Math.floor((def.buff.durationMs || 0) / 1000)}秒）` : "无"}<br>用途说明：${getItemUsageText(itemId)}<br>回收金币：${def.sellValue || 0}<br>${canCraft.length ? `可直接合成：${canCraft.map((r) => r.label).join(" / ")}` : "非直接合成产出"}</div>
             </div>
         </div>
+        ${chestLootRows ? `<div class="codex-col" style="margin-top:10px;"><strong>宝箱掉落概率（单次抽取）</strong><div style="margin-top:6px;">${chestLootRows}</div></div>` : ""}
     `;
     itemCodexModalEl.classList.remove("hidden");
     itemCodexModalEl.querySelectorAll("button[data-codex-close]").forEach((btn) => {
@@ -3943,6 +4118,7 @@ function openItemMenu(itemId, source, anchorEvent) {
     const recycleTotal = (def.sellValue || 0) * itemMenuQty;
     itemMenuEl.innerHTML = `
         <div class="menu-title">${getItemIconMarkup(itemId)} ${def.label} · 数量 ${bag[itemId] || 0}</div>
+        <div class="small-note" style="margin-bottom:4px;">${getItemUsageText(itemId)}</div>
         <div class="qty-row" style="${canBatch ? "" : "display:none;"}">
             <span class="qty-tag">数量</span>
             <button class="mini-btn" data-item-action="qty-minus">-</button>
@@ -4169,6 +4345,12 @@ function setMonsterHp(x, y, hp, maxHp) {
 
 function startBattleWith(monster) {
     if (!monster) return false;
+    if (!canStartBattleNow()) {
+        const remain = Math.max(0, Math.ceil((nextBattleAvailableAtMs - simulationTimeMs) / 1000));
+        movementStatusText = `战斗冷却中 ${remain}s`;
+        if (!isAutoMode) addLog(`战斗冷却中，${remain}s 后可再次交战`);
+        return false;
+    }
     if (monster.type) discoveredMonsterSet.add(monster.type);
     isGathering = false;
     gatherRemainingMs = 0;
@@ -4413,6 +4595,7 @@ function resolveBattleStep(elapsedMs = 100) {
         if (recentBattleHistory.length > 20) recentBattleHistory.shift();
         battleMetrics = null;
         battleState = null;
+        nextBattleAvailableAtMs = simulationTimeMs + BATTLE_GAP_CD_MS;
         if (shouldReturnHome()) autoObjective = "return_home";
         return;
     }
@@ -4491,11 +4674,12 @@ function resolveBattleStep(elapsedMs = 100) {
         if (recentBattleHistory.length > 20) recentBattleHistory.shift();
         battleMetrics = null;
         battleState = null;
+        nextBattleAvailableAtMs = simulationTimeMs + BATTLE_GAP_CD_MS;
         autoObjective = "return_home";
         addLog(`化身陨落退回洞府，损失灵石 ${lostStone}${lostCore ? ` / 妖丹 ${lostCore}` : ""}，10分钟后复活`);
         return;
     }
-    if (avatarHp <= Math.floor(getAvatarMaxHp() * BALANCE_CONFIG.combat.lowHpRetreatRatio)) {
+    if (avatarHp <= Math.floor(getAvatarMaxHp() * (currentBattleTactic().retreatRatio || BALANCE_CONFIG.combat.lowHpRetreatRatio))) {
         addLog("化身血量偏低，撤离返城");
         battleSummaryData = {
             atMs: simulationTimeMs,
@@ -4514,6 +4698,7 @@ function resolveBattleStep(elapsedMs = 100) {
         battleMetrics = null;
         autoObjective = "return_home";
         battleState = null;
+        nextBattleAvailableAtMs = simulationTimeMs + BATTLE_GAP_CD_MS;
         return;
     }
 }
@@ -4797,8 +4982,11 @@ function chooseResourceTargets(limit = TARGET_POOL_SIZE) {
             const amountFactor = state.remaining / seed.maxCapacity;
             const homePenalty = Math.max(0, (Math.abs(tx - HOME_X) + Math.abs(ty - HOME_Y) - 12) * 0.015);
             const terrainBonus = seed.terrainClass === "forest" && strategyId === "herb" ? 0.45 : seed.terrainClass === "mountain" && strategyId === "rare" ? 0.55 : 0;
+            const monster = getMonsterAt(tx, ty);
+            const monsterTier = monster ? (getMonsterDropProfile(monster.type)?.tier || 1) : 0;
+            const monsterPenalty = monsterTier * (strategy.avoidMonster || 0) * 0.24;
             const heatPenalty = getChunkHeatAt(tx, ty) * 0.35;
-            const score = typeWeight * (1.6 + amountFactor + terrainBonus) - dist * 0.085 - moveCost * 0.28 - homePenalty - heatPenalty;
+            const score = typeWeight * (1.6 + amountFactor + terrainBonus) - dist * 0.085 - moveCost * 0.28 - homePenalty - heatPenalty - monsterPenalty;
             candidates.push({ x: tx, y: ty, score, seed, heat: getChunkHeatAt(tx, ty) });
         }
     }
@@ -4806,12 +4994,42 @@ function chooseResourceTargets(limit = TARGET_POOL_SIZE) {
     return candidates.slice(0, limit);
 }
 
+function chooseMonsterTargets(limit = 3) {
+    const strategy = currentStrategy();
+    if ((strategy.combatBias || 0) <= 0) return [];
+    const candidates = [];
+    const searchRadius = 16 + Math.floor(sharedStats.mind * 0.4);
+    for (let dy = -searchRadius; dy <= searchRadius; dy++) {
+        for (let dx = -searchRadius; dx <= searchRadius; dx++) {
+            const tx = avatarX + dx;
+            const ty = avatarY + dy;
+            if (tx === avatarX && ty === avatarY) continue;
+            if (!isPassable(tx, ty)) continue;
+            if (!isWithinDailyMoveRadius(tx, ty)) continue;
+            const monster = getMonsterAt(tx, ty);
+            if (!monster) continue;
+            const dist = Math.abs(dx) + Math.abs(dy);
+            const tier = getMonsterDropProfile(monster.type)?.tier || 1;
+            const score = (strategy.combatBias || 0) * (tier * 2 + monster.level * 0.45) - dist * 0.12 - getChunkHeatAt(tx, ty) * 0.25;
+            candidates.push({ x: tx, y: ty, score, monster });
+        }
+    }
+    candidates.sort((a, b) => b.score - a.score);
+    return candidates.slice(0, limit);
+}
+
+function canStartBattleNow() {
+    return !battleState && simulationTimeMs >= nextBattleAvailableAtMs;
+}
+
 function shouldReturnHome() {
     if (isAtHome()) return false;
+    const tactic = currentBattleTactic();
     const bagThreshold = Math.floor(avatarBagCap * bagReturnRatio);
     const bagLoad = totalInventoryLoad();
     if (bagLoad >= bagThreshold) return true;
-    if (avatarHp <= Math.floor(getAvatarMaxHp() * BALANCE_CONFIG.combat.lowHpReturnRatio)) return true;
+    const retreatRatio = tactic.retreatRatio || BALANCE_CONFIG.combat.lowHpReturnRatio;
+    if (avatarHp <= Math.floor(getAvatarMaxHp() * retreatRatio)) return true;
     if ((avatarInventory.bloodPill || 0) <= bloodPillReturnThreshold) {
         const hasStock = (homeInventory.bloodPill || 0) > 0;
         const canBuy = autoBuyBloodPill && goldCoins >= getShopPrice(42);
@@ -5144,6 +5362,10 @@ function autoExploreStep(elapsedMs = 100) {
         resolveBattleStep(elapsedMs);
         return;
     }
+    if (!canStartBattleNow()) {
+        const remain = Math.max(0, Math.ceil((nextBattleAvailableAtMs - simulationTimeMs) / 1000));
+        movementStatusText = `战斗冷却中 ${remain}s`;
+    }
 
     if (autoObjective === "return_home") {
         releaseExploreTargetReservation();
@@ -5167,6 +5389,23 @@ function autoExploreStep(elapsedMs = 100) {
         autoObjective = "return_home";
         addLog("触发补给/整备条件，切换为回城优先");
         return;
+    }
+
+    const strategy = currentStrategy();
+    if ((strategy.combatBias || 0) >= 0.9 && canStartBattleNow()) {
+        const monsterTargets = chooseMonsterTargets(1);
+        if (monsterTargets.length) {
+            const m = monsterTargets[0];
+            if (avatarX === m.x && avatarY === m.y) {
+                startBattleWith(m.monster);
+                return;
+            }
+            exploreTarget = { x: m.x, y: m.y };
+            moveOneStep(m.x, m.y);
+            const encounteredNow = getMonsterAt(avatarX, avatarY);
+            if (encounteredNow && canStartBattleNow()) startBattleWith(encounteredNow);
+            return;
+        }
     }
 
     if (!hasValidExploreTarget()) {
@@ -5201,7 +5440,7 @@ function autoExploreStep(elapsedMs = 100) {
 
     moveOneStep(target.x, target.y);
     const encountered = getMonsterAt(avatarX, avatarY);
-    if (encountered) {
+    if (encountered && canStartBattleNow()) {
         startBattleWith(encountered);
     }
 }
@@ -5243,6 +5482,20 @@ function canAffordCost(cost) {
         homeInventory.herb >= (cost.herb || 0) &&
         homeInventory.rareCrystal >= (cost.rareCrystal || 0)
     );
+}
+
+function getScaledCost(baseCost, tier = 1, level = 1, mode = "build") {
+    if (!baseCost) return null;
+    const lv = Math.max(1, level);
+    const tierMul = 1 + Math.max(0, tier - 1) * 0.1;
+    const growth = mode === "upgrade" ? (1 + (lv - 1) * 0.34) : (1 + (lv - 1) * 0.22);
+    const rareBoost = mode === "upgrade" ? 1.18 : 1;
+    const out = {};
+    Object.entries(baseCost).forEach(([k, v]) => {
+        const isRare = k === "rareCrystal" || k === "demonCore";
+        out[k] = Math.max(1, Math.floor(v * tierMul * growth * (isRare ? rareBoost : 1)));
+    });
+    return out;
 }
 
 function closeBuildPanel() {
@@ -5288,7 +5541,7 @@ function performHomeBuildAction(wx, wy, action, targetType = null) {
             return false;
         }
         const conf = getBuildingConfig(current.type);
-        const upgradeCost = conf ? conf.upgradeCost : null;
+        const upgradeCost = conf ? getScaledCost(conf.upgradeCost, conf.id.includes("Array") ? 3 : 1, current.level, "upgrade") : null;
         if (!applyCost(upgradeCost)) {
             addLog("升级材料不足");
             return false;
@@ -5306,7 +5559,8 @@ function performHomeBuildAction(wx, wy, action, targetType = null) {
         addLog("该地块已有建筑，请先拆除或切换升级模式");
         return false;
     }
-    if (!applyCost(conf.buildCost)) {
+    const buildCost = getScaledCost(conf.buildCost, conf.id.includes("Array") ? 3 : 1, 1, "build");
+    if (!applyCost(buildCost)) {
         addLog(`建造 ${conf.label} 材料不足`);
         return false;
     }
@@ -5334,13 +5588,14 @@ function openBuildPanel(wx, wy) {
 
     if (current) {
         const conf = getBuildingConfig(current.type);
-        const canUpgrade = canAffordCost(conf?.upgradeCost);
+        const upgradeCost = conf ? getScaledCost(conf.upgradeCost, conf.id.includes("Array") ? 3 : 1, current.level, "upgrade") : null;
+        const canUpgrade = canAffordCost(upgradeCost);
         html += `
             <div class="build-row">
                 <div>
                     <div><strong>升级 ${conf ? conf.label : current.type}</strong></div>
-                    <div class="build-meta">需求: ${formatCostLine(conf?.upgradeCost)}</div>
-                    ${formatCostStockLine(conf?.upgradeCost)}
+                    <div class="build-meta">需求: ${formatCostLine(upgradeCost)}</div>
+                    ${formatCostStockLine(upgradeCost)}
                     <div class="build-meta ${canUpgrade ? "" : "mini-meta-warn"}">${canUpgrade ? "库存满足" : "材料不足，点击可查看提示"}</div>
                     <div class="build-meta">效果: ${conf?.effect || "-"}</div>
                 </div>
@@ -5359,13 +5614,14 @@ function openBuildPanel(wx, wy) {
         const arrayList = BUILDING_TYPES.filter((item) => ["skyArray", "earthArray", "furyArray"].includes(item.id));
         html += `<div class="build-meta" style="margin:6px 0 4px;"><strong>基础建筑</strong></div>`;
         for (const conf of normalList) {
-            const canBuild = canAffordCost(conf.buildCost);
+            const buildCost = getScaledCost(conf.buildCost, 1, 1, "build");
+            const canBuild = canAffordCost(buildCost);
             html += `
                 <div class="build-row">
                     <div>
                         <div><strong>${conf.icon} ${conf.label}</strong></div>
-                        <div class="build-meta">需求: ${formatCostLine(conf.buildCost)}</div>
-                        ${formatCostStockLine(conf.buildCost)}
+                        <div class="build-meta">需求: ${formatCostLine(buildCost)}</div>
+                        ${formatCostStockLine(buildCost)}
                         <div class="build-meta ${canBuild ? "" : "mini-meta-warn"}">${canBuild ? "库存满足" : "材料不足，点击可查看提示"}</div>
                         <div class="build-meta">效果: ${conf.effect}</div>
                     </div>
@@ -5375,13 +5631,14 @@ function openBuildPanel(wx, wy) {
         }
         html += `<div class="build-meta" style="margin:8px 0 4px;"><strong>战斗阵法（新增）</strong></div>`;
         for (const conf of arrayList) {
-            const canBuild = canAffordCost(conf.buildCost);
+            const buildCost = getScaledCost(conf.buildCost, 3, 1, "build");
+            const canBuild = canAffordCost(buildCost);
             html += `
                 <div class="build-row">
                     <div>
                         <div><strong>${conf.icon} ${conf.label}</strong></div>
-                        <div class="build-meta">需求: ${formatCostLine(conf.buildCost)}</div>
-                        ${formatCostStockLine(conf.buildCost)}
+                        <div class="build-meta">需求: ${formatCostLine(buildCost)}</div>
+                        ${formatCostStockLine(buildCost)}
                         <div class="build-meta ${canBuild ? "" : "mini-meta-warn"}">${canBuild ? "库存满足" : "材料不足，点击可查看提示"}</div>
                         <div class="build-meta">效果: ${conf.effect}</div>
                     </div>
@@ -5640,11 +5897,11 @@ function updateStatus() {
     statusEl.innerHTML = `
         化身位置: (${avatarX}, ${avatarY})<br>
         主角状态: ${hasAscended ? "已飞升，可外出" : "肉身驻守洞府（绝对安全）"}<br>
-        肉身修炼: 每20秒打坐修炼结算（当前效率 x${getCultivationRateMultiplier().toFixed(1)}）<br>
+        肉身修炼: 打坐开启后每20秒周天结算（当前效率 x${getCultivationRateMultiplier().toFixed(1)}）<br>
         当前地形: ${terrainRule.label}<br>
         行动状态: ${battleState ? `战斗中(${battleState.type} Lv.${battleState.level})` : isGathering ? "采集中" : isMeditating ? "打坐中" : isAutoMode ? (autoObjective === "return_home" ? "回城优先中" : "自动探索") : "待机"}<br>
         视角模式: ${cameraMode === "follow" ? "跟随化身" : `自由观察（中心 ${cameraX}, ${cameraY}）`}<br>
-        探索策略: ${strategy.label}<br>
+        探索策略: ${strategy.label}（战斗偏好 ${(strategy.combatBias || 0).toFixed(2)} / 避战 ${(strategy.avoidMonster || 0).toFixed(2)}）<br>
         当前目标: ${autoObjective === "return_home" ? "洞府" : exploreTarget ? `(${exploreTarget.x}, ${exploreTarget.y})` : "待选点"}（${autoObjective === "return_home" ? "可达" : getTargetReachability(exploreTarget)}）<br>
         距离洞府: ${homeDist} 格<br>
         风险收益加成: +${Math.round(getRiskRewardBonusAt(avatarX, avatarY) * 100)}%<br>
@@ -5655,6 +5912,7 @@ function updateStatus() {
         金币: ${goldCoins}<br>
         战斗胜场: ${dayCombatWins}<br>
         战斗策略: ${currentBattleTactic().label}（聚灵丹阈值 ${Math.round(autoUsePillRatio * 100)}% / 回春散阈值 ${Math.round(autoUseSalveRatio * 100)}%）<br>
+        战斗冷却: ${battleState ? "进行中" : `${Math.max(0, Math.ceil((nextBattleAvailableAtMs - simulationTimeMs) / 1000))}s`}<br>
         回血丹: 背包 ${avatarInventory.bloodPill || 0} / 库存 ${homeInventory.bloodPill || 0}（目标 ${bloodPillCarryTarget}，回城阈值 ${bloodPillReturnThreshold}）<br>
         伤势状态: ${simulationTimeMs < injuryDebuffUntilMs ? `重伤恢复中（剩余 ${Math.ceil((injuryDebuffUntilMs - simulationTimeMs) / 1000)}s）` : "正常"}<br>
         世界事件: ${getWorldEventDef() ? `${getWorldEventDef().label}（剩余 ${Math.max(0, Math.ceil((worldEventUntilMs - simulationTimeMs) / 1000))}s）` : "无"}<br>
@@ -5683,7 +5941,7 @@ function updateCultivationPanel() {
     if (cultivationMetaEl) {
         cultivationMetaEl.innerHTML = `
             境界 ${getRealmStyledText()} · 修为 ${bodyCultivationExp}/${curNeed}<br>
-            打坐 ${isMeditating ? `进行中 ${Math.ceil(meditateRemainingMs / 1000)}s` : "待机"} · 下次修炼结算 ${Math.max(1, Math.ceil((BODY_CULTIVATION_TICK_MS - bodyCultivationAccumMs) / 1000))}s<br>
+            打坐 ${isMeditating ? `进行中 ${Math.ceil(meditateRemainingMs / 1000)}s` : "未开始"} · ${isMeditating ? `周天结算 ${Math.max(1, Math.ceil((BODY_CULTIVATION_TICK_MS - bodyCultivationAccumMs) / 1000))}s` : "点击“开始打坐”后自动循环"}<br>
             距离下一级：${remain} 修为 · 效率 x${getCultivationRateMultiplier().toFixed(1)}
         `;
     }
@@ -5693,6 +5951,7 @@ function updateMovementStatus() {
     movementStatusEl.innerHTML = `
         化身: ${battleState ? `战斗中(${battleState.type})` : isGathering ? "采集中" : autoObjective === "return_home" ? "回城优先中" : isAutoMode ? "探索中" : "待命"}<br>
         ${movementStatusText}<br>
+        战斗CD: ${Math.max(0, Math.ceil((nextBattleAvailableAtMs - simulationTimeMs) / 1000))}s<br>
         目标标记: ${manualMarkedTarget ? `(${manualMarkedTarget.x}, ${manualMarkedTarget.y}) · ${manualMarkedTarget.reason}` : "无"}<br>
         到达评估: ${formatTargetEtaText(manualMarkedTarget)}<br>
         每秒 1 格，日活动半径 ≤ ${DAILY_MOVE_RADIUS}
@@ -5888,10 +6147,10 @@ function updateSidePanels() {
         </div>
     `;
     const allBagSlots = [
-        ...Object.keys(avatarInventory).map((id) => ({ id, ...(ITEM_DEFS[id] || { label: id, rarity: "common", source: "未知" }), count: avatarInventory[id] || 0 }))
+        ...Object.keys(avatarInventory).map((id) => ({ id, ...(ITEM_DEFS[id] || { label: id, rarity: "common", source: "未知" }), detail: getItemUsageText(id), count: avatarInventory[id] || 0 }))
     ].filter((item) => item.count > 0);
     const allStorageSlots = [
-        ...Object.keys(homeInventory).map((id) => ({ id, ...(ITEM_DEFS[id] || { label: id, rarity: "common", source: "未知" }), count: homeInventory[id] || 0 }))
+        ...Object.keys(homeInventory).map((id) => ({ id, ...(ITEM_DEFS[id] || { label: id, rarity: "common", source: "未知" }), detail: getItemUsageText(id), count: homeInventory[id] || 0 }))
     ].filter((item) => item.count > 0);
     const equipSlots = EQUIP_SLOT_DEFS.map((slot) => {
         const itemId = equippedSlots[slot.id];
@@ -6243,13 +6502,16 @@ function updateSidePanels() {
     const equipRows = Object.keys(ITEM_EQUIP_SLOT).filter((id) => (equipmentInventory[id] || 0) > 0 || Object.values(equippedSlots).includes(id)).map((id) => {
         const level = equipmentEnhanceLevels[id] || 0;
         const cost = getEnhanceCost(id);
+        const canEnhance = level < 10 && canAffordEnhance(id);
+        const costLine = `金币 ${cost.gold} / 灵石 ${cost.spiritStone}${cost.demonCore ? ` / 妖丹 ${cost.demonCore}` : ""}${cost.rareCrystal ? ` / 异晶 ${cost.rareCrystal}` : ""}`;
         return `
             <div class="codex-item">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <strong>${getItemIconMarkup(id)} ${ITEM_DEFS[id]?.label || id} +${level}</strong>
-                    <button class="mini-btn" data-enhance-item="${id}" ${level >= 10 ? "disabled" : ""}>强化 ${cost}</button>
+                    <button class="mini-btn" data-enhance-item="${id}" ${canEnhance ? "" : "disabled"}>强化</button>
                 </div>
                 <div class="small-note">每级提升该装备加成 12%（上限 +10）</div>
+                <div class="small-note">${costLine}</div>
             </div>
         `;
     }).join("");
@@ -6261,7 +6523,15 @@ function updateSidePanels() {
         btn.addEventListener("click", () => {
             const id = btn.dataset.enhanceItem;
             if (!id) return;
-            if (enhanceEquipment(id)) renderAll();
+            if (enhanceEquipment(id)) {
+                if (battleState) {
+                    updateSidePanels();
+                    updateStatus();
+                    renderButtons();
+                } else {
+                    renderAll();
+                }
+            }
         });
     });
     bindItemHover(resourceSummaryEl);
@@ -6340,6 +6610,10 @@ function renderAll(force = false) {
 }
 
 function renderButtons() {
+    if (bossModeBtn) {
+        bossModeBtn.classList.toggle("active", bossModeActive);
+        bossModeBtn.textContent = bossModeActive ? "🧾 返回游戏" : "🧾 工作模式";
+    }
     if (!controlButtonsInited) {
         strategyButtonsEl.innerHTML = "";
         for (const strategy of STRATEGIES) {
@@ -6363,6 +6637,8 @@ function renderButtons() {
             btn.textContent = `${tactic.label} · ${tactic.hint}`;
             btn.addEventListener("click", () => {
                 battleTacticId = tactic.id;
+                autoUsePillRatio = tactic.pillRatio || autoUsePillRatio;
+                autoUseSalveRatio = tactic.salveRatio || autoUseSalveRatio;
                 addLog(`战斗策略切换为：${tactic.label}`);
                 renderAll();
             });
@@ -6477,8 +6753,8 @@ function updateSimulation(ms) {
     }
     while (bodyCultivationAccumMs >= BODY_CULTIVATION_TICK_MS) {
         bodyCultivationAccumMs -= BODY_CULTIVATION_TICK_MS;
-        applyBodyCultivationTick();
-        renderAll();
+        const gain = applyBodyCultivationTick();
+        if (gain > 0) renderAll();
     }
     cleanupReservations();
     buildingProductionAccumMs += scaledMs;
@@ -6689,7 +6965,7 @@ function buildSavePayload() {
         home: { x: HOME_X, y: HOME_Y },
         avatar: { x: avatarX, y: avatarY, hp: avatarHp, mp: avatarMp, reviveUntilMs: avatarReviveUntilMs },
         day: { dayCount, dayOriginX, dayOriginY, dayMoveCount, dayMoveLogBatch, dayGatherUnits, dayStartMs },
-        runtime: { zoomLevel, strategyId, autoObjective, isAutoMode, timeScale, simulationTimeMs, buildingProductionAccumMs, worldEventId, worldEventUntilMs, nextWorldEventRollMs },
+        runtime: { zoomLevel, strategyId, autoObjective, isAutoMode, timeScale, simulationTimeMs, buildingProductionAccumMs, worldEventId, worldEventUntilMs, nextWorldEventRollMs, nextBattleAvailableAtMs },
         combat: { battleTacticId, autoUsePillRatio, autoUseSalveRatio, bloodPillCarryTarget, bloodPillReturnThreshold, autoBuyBloodPill, injuryDebuffUntilMs, ironBodyBuffUntilMs, swiftTalismanBuffUntilMs, lastBattleFrame },
         flags: { devForceMonster, devFixedDrops, baitBoostUntilMs },
         progression: {
@@ -6720,7 +6996,7 @@ function buildSavePayload() {
         },
         inventories: { avatar: { ...avatarInventory }, home: { ...homeInventory }, equipment: { ...equipmentInventory } },
         town: { ...town },
-        ui: { rightPanelTab, resourcePanelTab, codexTab, showEquipAttrDetail, showWorldSummary, inspectText, cameraMode, cameraX, cameraY, battleInfoMode },
+        ui: { rightPanelTab, resourcePanelTab, codexTab, showEquipAttrDetail, showWorldSummary, inspectText, cameraMode, cameraX, cameraY, battleInfoMode, bossModeActive, bossModePrevZoomLevel },
         maps: {
             homeBuildings: Array.from(homeBuildingMap.entries()),
             // 轻量存档：不保存大规模世界运行时缓存，避免读档后CPU飙升
@@ -6764,6 +7040,7 @@ function applySavePayload(payload) {
     worldEventId = payload.runtime?.worldEventId ?? worldEventId;
     worldEventUntilMs = payload.runtime?.worldEventUntilMs ?? worldEventUntilMs;
     nextWorldEventRollMs = payload.runtime?.nextWorldEventRollMs ?? nextWorldEventRollMs;
+    nextBattleAvailableAtMs = payload.runtime?.nextBattleAvailableAtMs ?? nextBattleAvailableAtMs;
     battleTacticId = payload.combat?.battleTacticId ?? battleTacticId;
     autoUsePillRatio = payload.combat?.autoUsePillRatio ?? autoUsePillRatio;
     autoUseSalveRatio = payload.combat?.autoUseSalveRatio ?? autoUseSalveRatio;
@@ -6818,6 +7095,8 @@ function applySavePayload(payload) {
     cameraX = Number.isFinite(payload.ui?.cameraX) ? payload.ui.cameraX : cameraX;
     cameraY = Number.isFinite(payload.ui?.cameraY) ? payload.ui.cameraY : cameraY;
     battleInfoMode = payload.ui?.battleInfoMode === "detail" ? "detail" : "simple";
+    bossModePrevZoomLevel = payload.ui?.bossModePrevZoomLevel ?? bossModePrevZoomLevel;
+    setBossMode(payload.ui?.bossModeActive === true, true);
     newbieGuideStepIndex = Math.max(0, Math.min(NEWBIE_GUIDE_STEPS.length, newbieGuideStepIndex));
     if (!["inventory", "bag", "equip"].includes(resourcePanelTab)) resourcePanelTab = "inventory";
     if (cameraMode !== "follow" && cameraMode !== "free") cameraMode = "follow";
@@ -7181,6 +7460,21 @@ if (autoBuyBloodPillToggle) {
     });
 }
 
+if (bossModeBtn) {
+    bossModeBtn.addEventListener("click", () => {
+        setBossMode(!bossModeActive);
+        renderAll();
+    });
+}
+
+window.addEventListener("keydown", (e) => {
+    if (e.key === "F9") {
+        e.preventDefault();
+        setBossMode(!bossModeActive);
+        renderAll();
+    }
+});
+
 forceMonsterToggle.addEventListener("change", () => {
     devForceMonster = forceMonsterToggle.checked;
     addLog(`测试开关：强制刷怪 ${devForceMonster ? "开启" : "关闭"}`);
@@ -7295,7 +7589,15 @@ itemMenuEl.addEventListener("click", (e) => {
     if (btn.dataset.itemAction === "equip") ok = equipItemFrom(source, itemId, 1);
     if (btn.dataset.itemAction === "recycle") ok = recycleItemFrom(source, itemId, itemMenuQty);
     closeItemMenu();
-    if (ok) renderAll();
+    if (ok) {
+        if (battleState) {
+            updateSidePanels();
+            updateStatus();
+            renderButtons();
+        } else {
+            renderAll();
+        }
+    }
 });
 
 equipSlotMenuEl.addEventListener("click", (e) => {
@@ -7385,9 +7687,16 @@ codexCloseBtn.addEventListener("click", () => {
 grid.addEventListener("mousemove", (e) => {
     const cell = e.target.closest(".cell");
     if (!cell) {
+        if (hoveredMapCellEl) {
+            hoveredMapCellEl.classList.remove("hovered");
+            hoveredMapCellEl = null;
+        }
         tooltip.style.display = "none";
         return;
     }
+    if (hoveredMapCellEl && hoveredMapCellEl !== cell) hoveredMapCellEl.classList.remove("hovered");
+    hoveredMapCellEl = cell;
+    hoveredMapCellEl.classList.add("hovered");
 
     const wx = Number(cell.dataset.wx);
     const wy = Number(cell.dataset.wy);
@@ -7402,6 +7711,10 @@ grid.addEventListener("mousemove", (e) => {
 
 grid.addEventListener("mouseleave", () => {
     tooltip.style.display = "none";
+    if (hoveredMapCellEl) {
+        hoveredMapCellEl.classList.remove("hovered");
+        hoveredMapCellEl = null;
+    }
     inspectText = "";
     scheduleSidePanelRefresh();
 });
