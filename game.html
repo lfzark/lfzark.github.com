@@ -730,16 +730,17 @@
     }
     .equip-board {
         display: grid;
-        grid-template-columns: repeat(4, 56px);
-        gap: 6px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
         align-content: start;
     }
     .equip-slot {
-        width: 56px;
-        height: 56px;
-        border: 1px dashed rgba(162, 174, 232, 0.55);
-        border-radius: 6px;
-        background: rgba(25, 30, 49, 0.9);
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        min-height: 58px;
+        border: 1px solid rgba(132, 156, 198, 0.45);
+        border-radius: 8px;
+        background: linear-gradient(165deg, rgba(34, 45, 68, 0.94), rgba(20, 28, 44, 0.94));
         position: relative;
         cursor: pointer;
         display: flex;
@@ -753,6 +754,17 @@
         transform: translateY(-1px);
         border-color: rgba(175, 205, 255, 0.92);
         box-shadow: 0 0 0 1px rgba(175, 205, 255, 0.25), 0 6px 14px rgba(18, 35, 66, 0.45);
+    }
+    .equip-slot.empty {
+        border-style: dashed;
+        border-color: rgba(108, 123, 153, 0.55);
+        background: rgba(20, 28, 44, 0.82);
+    }
+    .equip-slot.empty::before {
+        content: "+";
+        font-size: 16px;
+        color: rgba(176, 195, 224, 0.62);
+        transform: translateY(2px);
     }
     .equip-slot .icon-wrap {
         width: 24px;
@@ -769,17 +781,23 @@
     }
     .equip-slot .slot-label {
         position: absolute;
-        top: 2px;
+        top: 3px;
         left: 3px;
         font-size: 10px;
-        color: #d8dff8;
+        line-height: 1;
+        color: #dce7ff;
+        padding: 2px 4px;
+        border-radius: 4px;
+        background: rgba(10, 16, 29, 0.62);
+        border: 1px solid rgba(150, 173, 214, 0.35);
     }
     .equip-slot .slot-item-count {
         position: absolute;
-        right: 3px;
-        top: 2px;
+        right: 4px;
+        bottom: 3px;
         font-size: 10px;
-        color: #ffe08f;
+        color: #ffe6a9;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
     }
     #equip-slot-menu {
         position: fixed;
@@ -1754,6 +1772,14 @@
             </div>
             <div id="newbieGuideSummary" class="small-note" style="margin-top:6px;">任务载入中...</div>
         </div>
+        <div class="card" style="margin:8px 0 0;">
+            <div style="font-size:1.02em; color:#a8d0ff; margin-bottom:6px;">🐟 锦鲤与功德</div>
+            <div id="meritSummary" class="small-note">功德载入中...</div>
+            <div class="compact-row" style="grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:6px;">
+                <button id="redeemKoiNecklaceBtn" class="mini-btn">兑换锦鲤项链</button>
+                <button id="donateMeritBtn" class="mini-btn">捐功德 100</button>
+            </div>
+        </div>
 
         <div class="section-title" style="margin-top:8px;">倍速</div>
         <div id="speedButtons"></div>
@@ -1937,6 +1963,8 @@
     <div id="enhanceSummary"></div>
 </div>
 
+<script src="core/equipment-core.js"></script>
+<script src="core/battle-core.js"></script>
 <script>
 let HOME_X = 5000;
 let HOME_Y = 5000;
@@ -1993,6 +2021,13 @@ const BALANCE_CONFIG = {
             2: { cultivationLevel: 4, spiritWell: 1, trainingRoom: 0 },
             3: { cultivationLevel: 7, spiritWell: 1, trainingRoom: 1 }
         }
+    },
+    merit: {
+        koiReleaseEventChance: 0.18,
+        koiMeritMin: 6,
+        koiMeritMax: 22,
+        koiNecklaceRedeem: 100,
+        worldProjectGoal: 5000
     }
 };
 
@@ -2054,8 +2089,12 @@ const ITEM_DEFS = {
     soulRobe: { label: "玄冥法衣", icon: "👘", rarity: "epic", category: "装备", source: "精英/BOSS掉落", bonus: { def: 11, dodge: 0.04, hit: 0.01, regen: 1 }, sellValue: 238 },
     qilinRing: { label: "麒麟戒", icon: "💍", rarity: "rare", category: "装备", source: "精英掉落", bonus: { luck: 4, dodge: 0.02 }, sellValue: 172 },
     warDrum: { label: "战魂鼓", icon: "🥁", rarity: "epic", category: "装备", source: "BOSS掉落", bonus: { atk: 7, def: 4, luck: 2 }, sellValue: 276 },
+    skyEarring: { label: "凌霄耳坠", icon: "🩵", rarity: "rare", category: "装备", source: "精英掉落", bonus: { hit: 0.02, dodge: 0.02, luck: 2 }, sellValue: 188 },
+    cloudBoots: { label: "踏云履", icon: "👢", rarity: "rare", category: "装备", source: "精英/BOSS掉落", bonus: { def: 6, dodge: 0.03 }, sellValue: 196 },
     ironBodyPill: { label: "淬体丹", icon: "🧪", rarity: "uncommon", category: "消耗品", source: "商店 / 战斗掉落", bonus: { def: 2 }, buff: { type: "battle", def: 2, durationMs: 150000 }, sellValue: 20, usable: true },
     swiftTalisman: { label: "疾风符", icon: "🪶", rarity: "rare", category: "符咒", source: "商店 / 合成 / 战斗掉落", bonus: { dodge: 0.03, hit: 0.01 }, buff: { type: "battle", dodge: 0.03, hit: 0.01, durationMs: 180000 }, sellValue: 34, usable: true }
+    ,koiFish: { label: "锦鲤", icon: "🐟", rarity: "rare", category: "道具", source: "采集 / 战斗随机掉落", sellValue: 1, usable: false }
+    ,koiNecklace: { label: "锦鲤项链", icon: "🎏", rarity: "epic", category: "装备", source: "功德兑换", bonus: { luck: 6, dodge: 0.02 }, sellValue: 320 }
 };
 
 const EQUIP_SLOT_DEFS = [
@@ -2063,7 +2102,10 @@ const EQUIP_SLOT_DEFS = [
     { id: "weaponOff", label: "副手" },
     { id: "armor", label: "衣甲" },
     { id: "artifact", label: "法器" },
-    { id: "trinket", label: "饰件" }
+    { id: "necklace", label: "项链" },
+    { id: "ring", label: "戒指" },
+    { id: "earring", label: "耳环" },
+    { id: "shoes", label: "鞋" }
 ];
 
 const ITEM_EQUIP_SLOT = {
@@ -2075,10 +2117,13 @@ const ITEM_EQUIP_SLOT = {
     shield: "armor",
     voidArmor: "armor",
     soulRobe: "armor",
+    cloudBoots: "shoes",
     artifact: "artifact",
     warDrum: "artifact",
-    dragonRelic: "trinket",
-    qilinRing: "trinket"
+    dragonRelic: "earring",
+    skyEarring: "earring",
+    qilinRing: "ring",
+    koiNecklace: "necklace"
 };
 
 const EQUIP_LEVEL_REQUIREMENTS = {
@@ -2093,7 +2138,10 @@ const EQUIP_LEVEL_REQUIREMENTS = {
     voidArmor: 32,
     soulRobe: 36,
     warDrum: 42,
-    dragonRelic: 50
+    dragonRelic: 50,
+    skyEarring: 24,
+    cloudBoots: 22,
+    koiNecklace: 18
 };
 
 const ITEM_ICON_SVG = {
@@ -2125,9 +2173,13 @@ const ITEM_ICON_SVG = {
     spiritBlade: `<svg viewBox="0 0 32 32"><path d="M8 24l3 3 9-9-3-3z" fill="#f1f6ff"/><path d="M18 7l7-2-2 7-6 6-4-4z" fill="#85a9ff"/><rect x="6" y="25" width="8" height="2" fill="#d4b36f"/></svg>`,
     soulRobe: `<svg viewBox="0 0 32 32"><path d="M9 9l7-4 7 4 2 15H7z" fill="#6978be"/><path d="M16 8v16" stroke="#d9e2ff" stroke-width="1.4"/><circle cx="16" cy="13" r="2" fill="#f0f4ff"/></svg>`,
     qilinRing: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="8" fill="#f4d88c"/><circle cx="16" cy="16" r="4" fill="#3f2f1a"/><circle cx="21" cy="11" r="2" fill="#f9f1d1"/></svg>`,
+    skyEarring: `<svg viewBox="0 0 32 32"><circle cx="16" cy="10" r="4" fill="#8fdcff"/><path d="M16 14v10" stroke="#b6e8ff" stroke-width="2"/><circle cx="16" cy="26" r="3" fill="#5ab5e8"/></svg>`,
+    cloudBoots: `<svg viewBox="0 0 32 32"><path d="M8 8h9v10H8z" fill="#8aa0d3"/><path d="M17 14h7l2 5H17z" fill="#677eb5"/><rect x="7" y="24" width="20" height="3" rx="1.5" fill="#d8e6ff"/></svg>`,
     warDrum: `<svg viewBox="0 0 32 32"><ellipse cx="16" cy="16" rx="8" ry="10" fill="#8f5b3c"/><ellipse cx="16" cy="16" rx="6" ry="8" fill="#c58a61"/><path d="M10 9h12M10 23h12" stroke="#f2d3a7" stroke-width="1.2"/></svg>`,
     ironBodyPill: `<svg viewBox="0 0 32 32"><rect x="10" y="7" width="12" height="18" rx="4" fill="#a9d4e6"/><path d="M12 13h8M12 17h8" stroke="#2e5571" stroke-width="1.6"/></svg>`,
     swiftTalisman: `<svg viewBox="0 0 32 32"><path d="M5 18c5-6 12-8 22-7-4 5-11 9-20 10z" fill="#e9f2ff"/><path d="M7 21c6-1 12-4 17-9" stroke="#7aa8d6" stroke-width="1.5"/></svg>`,
+    koiFish: `<svg viewBox="0 0 32 32"><path d="M7 16c3-5 9-7 15-5 2 1 3 2 4 5-1 3-2 4-4 5-6 2-12 0-15-5z" fill="#ff9a7a"/><circle cx="20" cy="14" r="1.2" fill="#1b1f2b"/><path d="M7 16l-4-3v6z" fill="#ffc3aa"/></svg>`,
+    koiNecklace: `<svg viewBox="0 0 32 32"><path d="M8 10c2-4 5-6 8-6s6 2 8 6" stroke="#f6d78a" stroke-width="2" fill="none"/><circle cx="16" cy="19" r="5" fill="#8fd9ff"/><path d="M13 19h6" stroke="#2f6280" stroke-width="1.5"/></svg>`,
     default: `<svg viewBox="0 0 32 32"><rect x="8" y="8" width="16" height="16" rx="4" fill="#98a7c8"/></svg>`
 };
 
@@ -2197,10 +2249,12 @@ function itemGroupLabel(itemId, def = ITEM_DEFS[itemId] || {}) {
     if (itemId === "spiritStone" || itemId === "demonCore") return "货币";
     if (itemId === "chestSmall" || itemId === "chestMedium" || itemId === "chestLarge") return "宝箱";
     if (def.usable) return "消耗品";
+    if ((def.category || "").includes("道具") || (def.category || "").includes("符咒")) return "消耗品";
     const slot = ITEM_EQUIP_SLOT[itemId];
     if (slot === "weaponMain" || slot === "weaponOff") return "武器";
     if (slot === "armor") return "防具";
-    if (slot === "artifact" || slot === "trinket") return "饰品";
+    if (slot === "artifact" || slot === "necklace" || slot === "ring" || slot === "earring") return "饰品";
+    if (slot === "shoes") return "防具";
     if ((def.category || "").includes("关键")) return "关键道具";
     return "材料";
 }
@@ -2375,7 +2429,9 @@ const STORY_CHAPTERS = [
 const WORLD_EVENT_DEFS = [
     { id: "spirit_tide", label: "灵潮涌动", durationMs: 180000, effects: { cultivationMul: 0.35, dropMul: 0.12 } },
     { id: "beast_rush", label: "兽潮躁动", durationMs: 150000, effects: { monsterSpawnAdd: 0.15, monsterDamageMul: 0.12, dropMul: 0.2 } },
-    { id: "market_fair", label: "云集坊市", durationMs: 180000, effects: { shopDiscount: 0.2, dropMul: 0.08 } }
+    { id: "market_fair", label: "云集坊市", durationMs: 180000, effects: { shopDiscount: 0.2, dropMul: 0.08 } },
+    { id: "koi_blessing", label: "锦鲤赐福", durationMs: 180000, effects: { cultivationMul: 0.5 } },
+    { id: "tiandao_project", label: "天道工程增益", durationMs: 300000, effects: { cultivationMul: 0.6, dropMul: 0.1 } }
 ];
 const AUTO_REGEN_INTERVAL_MS = 5000;
 
@@ -2512,9 +2568,13 @@ const ITEM_USAGE_HINTS = {
     spiritBlade: "稀有主手。攻击强于前期武器并附少量吸血。",
     soulRobe: "史诗法衣。兼顾防御、闪避与自动回血。",
     qilinRing: "稀有饰件。提升气运并补充闪避。",
+    skyEarring: "稀有耳饰。提升命中、闪避与少量气运。",
+    cloudBoots: "稀有鞋履。补充防御并提升闪避生存。",
     warDrum: "史诗法器。强化攻击、防御与整体战斗节奏。",
     ironBodyPill: "战斗增益药。短时提高防御，提升容错。",
-    swiftTalisman: "战斗增益符。短时提升命中与闪避。"
+    swiftTalisman: "战斗增益符。短时提升命中与闪避。",
+    koiFish: "可右键放生，随机获得功德并有概率触发世界修炼增益事件。",
+    koiNecklace: "功德兑换饰件。佩戴后死亡时有极低概率满血逆转，可强化至+20。"
 };
 const CHEST_LOOT_TABLES = {
     chestSmall: [
@@ -2559,7 +2619,8 @@ const BUILDING_TYPES = [
     { id: "trainingRoom", label: "悟道室", icon: "🕯", buildCost: { spiritStone: 34, wood: 5, herb: 5 }, upgradeCost: { spiritStone: 26, wood: 4, herb: 4 }, effect: "消耗灵石促生灵草，打坐经验 +8%/级" },
     { id: "skyArray", label: "天罡阵", icon: "⚚", buildCost: { spiritStone: 56, wood: 6, herb: 8, rareCrystal: 1 }, upgradeCost: { spiritStone: 42, wood: 5, herb: 5, rareCrystal: 1 }, effect: "战斗攻击 +6%/级，掉落倍率 +4%/级" },
     { id: "earthArray", label: "玄武阵", icon: "🜃", buildCost: { spiritStone: 52, wood: 7, herb: 6, rareCrystal: 1 }, upgradeCost: { spiritStone: 38, wood: 5, herb: 5, rareCrystal: 1 }, effect: "战斗防御 +6%/级，自动用药治疗 +5%/级" },
-    { id: "furyArray", label: "烈魄阵", icon: "✹", buildCost: { spiritStone: 64, wood: 6, herb: 10, rareCrystal: 2 }, upgradeCost: { spiritStone: 48, wood: 5, herb: 7, rareCrystal: 1 }, effect: "暴击率 +2%/级，暴击伤害 +8%/级" }
+    { id: "furyArray", label: "烈魄阵", icon: "✹", buildCost: { spiritStone: 64, wood: 6, herb: 10, rareCrystal: 2 }, upgradeCost: { spiritStone: 48, wood: 5, herb: 7, rareCrystal: 1 }, effect: "暴击率 +2%/级，暴击伤害 +8%/级" },
+    { id: "gatherSpiritArray", label: "聚灵阵", icon: "☯", buildCost: { spiritStone: 58, wood: 5, herb: 12, rareCrystal: 2 }, upgradeCost: { spiritStone: 44, wood: 4, herb: 8, rareCrystal: 1 }, effect: "修炼效率 +8%/级，打坐经验 +4%/级" }
 ];
 
 let avatarX = HOME_X;
@@ -2636,6 +2697,11 @@ let nextBattleAvailableAtMs = 0;
 let hoveredMapCellEl = null;
 let bossModeActive = false;
 let bossModePrevZoomLevel = 2;
+let meritPoints = 0;
+let koiWindowStartMs = 0;
+let koiWindowTarget = 0;
+let koiWindowDropped = 0;
+let worldProjectProgress = 0;
 let injuryDebuffUntilMs = 0;
 let ironBodyBuffUntilMs = 0;
 let swiftTalismanBuffUntilMs = 0;
@@ -2674,24 +2740,28 @@ let inSimulationTick = false;
 let deferredRenderInTick = false;
 let lastCultivationUiUpdateMs = -1;
 let simulationTimer = 0;
-const equipmentEnhanceLevels = { sword: 0, bow: 0, shield: 0, artifact: 0, thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, warDrum: 0 };
+const equipmentEnhanceLevels = { sword: 0, bow: 0, shield: 0, artifact: 0, thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, skyEarring: 0, cloudBoots: 0, warDrum: 0, koiNecklace: 0 };
 
 const avatarInventory = {
     spiritStone: 0, herb: 0, wood: 0, rareCrystal: 0, demonCore: 0,
     spiritPill: 0, healingSalve: 0, bloodPill: 0, wardCharm: 0, focusCharm: 0, baitFlag: 0, coreElixir: 0, starShard: 0, ascendSeal: 0,
     ironBodyPill: 0, swiftTalisman: 0,
     chestSmall: 0, chestMedium: 0, chestLarge: 0,
-    thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, warDrum: 0
+    thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, skyEarring: 0, cloudBoots: 0, warDrum: 0, koiNecklace: 0, koiFish: 0
 };
 const homeInventory = {
     spiritStone: 156, herb: 11, wood: 0, rareCrystal: 0, demonCore: 0,
     spiritPill: 0, healingSalve: 0, bloodPill: 0, wardCharm: 0, focusCharm: 0, baitFlag: 0, coreElixir: 0, starShard: 0, ascendSeal: 0,
     ironBodyPill: 0, swiftTalisman: 0,
     chestSmall: 0, chestMedium: 0, chestLarge: 0,
-    thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, warDrum: 0
+    thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, skyEarring: 0, cloudBoots: 0, warDrum: 0, koiNecklace: 0, koiFish: 0
 };
-const equipmentInventory = { sword: 0, bow: 0, shield: 0, artifact: 0, thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, warDrum: 0 };
-const equippedSlots = { weaponMain: "sword", weaponOff: "bow", armor: "shield", artifact: "artifact", trinket: null };
+const equipmentInventory = { sword: 0, bow: 0, shield: 0, artifact: 0, thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, skyEarring: 0, cloudBoots: 0, warDrum: 0, koiNecklace: 0 };
+const equippedSlots = { weaponMain: "sword", weaponOff: "bow", armor: "shield", artifact: "artifact", necklace: null, ring: null, earring: null, shoes: null };
+const equippedSlotInstances = { weaponMain: null, weaponOff: null, armor: null, artifact: null, necklace: null, ring: null, earring: null, shoes: null };
+let equipInstanceSeq = 1;
+const equipInstances = [];
+let equipExpandItemId = "";
 const town = { prosperity: 1, storageCap: 260 };
 const sharedStats = {
     body: 10,
@@ -2902,6 +2972,9 @@ const socialCloseBtn = document.getElementById("socialCloseBtn");
 const socialSummaryEl = document.getElementById("socialSummary");
 const newbieGuideSummaryEl = document.getElementById("newbieGuideSummary");
 const newbieGuideClaimBtn = document.getElementById("newbieGuideClaimBtn");
+const meritSummaryEl = document.getElementById("meritSummary");
+const redeemKoiNecklaceBtn = document.getElementById("redeemKoiNecklaceBtn");
+const donateMeritBtn = document.getElementById("donateMeritBtn");
 const forceMonsterToggle = document.getElementById("forceMonsterToggle");
 const fixedDropToggle = document.getElementById("fixedDropToggle");
 const debugMonsterSelect = document.getElementById("debugMonsterSelect");
@@ -3237,6 +3310,7 @@ function getBuildingBonuses() {
     let battleCritRate = 0;
     let battleCritDmgMul = 0;
     let battleHealMul = 0;
+    let cultivationMul = 0;
 
     homeBuildingMap.forEach((building) => {
         const lvl = building.level || 1;
@@ -3256,6 +3330,10 @@ function getBuildingBonuses() {
             battleCritRate += 0.02 * lvl;
             battleCritDmgMul += 0.08 * lvl;
         }
+        if (building.type === "gatherSpiritArray") {
+            cultivationMul += 0.08 * lvl;
+            meditateExp += 0.04 * lvl;
+        }
     });
     return {
         meditateSpeed,
@@ -3267,7 +3345,8 @@ function getBuildingBonuses() {
         battleDropMul: Math.min(0.5, battleDropMul),
         battleCritRate: Math.min(0.25, battleCritRate),
         battleCritDmgMul: Math.min(0.8, battleCritDmgMul),
-        battleHealMul: Math.min(0.55, battleHealMul)
+        battleHealMul: Math.min(0.55, battleHealMul),
+        cultivationMul: Math.min(0.65, cultivationMul)
     };
 }
 
@@ -3302,8 +3381,14 @@ function applyHomeCost(cost) {
 }
 
 function applyHomeGain(gain) {
+    ensureEquipInstancesBootstrapped();
     Object.entries(gain || {}).forEach(([key, amount]) => {
-        homeInventory[key] = (homeInventory[key] || 0) + amount;
+        if (isEquipItem(key)) {
+            for (let i = 0; i < amount; i++) createEquipInstance(key, "home", 0);
+            syncEquipCountsToBags();
+        } else {
+            homeInventory[key] = (homeInventory[key] || 0) + amount;
+        }
         if (amount > 0 && ITEM_DEFS[key]) discoveredItemSet.add(key);
     });
 }
@@ -3357,11 +3442,13 @@ function getBodyCultivationExpNeed(level) {
 
 function getCultivationRateMultiplier() {
     const eventMul = getWorldEventEffects().cultivationMul || 0;
+    const bonuses = getBuildingBonuses();
     const base = (simulationTimeMs < cultivationBuffUntilMs ? 1.8 : 1) * (1 + eventMul);
     const statBonus = 1 + Math.min(0.55, sharedStats.mind * 0.01 + sharedStats.spirit * 0.007);
     const buildingBonus = 1 + Math.min(0.45, countBuildingsByType("trainingRoom") * 0.06 + countBuildingsByType("herbGarden") * 0.03);
     const arrayBonus = 1 + Math.min(0.2, countBuildingsByType("skyArray") * 0.02 + countBuildingsByType("furyArray") * 0.015);
-    return base * statBonus * buildingBonus * arrayBonus;
+    const gatherArrayBonus = 1 + (bonuses.cultivationMul || 0);
+    return base * statBonus * buildingBonus * arrayBonus * gatherArrayBonus;
 }
 
 function gainCultivationExp(expGain, reason = "修炼") {
@@ -3496,12 +3583,15 @@ function allocSharedStat(statKey) {
 }
 
 function getEquipmentBonus() {
+    ensureEquipInstancesBootstrapped();
     const bonus = { atk: 0, def: 0, hit: 0, dodge: 0, luck: 0, lifesteal: 0, regen: 0 };
-    Object.values(equippedSlots).forEach((itemId) => {
-        const def = ITEM_DEFS[itemId];
+    Object.values(equippedSlotInstances).forEach((uid) => {
+        const inst = uid ? findEquipInstance(uid) : null;
+        if (!inst) return;
+        const def = ITEM_DEFS[inst.itemId];
         if (!def) return;
         const cfg = def.bonus || {};
-        const enhanceMul = 1 + (equipmentEnhanceLevels[itemId] || 0) * 0.12;
+        const enhanceMul = 1 + (inst.enhance || 0) * 0.12;
         bonus.atk += (cfg.atk || 0) * enhanceMul;
         bonus.def += (cfg.def || 0) * enhanceMul;
         bonus.hit += (cfg.hit || 0) * enhanceMul;
@@ -3517,45 +3607,66 @@ function getEquipmentBonus() {
     return bonus;
 }
 
-function getEnhanceCost(itemId) {
-    const level = equipmentEnhanceLevels[itemId] || 0;
+function getEnhanceCost(itemId, level = 0) {
+    if (itemId === "koiNecklace") {
+        return {
+            gold: 0,
+            spiritStone: 18 + level * 6,
+            demonCore: Math.floor(level / 4),
+            rareCrystal: 1 + Math.floor(level / 3),
+            merit: 16 + level * 12
+        };
+    }
     const rarity = ITEM_DEFS[itemId]?.rarity || "common";
-    const rarityMul = rarity === "epic" ? 2.05 : rarity === "rare" ? 1.62 : rarity === "uncommon" ? 1.28 : 1;
-    const gold = Math.floor((30 + level * 20 + level * level * 3) * rarityMul);
-    const spiritStone = Math.max(6, Math.floor((8 + level * 6) * rarityMul));
-    const demonCore = rarity === "epic" ? Math.max(1, Math.floor((level + 1) / 2)) : level >= 4 ? 1 : 0;
-    const rareCrystal = rarity === "epic" ? Math.max(1, Math.floor((level + 2) / 3)) : rarity === "rare" && level >= 6 ? 1 : 0;
-    return { gold, spiritStone, demonCore, rareCrystal };
+    return SimpleWorldEquipCore.calcEnhanceCost(rarity, level);
 }
 
-function canAffordEnhance(itemId) {
-    const cost = getEnhanceCost(itemId);
+function canAffordEnhance(itemId, level = 0) {
+    const cost = getEnhanceCost(itemId, level);
     return goldCoins >= cost.gold
         && homeInventory.spiritStone >= cost.spiritStone
         && homeInventory.demonCore >= cost.demonCore
-        && homeInventory.rareCrystal >= cost.rareCrystal;
+        && homeInventory.rareCrystal >= cost.rareCrystal
+        && meritPoints >= (cost.merit || 0);
 }
 
-function enhanceEquipment(itemId) {
-    const ownedCount = (equipmentInventory[itemId] || 0) + (Object.values(equippedSlots).includes(itemId) ? 1 : 0);
-    if (ownedCount <= 0) return false;
-    const level = equipmentEnhanceLevels[itemId] || 0;
-    if (level >= 10) {
-        addLog(`强化失败：${ITEM_DEFS[itemId]?.label || itemId} 已达 +10`);
+function pickEnhanceTargetInstance(itemId, level = null) {
+    ensureEquipInstancesBootstrapped();
+    const candidates = equipInstances.filter((it) => it.itemId === itemId && (it.location === "avatar" || it.location === "home" || it.location === "equipped"));
+    if (!candidates.length) return null;
+    const sameLevel = level === null ? candidates : candidates.filter((it) => it.enhance === level);
+    const pool = sameLevel.length ? sameLevel : candidates;
+    pool.sort((a, b) => (a.enhance - b.enhance) || a.uid.localeCompare(b.uid));
+    return pool[0];
+}
+
+function enhanceEquipment(itemId, targetLevel = null) {
+    const target = pickEnhanceTargetInstance(itemId, targetLevel);
+    if (!target) return false;
+    const level = target.enhance || 0;
+    const maxLevel = itemId === "koiNecklace" ? 20 : 10;
+    if (level >= maxLevel) {
+        addLog(`强化失败：${ITEM_DEFS[itemId]?.label || itemId} 已达 +${maxLevel}`);
         return false;
     }
-    const cost = getEnhanceCost(itemId);
-    if (!canAffordEnhance(itemId)) {
-        addLog(`强化失败：材料不足（需金币${cost.gold}/灵石${cost.spiritStone}/妖丹${cost.demonCore}/异晶${cost.rareCrystal}）`);
+    const cost = getEnhanceCost(itemId, level);
+    const affordable = goldCoins >= cost.gold
+        && homeInventory.spiritStone >= cost.spiritStone
+        && homeInventory.demonCore >= cost.demonCore
+        && homeInventory.rareCrystal >= cost.rareCrystal;
+    if (!affordable) {
+        addLog(`强化失败：材料不足（需金币${cost.gold}/灵石${cost.spiritStone}/妖丹${cost.demonCore}/异晶${cost.rareCrystal}${cost.merit ? `/功德${cost.merit}` : ""}）`);
         return false;
     }
     goldCoins -= cost.gold;
     homeInventory.spiritStone -= cost.spiritStone;
     homeInventory.demonCore -= cost.demonCore;
     homeInventory.rareCrystal -= cost.rareCrystal;
-    equipmentEnhanceLevels[itemId] = level + 1;
+    meritPoints -= (cost.merit || 0);
+    target.enhance = level + 1;
     newbieGuideFlags.enhancedOnce = true;
-    addLog(`强化成功：${ITEM_DEFS[itemId]?.label || itemId} +${equipmentEnhanceLevels[itemId]}`);
+    addLog(`强化成功：${ITEM_DEFS[itemId]?.label || itemId} +${target.enhance}`);
+    syncEquipCountsToBags();
     return true;
 }
 
@@ -3668,10 +3779,89 @@ function rollWorldEvent() {
     if (worldEventId && simulationTimeMs < worldEventUntilMs) return;
     const roll = (simpleHash(dayCount + Math.floor(simulationTimeMs / 1000), gatherCount + dayCombatWins) % 1000) / 1000;
     if (roll > 0.42) return;
-    const def = WORLD_EVENT_DEFS[simpleHash(dayCount + gatherCount, Math.floor(simulationTimeMs / 5000)) % WORLD_EVENT_DEFS.length];
+    const randomPool = WORLD_EVENT_DEFS.filter((e) => e.id !== "koi_blessing" && e.id !== "tiandao_project");
+    const def = randomPool[simpleHash(dayCount + gatherCount, Math.floor(simulationTimeMs / 5000)) % randomPool.length];
     worldEventId = def.id;
     worldEventUntilMs = simulationTimeMs + def.durationMs;
     addLog(`世界事件：${def.label}（持续 ${Math.floor(def.durationMs / 1000)} 秒）`);
+}
+
+function refreshKoiWindowIfNeeded() {
+    const hourMs = 3600000;
+    if (simulationTimeMs - koiWindowStartMs >= hourMs || koiWindowTarget <= 0) {
+        koiWindowStartMs = simulationTimeMs;
+        koiWindowTarget = 1 + (simpleHash(dayCount + gatherCount, Math.floor(simulationTimeMs / 1000)) % 5);
+        koiWindowDropped = 0;
+    }
+}
+
+function tryDropKoiFromAction(actionTag = "探索") {
+    refreshKoiWindowIfNeeded();
+    const roll = (simpleHash(dayCount + gatherCount + totalBattleWins, Math.floor(simulationTimeMs / 1000) + koiWindowDropped * 13 + (actionTag === "战斗中" ? 17 : 0)) % 1000) / 1000;
+    const baseChance = actionTag === "战斗中" ? 0.072 : 0.052;
+    if (roll > baseChance) return 0;
+    const qty = 1;
+    avatarInventory.koiFish = (avatarInventory.koiFish || 0) + qty;
+    koiWindowDropped += qty;
+    discoveredItemSet.add("koiFish");
+    addLog(`${actionTag}意外收获：锦鲤 x${qty}（1倍速本小时参考 ${koiWindowTarget} 条，当前 ${koiWindowDropped}）`);
+    return qty;
+}
+
+function triggerKoiWorldEvent() {
+    worldEventId = "koi_blessing";
+    worldEventUntilMs = Math.max(worldEventUntilMs, simulationTimeMs + 180000);
+    addLog("天降祥瑞：锦鲤赐福生效，全世界修炼效率提升");
+}
+
+function releaseKoi(count = 1, source = "avatar") {
+    const bag = getItemContainer(source);
+    if (!bag || (bag.koiFish || 0) <= 0) return false;
+    const n = Math.max(1, Math.min(count, bag.koiFish || 0));
+    bag.koiFish -= n;
+    let meritGain = 0;
+    for (let i = 0; i < n; i++) {
+        meritGain += BALANCE_CONFIG.merit.koiMeritMin + (simpleHash(dayCount + i * 17, Math.floor(simulationTimeMs / 1000) + i * 31) % (BALANCE_CONFIG.merit.koiMeritMax - BALANCE_CONFIG.merit.koiMeritMin + 1));
+    }
+    meritPoints += meritGain;
+    addLog(`放生锦鲤 x${n}，获得功德 ${meritGain}`);
+    const eventRoll = (simpleHash(dayCount + meritPoints, Math.floor(simulationTimeMs / 1000) + n * 19) % 1000) / 1000;
+    if (eventRoll <= BALANCE_CONFIG.merit.koiReleaseEventChance) {
+        triggerKoiWorldEvent();
+    }
+    return true;
+}
+
+function redeemKoiNecklace() {
+    if (meritPoints < BALANCE_CONFIG.merit.koiNecklaceRedeem) {
+        addLog(`功德不足：兑换锦鲤项链需 ${BALANCE_CONFIG.merit.koiNecklaceRedeem}`);
+        return false;
+    }
+    meritPoints -= BALANCE_CONFIG.merit.koiNecklaceRedeem;
+    ensureEquipInstancesBootstrapped();
+    createEquipInstance("koiNecklace", "home", 0);
+    syncEquipCountsToBags();
+    discoveredItemSet.add("koiNecklace");
+    addLog("已兑换：锦鲤项链（可强化至+20）");
+    return true;
+}
+
+function donateMeritToWorldProject(amount = 100) {
+    const n = Math.max(1, Math.floor(amount));
+    if (meritPoints < n) {
+        addLog(`功德不足：捐献 ${n} 失败`);
+        return false;
+    }
+    meritPoints -= n;
+    worldProjectProgress += n;
+    addLog(`已捐献功德 ${n}，天道工程进度 ${worldProjectProgress}/${BALANCE_CONFIG.merit.worldProjectGoal}`);
+    if (worldProjectProgress >= BALANCE_CONFIG.merit.worldProjectGoal) {
+        worldProjectProgress = 0;
+        worldEventId = "tiandao_project";
+        worldEventUntilMs = Math.max(worldEventUntilMs, simulationTimeMs + 300000);
+        addLog("天道工程达成：全服增益开启（修炼效率提升）");
+    }
+    return true;
 }
 
 function weightedPick(table, seedA, seedB) {
@@ -3881,40 +4071,21 @@ function closeEquipSlotMenu() {
 }
 
 function enforceNonStackEquipCounts(showLog = false) {
-    let totalGoldCompensation = 0;
-    Object.keys(ITEM_EQUIP_SLOT).forEach((itemId) => {
-        const equippedCount = Object.values(equippedSlots).includes(itemId) ? 1 : 0;
-        const totalCount = (avatarInventory[itemId] || 0) + (homeInventory[itemId] || 0) + (equipmentInventory[itemId] || 0) + equippedCount;
-        if (totalCount <= 1) return;
-        let surplus = totalCount - 1;
-        const consume = (bag, key) => {
-            if (surplus <= 0) return;
-            const cur = bag[key] || 0;
-            if (cur <= 0) return;
-            const cut = Math.min(cur, surplus);
-            bag[key] = cur - cut;
-            surplus -= cut;
-        };
-        consume(avatarInventory, itemId);
-        consume(homeInventory, itemId);
-        consume(equipmentInventory, itemId);
-        const unitGold = ITEM_DEFS[itemId]?.sellValue || 0;
-        totalGoldCompensation += (totalCount - 1) * unitGold;
-    });
-    if (totalGoldCompensation > 0) {
-        goldCoins += totalGoldCompensation;
-        if (showLog) addLog(`装备不可叠加：多余装备已折算金币 ${totalGoldCompensation}`);
-    }
+    ensureEquipInstancesBootstrapped();
+    syncEquipCountsToBags();
 }
 
 function openEquipSlotMenu(slotId, anchorEvent) {
     if (!equipSlotMenuEl) return;
-    const currentItemId = equippedSlots[slotId];
+    ensureEquipInstancesBootstrapped();
+    const currentUid = equippedSlotInstances[slotId];
+    const currentInst = currentUid ? findEquipInstance(currentUid) : null;
+    const currentItemId = currentInst?.itemId || equippedSlots[slotId];
     const candidates = [];
     Object.keys(ITEM_DEFS).forEach((id) => {
         if (slotForItem(id) !== slotId) return;
-        const bagCount = avatarInventory[id] || 0;
-        const homeCount = homeInventory[id] || 0;
+        const bagCount = listEquipInstances(id, "avatar").length;
+        const homeCount = listEquipInstances(id, "home").length;
         const requiredLevel = getEquipRequiredLevel(id);
         const isLocked = cultivationLevel < requiredLevel;
         if (bagCount > 0) candidates.push({ id, source: "avatar", count: bagCount, from: "背包", requiredLevel, isLocked });
@@ -3922,7 +4093,7 @@ function openEquipSlotMenu(slotId, anchorEvent) {
     });
     equipSlotMenuEl.innerHTML = `
         <div class="small-note" style="margin-bottom:6px;">${EQUIP_SLOT_DEFS.find((s) => s.id === slotId)?.label || slotId}</div>
-        ${currentItemId ? `<div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">${getItemIconMarkup(currentItemId)}<strong>${ITEM_DEFS[currentItemId]?.label || currentItemId}</strong></div>` : `<div class="small-note">当前未装备</div>`}
+        ${currentItemId ? `<div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">${getItemIconMarkup(currentItemId)}<strong>${ITEM_DEFS[currentItemId]?.label || currentItemId}${currentInst ? ` +${currentInst.enhance || 0}` : ""}</strong></div>` : `<div class="small-note">当前未装备</div>`}
         <div class="menu-actions">
             ${currentItemId ? `<button class="mode-btn" data-equip-action="remove" data-slot-id="${slotId}">移除</button>` : ""}
             ${candidates.map((c) => `<button class="mode-btn" data-equip-action="equip" data-slot-id="${slotId}" data-item-id="${c.id}" data-source="${c.source}" ${c.isLocked ? "disabled" : ""}>${c.isLocked ? `需Lv.${c.requiredLevel}` : "装备"} ${ITEM_DEFS[c.id]?.label || c.id}（${c.from} ${c.count}）</button>`).join("") || `<div class="small-note">暂无可装备物品</div>`}
@@ -3947,7 +4118,13 @@ function openChest(source, chestId, count = 1) {
         const pick = weightedPick(table, dayCount * 97 + i * 17 + gatherCount, simulationTimeMs + i * 113);
         const qtyRange = Math.max(0, pick.max - pick.min);
         const qty = pick.min + (simpleHash(dayCount + i * 7, simulationTimeMs + i * 41) % (qtyRange + 1));
-        bag[pick.id] = (bag[pick.id] || 0) + qty;
+        if (isEquipItem(pick.id) && isEquipSource(source)) {
+            ensureEquipInstancesBootstrapped();
+            for (let k = 0; k < qty; k++) createEquipInstance(pick.id, source, 0);
+            syncEquipCountsToBags();
+        } else {
+            bag[pick.id] = (bag[pick.id] || 0) + qty;
+        }
         rewards[pick.id] = (rewards[pick.id] || 0) + qty;
         discoveredItemSet.add(pick.id);
     }
@@ -3966,6 +4143,74 @@ function getItemContainer(source) {
     if (source === "home") return homeInventory;
     if (source === "equipment") return equipmentInventory;
     return null;
+}
+
+function isEquipSource(source) {
+    return source === "avatar" || source === "home" || source === "equipment";
+}
+
+function createEquipInstance(itemId, location = "avatar", enhance = 0) {
+    const inst = SimpleWorldEquipCore.createEquipInstance(itemId, location, enhance, equipInstanceSeq++);
+    equipInstances.push(inst);
+    return inst;
+}
+
+function listEquipInstances(itemId = "", location = "") {
+    return equipInstances.filter((it) => (!itemId || it.itemId === itemId) && (!location || it.location === location));
+}
+
+function findEquipInstance(uid) {
+    return equipInstances.find((it) => it.uid === uid) || null;
+}
+
+function removeEquipInstance(uid) {
+    const idx = equipInstances.findIndex((it) => it.uid === uid);
+    if (idx >= 0) equipInstances.splice(idx, 1);
+}
+
+function syncEquipCountsToBags() {
+    Object.keys(ITEM_EQUIP_SLOT).forEach((id) => {
+        avatarInventory[id] = 0;
+        homeInventory[id] = 0;
+        equipmentInventory[id] = 0;
+    });
+    equipInstances.forEach((it) => {
+        if (it.location === "avatar") avatarInventory[it.itemId] = (avatarInventory[it.itemId] || 0) + 1;
+        else if (it.location === "home") homeInventory[it.itemId] = (homeInventory[it.itemId] || 0) + 1;
+        else if (it.location === "equipment") equipmentInventory[it.itemId] = (equipmentInventory[it.itemId] || 0) + 1;
+    });
+}
+
+function ensureEquipInstancesBootstrapped() {
+    if (equipInstances.length > 0) return;
+    Object.keys(ITEM_EQUIP_SLOT).forEach((itemId) => {
+        const av = avatarInventory[itemId] || 0;
+        const hm = homeInventory[itemId] || 0;
+        const eq = equipmentInventory[itemId] || 0;
+        const total = av + hm + eq;
+        const enhance = equipmentEnhanceLevels[itemId] || 0;
+        for (let i = 0; i < av; i++) createEquipInstance(itemId, "avatar", enhance);
+        for (let i = 0; i < hm; i++) createEquipInstance(itemId, "home", enhance);
+        for (let i = 0; i < eq; i++) createEquipInstance(itemId, "equipment", enhance);
+        if (total === 0 && Object.values(equippedSlots).includes(itemId)) {
+            createEquipInstance(itemId, "equipped", enhance);
+        }
+    });
+    Object.entries(equippedSlots).forEach(([slotId, itemId]) => {
+        if (!itemId) {
+            equippedSlotInstances[slotId] = null;
+            return;
+        }
+        const inst = equipInstances.find((it) => it.itemId === itemId && it.location !== "equipped");
+        if (inst) {
+            inst.location = "equipped";
+            equippedSlotInstances[slotId] = inst.uid;
+        } else {
+            const created = createEquipInstance(itemId, "equipped", equipmentEnhanceLevels[itemId] || 0);
+            equippedSlotInstances[slotId] = created.uid;
+        }
+    });
+    syncEquipCountsToBags();
 }
 
 function isEquipItem(itemId) {
@@ -4053,6 +4298,7 @@ function useItemFrom(source, itemId, count = 1) {
 
 function equipItemFrom(source, itemId, count = 1) {
     if (!isEquipItem(itemId)) return false;
+    ensureEquipInstancesBootstrapped();
     const bag = getItemContainer(source);
     if (!bag || (bag[itemId] || 0) <= 0) return false;
     if (source === "equipment") return false;
@@ -4063,16 +4309,20 @@ function equipItemFrom(source, itemId, count = 1) {
         addLog(`装备失败：${ITEM_DEFS[itemId]?.label || itemId} 需要境界 Lv.${requiredLevel}（当前 Lv.${cultivationLevel}）`);
         return false;
     }
-    if (equippedSlots[slot] === itemId) return false;
-    bag[itemId] -= 1;
-    const prev = equippedSlots[slot];
+    const inst = listEquipInstances(itemId, source).sort((a, b) => (b.enhance || 0) - (a.enhance || 0))[0];
+    if (!inst) return false;
+    const prevUid = equippedSlotInstances[slot];
+    const prevInst = prevUid ? findEquipInstance(prevUid) : null;
     equippedSlots[slot] = itemId;
-    if (prev) {
-        bag[prev] = (bag[prev] || 0) + 1;
+    equippedSlotInstances[slot] = inst.uid;
+    inst.location = "equipped";
+    if (prevInst) {
+        prevInst.location = source;
         addLog(`装备替换：${ITEM_DEFS[itemId]?.label || itemId}`);
     } else {
         addLog(`装备已激活：${ITEM_DEFS[itemId]?.label || itemId}`);
     }
+    syncEquipCountsToBags();
     return true;
 }
 
@@ -4084,7 +4334,14 @@ function recycleItemFrom(source, itemId, count = 1) {
     const value = ITEM_DEFS[itemId]?.sellValue || 0;
     if (value <= 0) return false;
     const recycleCount = Math.max(1, Math.min(count, bag[itemId] || 0));
-    bag[itemId] -= recycleCount;
+    if (isEquipItem(itemId) && isEquipSource(source)) {
+        ensureEquipInstancesBootstrapped();
+        const pool = listEquipInstances(itemId, source).sort((a, b) => (a.enhance || 0) - (b.enhance || 0));
+        for (let i = 0; i < recycleCount && i < pool.length; i++) removeEquipInstance(pool[i].uid);
+        syncEquipCountsToBags();
+    } else {
+        bag[itemId] -= recycleCount;
+    }
     goldCoins += value * recycleCount;
     addLog(`回收 ${ITEM_DEFS[itemId]?.label || itemId} x${recycleCount}，获得金币 ${value * recycleCount}`);
     return true;
@@ -4111,6 +4368,7 @@ function openItemMenu(itemId, source, anchorEvent) {
     itemMenuState = { itemId, source };
     itemMenuQty = 1;
     const canUse = canUseItem(itemId);
+    const canRelease = itemId === "koiFish";
     const requiredLevel = isEquipItem(itemId) ? getEquipRequiredLevel(itemId) : 1;
     const canEquip = isEquipItem(itemId) && source !== "equipment" && cultivationLevel >= requiredLevel;
     const canRecycle = source !== "equipment" && (def.sellValue || 0) > 0 && itemId !== "ascendSeal" && itemId !== "dragonRelic";
@@ -4127,7 +4385,8 @@ function openItemMenu(itemId, source, anchorEvent) {
             <button class="mini-btn" data-item-action="qty-all">全部</button>
         </div>
         <div class="menu-actions">
-            <button class="mode-btn" data-item-action="use" ${canUse ? "" : "disabled"}>${itemId.startsWith("chest") ? "打开选中个" : "使用"}</button>
+            ${canUse ? `<button class="mode-btn" data-item-action="use">${itemId.startsWith("chest") ? "打开选中个" : "使用"}</button>` : ""}
+            ${canRelease ? `<button class="mode-btn" data-item-action="release">放生</button>` : ""}
             ${isEquipItem(itemId) ? `<button class="mode-btn" data-item-action="equip" ${canEquip ? "" : "disabled"}>${canEquip ? "一键装备" : `需 Lv.${requiredLevel}`}</button>` : ""}
             <button class="mode-btn" data-item-action="recycle" ${canRecycle ? "" : "disabled"}>商人回收 ${recycleTotal} 金币</button>
             <button class="mode-btn" data-item-action="codex">打开物品词典</button>
@@ -4386,19 +4645,29 @@ function startBattleWith(monster) {
 function grantBattleLoot(monster) {
     const riskBonus = getRiskRewardBonusAt(monster.x, monster.y);
     const buildBonus = getBuildingBonuses();
-    const eventDropMul = 1 + (getWorldEventEffects().dropMul || 0) + (buildBonus.battleDropMul || 0);
-    const rewardBoost = 1.6;
     const profile = getMonsterDropProfile(monster.type);
     const monsterTier = profile?.tier || 1;
     const isEliteTier = monsterTier >= 4;
     const isBossTier = monsterTier >= 5;
-    const tierMul = monsterTier >= 5 ? 3.2 : monsterTier >= 4 ? 2.4 : monsterTier >= 3 ? 1.6 : 1;
-    const gainStone = Math.floor((8 + monster.level * 4) * (1 + riskBonus * 0.9) * tierMul * eventDropMul * rewardBoost);
-    const gainHerb = monster.level >= 2 ? Math.max(1, Math.floor((riskBonus >= 0.35 ? 2 : 1) * tierMul * rewardBoost)) : 0;
     const eq = getEquipmentBonus();
-    const rareChance = Math.min(BALANCE_CONFIG.drops.rareMax, BALANCE_CONFIG.drops.rareBase + sharedStats.fortune + Math.floor(eq.luck * 0.8));
-    const coreBase = monsterTier >= 3 ? 24 : monsterTier === 2 ? 14 : 8;
-    const coreChance = Math.min(55, coreBase + Math.floor(sharedStats.fortune * 0.6));
+    const coreCtx = SimpleWorldBattleCore.calcLootBase({
+        monsterTier,
+        monsterLevel: monster.level,
+        riskBonus,
+        eventDropMul: getWorldEventEffects().dropMul || 0,
+        arrayDropMul: buildBonus.battleDropMul || 0,
+        luck: eq.luck || 0,
+        fortune: sharedStats.fortune || 0,
+        rareBase: BALANCE_CONFIG.drops.rareBase,
+        rareMax: BALANCE_CONFIG.drops.rareMax
+    });
+    const tierMul = coreCtx.tierMul;
+    const eventDropMul = coreCtx.eventDropMul;
+    const rewardBoost = coreCtx.rewardBoost;
+    const gainStone = coreCtx.gainStone;
+    const gainHerb = coreCtx.gainHerb;
+    const rareChance = coreCtx.rareChance;
+    const coreChance = coreCtx.coreChance;
     const gainRare = monster.level >= 3 && (devFixedDrops || (simpleHash(monster.x + dayCount, monster.y + dayCombatWins) % 100 < (rareChance + Math.floor(riskBonus * 18) + (monsterTier >= 5 ? 22 : monsterTier >= 4 ? 12 : 0)))) ? Math.max(1, Math.floor((tierMul / 1.5) * eventDropMul * rewardBoost)) : 0;
     const gainCore = devFixedDrops ? Math.max(1, Math.floor(tierMul * eventDropMul * rewardBoost)) : (simpleHash(monster.x + dayCount * 3, monster.y + dayCombatWins * 11) % 100 < coreChance ? Math.max(1, Math.floor(tierMul * eventDropMul * rewardBoost)) : 0);
     const chestSmallChance = Math.min(95, BALANCE_CONFIG.drops.chestSmallBase + Math.floor(riskBonus * 42) + monster.level * 7);
@@ -4437,14 +4706,16 @@ function grantBattleLoot(monster) {
     avatarInventory.chestSmall += gainSmallChest;
     avatarInventory.chestMedium += gainMediumChest;
     avatarInventory.chestLarge += gainLargeChest;
-    avatarInventory.thunderBlade += gainThunderBlade;
-    avatarInventory.phoenixBow += gainPhoenixBow;
-    avatarInventory.voidArmor += gainVoidArmor;
-    avatarInventory.spiritBlade += gainSpiritBlade;
-    avatarInventory.soulRobe += gainSoulRobe;
-    avatarInventory.qilinRing += gainQilinRing;
-    avatarInventory.warDrum += gainWarDrum;
-    avatarInventory.dragonRelic += gainDragonRelic;
+    ensureEquipInstancesBootstrapped();
+    for (let i = 0; i < gainThunderBlade; i++) createEquipInstance("thunderBlade", "avatar", 0);
+    for (let i = 0; i < gainPhoenixBow; i++) createEquipInstance("phoenixBow", "avatar", 0);
+    for (let i = 0; i < gainVoidArmor; i++) createEquipInstance("voidArmor", "avatar", 0);
+    for (let i = 0; i < gainSpiritBlade; i++) createEquipInstance("spiritBlade", "avatar", 0);
+    for (let i = 0; i < gainSoulRobe; i++) createEquipInstance("soulRobe", "avatar", 0);
+    for (let i = 0; i < gainQilinRing; i++) createEquipInstance("qilinRing", "avatar", 0);
+    for (let i = 0; i < gainWarDrum; i++) createEquipInstance("warDrum", "avatar", 0);
+    for (let i = 0; i < gainDragonRelic; i++) createEquipInstance("dragonRelic", "avatar", 0);
+    syncEquipCountsToBags();
     discoveredItemSet.add("demonCore");
     if (gainRare > 0) discoveredItemSet.add("rareCrystal");
     if (gainSmallChest > 0) discoveredItemSet.add("chestSmall");
@@ -4463,6 +4734,7 @@ function grantBattleLoot(monster) {
     totalBattleWins += 1;
     if (monsterTier >= 4) totalEliteKills += 1;
     if (monsterTier >= 5) totalBossKills += 1;
+    tryDropKoiFromAction("战斗中");
     const lootText = `灵石×${gainStone}${gainHerb ? ` / 灵草×${gainHerb}` : ""}${gainCore ? ` / 妖丹×${gainCore}` : ""}${gainRare ? ` / 异晶×${gainRare}` : ""}${gainSmallChest ? ` / 小宝箱×${gainSmallChest}` : ""}${gainMediumChest ? ` / 中宝箱×${gainMediumChest}` : ""}${gainLargeChest ? ` / 大宝箱×${gainLargeChest}` : ""}${gainThunderBlade ? " / 雷劫断岳×1" : ""}${gainPhoenixBow ? " / 赤凰长弓×1" : ""}${gainVoidArmor ? " / 太虚战铠×1" : ""}${gainSpiritBlade ? " / 玄霄灵刃×1" : ""}${gainSoulRobe ? " / 玄冥法衣×1" : ""}${gainQilinRing ? " / 麒麟戒×1" : ""}${gainWarDrum ? " / 战魂鼓×1" : ""}${gainDragonRelic ? " / 天龙遗宝×1" : ""}${buildBonus.battleDropMul > 0 ? ` / 阵法加成 +${Math.round(buildBonus.battleDropMul * 100)}%` : ""}`;
     addLog(`战斗胜利：${monster.type}，掉落 ${lootText}`);
     return lootText;
@@ -4643,6 +4915,16 @@ function resolveBattleStep(elapsedMs = 100) {
         }
     }
     if (avatarHp <= 0) {
+        const necklaceId = equippedSlots.necklace;
+        if (necklaceId === "koiNecklace") {
+            const procRoll = (simpleHash(dayCount + totalBattleWins, Math.floor(simulationTimeMs / 1000) + avatarX + avatarY) % 1000) / 1000;
+            if (procRoll < 0.01) {
+                avatarHp = getAvatarMaxHp();
+                addLog("锦鲤项链触发：化身濒死逆转，瞬间满血！");
+                spawnCombatFx("锦鲤护佑 +满血", "heal", 8);
+                return;
+            }
+        }
         const riskBonus = getRiskRewardBonusAt(battleState.x, battleState.y);
         const lossRatio = 0.12 + riskBonus * 0.18;
         const lostStone = Math.floor(avatarInventory.spiritStone * lossRatio);
@@ -4679,28 +4961,7 @@ function resolveBattleStep(elapsedMs = 100) {
         addLog(`化身陨落退回洞府，损失灵石 ${lostStone}${lostCore ? ` / 妖丹 ${lostCore}` : ""}，10分钟后复活`);
         return;
     }
-    if (avatarHp <= Math.floor(getAvatarMaxHp() * (currentBattleTactic().retreatRatio || BALANCE_CONFIG.combat.lowHpRetreatRatio))) {
-        addLog("化身血量偏低，撤离返城");
-        battleSummaryData = {
-            atMs: simulationTimeMs,
-            result: "撤离",
-            enemy: `${battleState.type} Lv.${battleState.level}`,
-            enemyMaxHp: battleState.maxHp,
-            enemyHpEnd: battleState.hp,
-            rounds: battleState.rounds,
-            durationSec: battleMetrics ? Math.max(1, Math.round((simulationTimeMs - battleMetrics.startMs) / 1000)) : battleState.rounds,
-            dealt: battleMetrics ? battleMetrics.dealt : Math.max(0, battleState.maxHp - battleState.hp),
-            taken: battleMetrics ? battleMetrics.taken : Math.max(0, getAvatarMaxHp() - avatarHp),
-            crits: battleMetrics ? battleMetrics.crits : 0,
-            healed: battleMetrics ? battleMetrics.heals : 0,
-            loot: "无结算掉落"
-        };
-        battleMetrics = null;
-        autoObjective = "return_home";
-        battleState = null;
-        nextBattleAvailableAtMs = simulationTimeMs + BATTLE_GAP_CD_MS;
-        return;
-    }
+    // 设计调整：战斗不可主动撤离，直到胜利或化身死亡。
 }
 
 function getRealmName(level = cultivationLevel) {
@@ -4928,8 +5189,10 @@ function updateNewbieGuidePanel() {
 }
 
 function totalInventoryLoad() {
+    ensureEquipInstancesBootstrapped();
+    const equipLoad = equipInstances.filter((it) => it.location === "avatar").length * 2;
     return avatarInventory.spiritStone + avatarInventory.herb + avatarInventory.wood + avatarInventory.demonCore * 2 + avatarInventory.rareCrystal * 4 +
-        avatarInventory.chestSmall + avatarInventory.chestMedium * 2 + avatarInventory.chestLarge * 3;
+        avatarInventory.chestSmall + avatarInventory.chestMedium * 2 + avatarInventory.chestLarge * 3 + equipLoad;
 }
 
 function distanceToHome() {
@@ -5064,6 +5327,7 @@ function handleBloodPillResupplyAtHome() {
 }
 
 function depositAvatarInventoryToHome() {
+    ensureEquipInstancesBootstrapped();
     const moved = [];
     Object.keys(avatarInventory).forEach((key) => {
         const amount = avatarInventory[key];
@@ -5079,6 +5343,12 @@ function depositAvatarInventoryToHome() {
         updateSidePanels();
         updateStatus();
         updateMovementStatus();
+    }
+    const movedEquip = equipInstances.filter((it) => it.location === "avatar");
+    if (movedEquip.length) {
+        movedEquip.forEach((it) => { it.location = "home"; });
+        syncEquipCountsToBags();
+        addLog(`装备已入库：${movedEquip.length} 件`);
     }
     avatarHp = getAvatarMaxHp();
     avatarMp = getAvatarMaxMp();
@@ -5339,6 +5609,7 @@ function finishGathering() {
 
     if (amount > 0) {
         addLog(`采集完成，获得 ${RESOURCE_META[resourceKey].label} ×${amount}（热度${heat.toFixed(1)}）`);
+        tryDropKoiFromAction("采集中");
     }
     if (shouldReturnHome()) {
         autoObjective = "return_home";
@@ -5610,8 +5881,8 @@ function openBuildPanel(wx, wy) {
             </div>
         `;
     } else {
-        const normalList = BUILDING_TYPES.filter((item) => !["none", "skyArray", "earthArray", "furyArray"].includes(item.id));
-        const arrayList = BUILDING_TYPES.filter((item) => ["skyArray", "earthArray", "furyArray"].includes(item.id));
+        const normalList = BUILDING_TYPES.filter((item) => item.id !== "none" && !item.id.includes("Array"));
+        const arrayList = BUILDING_TYPES.filter((item) => item.id.includes("Array"));
         html += `<div class="build-meta" style="margin:6px 0 4px;"><strong>基础建筑</strong></div>`;
         for (const conf of normalList) {
             const buildCost = getScaledCost(conf.buildCost, 1, 1, "build");
@@ -5629,7 +5900,7 @@ function openBuildPanel(wx, wy) {
                 </div>
             `;
         }
-        html += `<div class="build-meta" style="margin:8px 0 4px;"><strong>战斗阵法（新增）</strong></div>`;
+        html += `<div class="build-meta" style="margin:8px 0 4px;"><strong>阵法（战斗 / 修炼）</strong></div>`;
         for (const conf of arrayList) {
             const buildCost = getScaledCost(conf.buildCost, 3, 1, "build");
             const canBuild = canAffordCost(buildCost);
@@ -5910,6 +6181,7 @@ function updateStatus() {
         在线时长: ${Math.floor(avatarOnlineAccumMs / 3600000)}h ${Math.floor((avatarOnlineAccumMs % 3600000) / 60000)}m / 12h（${avatarSessionExpired ? "已到上限，需重新登录" : "正常"}）<br>
         复活状态: ${avatarHp > 0 ? "正常" : `冷却中（剩余 ${Math.max(0, Math.ceil((avatarReviveUntilMs - simulationTimeMs) / 1000))}s）`}<br>
         金币: ${goldCoins}<br>
+        功德: ${meritPoints}<br>
         战斗胜场: ${dayCombatWins}<br>
         战斗策略: ${currentBattleTactic().label}（聚灵丹阈值 ${Math.round(autoUsePillRatio * 100)}% / 回春散阈值 ${Math.round(autoUseSalveRatio * 100)}%）<br>
         战斗冷却: ${battleState ? "进行中" : `${Math.max(0, Math.ceil((nextBattleAvailableAtMs - simulationTimeMs) / 1000))}s`}<br>
@@ -6152,13 +6424,17 @@ function updateSidePanels() {
     const allStorageSlots = [
         ...Object.keys(homeInventory).map((id) => ({ id, ...(ITEM_DEFS[id] || { label: id, rarity: "common", source: "未知" }), detail: getItemUsageText(id), count: homeInventory[id] || 0 }))
     ].filter((item) => item.count > 0);
+    ensureEquipInstancesBootstrapped();
     const equipSlots = EQUIP_SLOT_DEFS.map((slot) => {
-        const itemId = equippedSlots[slot.id];
+        const uid = equippedSlotInstances[slot.id];
+        const inst = uid ? findEquipInstance(uid) : null;
+        const itemId = inst?.itemId || equippedSlots[slot.id];
         return {
             slotId: slot.id,
             slotLabel: slot.label,
             id: itemId,
             count: itemId ? 1 : 0,
+            enhance: inst?.enhance || 0,
             ...(itemId ? ITEM_DEFS[itemId] : { label: "空槽", rarity: "common", source: "未装备" })
         };
     });
@@ -6190,7 +6466,7 @@ function updateSidePanels() {
             <span class="pill">背包 ${totalLoad}/${avatarBagCap}</span>
             <span class="pill">仓储 ${storageLoad}/${town.storageCap}</span>
             <span class="pill">效率 x${getCultivationRateMultiplier().toFixed(1)}</span>
-            <span class="pill">阵法 攻+${Math.round((b.battleAtkMul || 0) * 100)}% 防+${Math.round((b.battleDefMul || 0) * 100)}% 掉落+${Math.round((b.battleDropMul || 0) * 100)}%</span>
+            <span class="pill">阵法 攻+${Math.round((b.battleAtkMul || 0) * 100)}% 防+${Math.round((b.battleDefMul || 0) * 100)}% 掉落+${Math.round((b.battleDropMul || 0) * 100)}% 修炼+${Math.round((b.cultivationMul || 0) * 100)}%</span>
         </div>
         <div class="small-note" style="margin-bottom:6px;">
             近10分钟净增：${trend ? `灵石 ${trend.spiritStone >= 0 ? "+" : ""}${trend.spiritStone} / 灵草 ${trend.herb >= 0 ? "+" : ""}${trend.herb} / 灵木 ${trend.wood >= 0 ? "+" : ""}${trend.wood} / 异晶 ${trend.rareCrystal >= 0 ? "+" : ""}${trend.rareCrystal} / 妖丹 ${trend.demonCore >= 0 ? "+" : ""}${trend.demonCore} / 金币 ${trend.goldCoins >= 0 ? "+" : ""}${trend.goldCoins}` : "数据采集中..."}
@@ -6216,16 +6492,19 @@ function updateSidePanels() {
                 </div>
                 <div class="equip-board">
                     ${equipSlots.map((slot) => `
-                        <div class="equip-slot rarity-${slot.rarity || "common"}" data-equip-slot="${slot.slotId}" ${slot.id ? `data-item-id="${slot.id}" data-item-count="1"` : ""}>
+                        <div class="equip-slot ${slot.id ? `rarity-${slot.rarity || "common"}` : "empty"}" data-equip-slot="${slot.slotId}" ${slot.id ? `data-item-id="${slot.id}" data-item-count="1"` : ""}>
                             <span class="slot-label">${slot.slotLabel}</span>
                             ${slot.id ? getItemIconMarkup(slot.id) : ""}
-                            ${slot.id ? `<span class="slot-item-count">1</span>` : ""}
+                            ${slot.id ? `<span class="slot-item-count">+${slot.enhance || 0}</span>` : ""}
                         </div>
                     `).join("")}
                 </div>
                 ${showEquipAttrDetail ? (() => {
             const eq = getEquipmentBonus();
-            const detail = Object.entries(equippedSlots).filter(([, id]) => id).map(([slotId, id]) => `${EQUIP_SLOT_DEFS.find((s) => s.id === slotId)?.label || slotId}: ${ITEM_DEFS[id]?.label || id}`).join(" / ");
+            const detail = Object.entries(equippedSlots).filter(([, id]) => id).map(([slotId, id]) => {
+                const inst = findEquipInstance(equippedSlotInstances[slotId]);
+                return `${EQUIP_SLOT_DEFS.find((s) => s.id === slotId)?.label || slotId}: ${ITEM_DEFS[id]?.label || id} +${inst?.enhance || 0}`;
+            }).join(" / ");
             return `<div class="small-note" style="margin-top:8px;">总加成：攻击 +${eq.atk.toFixed(1)} / 防御 +${eq.def.toFixed(1)} / 命中 +${(eq.hit * 100).toFixed(1)}% / 闪避 +${(eq.dodge * 100).toFixed(1)}% / 气运 +${eq.luck.toFixed(1)}<br>${detail || "当前无装备"}</div>`;
         })() : ""}
             `
@@ -6340,8 +6619,14 @@ function updateSidePanels() {
         });
     });
 
+    if (meritSummaryEl) {
+        meritSummaryEl.innerHTML = `功德 ${meritPoints} ｜ 锦鲤 ${avatarInventory.koiFish || 0}（1倍速本小时参考 ${Math.max(1, koiWindowTarget || 1)} 条，当前 ${koiWindowDropped}）<br>天道工程 ${worldProjectProgress}/${BALANCE_CONFIG.merit.worldProjectGoal}`;
+    }
+
     const codexItems = Object.entries(ITEM_DEFS).map(([id, def]) => {
-        const owned = (avatarInventory[id] || 0) + (homeInventory[id] || 0) + (equipmentInventory[id] || 0) + (Object.values(equippedSlots).includes(id) ? 1 : 0);
+        const owned = isEquipItem(id)
+            ? equipInstances.filter((it) => it.itemId === id).length
+            : (avatarInventory[id] || 0) + (homeInventory[id] || 0) + (equipmentInventory[id] || 0) + (Object.values(equippedSlots).includes(id) ? 1 : 0);
         const discovered = discoveredItemSet.has(id);
         return { id, ...def, owned, discovered };
     });
@@ -6499,19 +6784,31 @@ function updateSidePanels() {
             if (buyFromShop(id, cost, 1)) renderAll();
         });
     });
-    const equipRows = Object.keys(ITEM_EQUIP_SLOT).filter((id) => (equipmentInventory[id] || 0) > 0 || Object.values(equippedSlots).includes(id)).map((id) => {
-        const level = equipmentEnhanceLevels[id] || 0;
-        const cost = getEnhanceCost(id);
-        const canEnhance = level < 10 && canAffordEnhance(id);
-        const costLine = `金币 ${cost.gold} / 灵石 ${cost.spiritStone}${cost.demonCore ? ` / 妖丹 ${cost.demonCore}` : ""}${cost.rareCrystal ? ` / 异晶 ${cost.rareCrystal}` : ""}`;
+    ensureEquipInstancesBootstrapped();
+    const equipRows = Object.keys(ITEM_EQUIP_SLOT).map((id) => {
+        const all = equipInstances.filter((it) => it.itemId === id);
+        if (!all.length) return "";
+        const levelGroups = SimpleWorldEquipCore.groupInstancesByLevel(equipInstances, id);
+        const sortedLv = Array.from(levelGroups.keys()).sort((a, b) => b - a);
+        const topLv = sortedLv[0] || 0;
+        const collapsedCount = all.length;
+        const expanded = equipExpandItemId === id;
+        const groupRows = sortedLv.map((lv) => {
+            const cnt = levelGroups.get(lv) || 0;
+            const cost = getEnhanceCost(id, lv);
+            const maxLv = id === "koiNecklace" ? 20 : 10;
+            const canEnhance = lv < maxLv && canAffordEnhance(id, lv);
+            const costLine = `金币${cost.gold}/灵石${cost.spiritStone}${cost.demonCore ? `/妖丹${cost.demonCore}` : ""}${cost.rareCrystal ? `/异晶${cost.rareCrystal}` : ""}${cost.merit ? `/功德${cost.merit}` : ""}`;
+            return `<div class="small-note" style="margin-top:4px;">+${lv} ×${cnt} ｜ ${costLine} <button class="mini-btn" data-enhance-item="${id}" data-enhance-level="${lv}" ${canEnhance ? "" : "disabled"}>强化1件</button></div>`;
+        }).join("");
         return `
             <div class="codex-item">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong>${getItemIconMarkup(id)} ${ITEM_DEFS[id]?.label || id} +${level}</strong>
-                    <button class="mini-btn" data-enhance-item="${id}" ${canEnhance ? "" : "disabled"}>强化</button>
+                    <strong>${getItemIconMarkup(id)} ${ITEM_DEFS[id]?.label || id}（共${collapsedCount}）</strong>
+                    <button class="mini-btn" data-enhance-expand="${id}">${expanded ? "收起" : "展开"}</button>
                 </div>
-                <div class="small-note">每级提升该装备加成 12%（上限 +10）</div>
-                <div class="small-note">${costLine}</div>
+                <div class="small-note">最高强化 +${topLv} ｜ 上限 +${id === "koiNecklace" ? 20 : 10} ｜ 同等级已自动堆叠展示</div>
+                ${expanded ? `<div style="margin-top:4px;">${groupRows}</div>` : ""}
             </div>
         `;
     }).join("");
@@ -6522,8 +6819,9 @@ function updateSidePanels() {
     enhanceSummaryEl.querySelectorAll("button[data-enhance-item]").forEach((btn) => {
         btn.addEventListener("click", () => {
             const id = btn.dataset.enhanceItem;
+            const lv = Number(btn.dataset.enhanceLevel);
             if (!id) return;
-            if (enhanceEquipment(id)) {
+            if (enhanceEquipment(id, Number.isFinite(lv) ? lv : null)) {
                 if (battleState) {
                     updateSidePanels();
                     updateStatus();
@@ -6532,6 +6830,13 @@ function updateSidePanels() {
                     renderAll();
                 }
             }
+        });
+    });
+    enhanceSummaryEl.querySelectorAll("button[data-enhance-expand]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const id = btn.dataset.enhanceExpand || "";
+            equipExpandItemId = equipExpandItemId === id ? "" : id;
+            updateSidePanels();
         });
     });
     bindItemHover(resourceSummaryEl);
@@ -6593,6 +6898,7 @@ function scheduleSidePanelRefresh() {
 }
 
 function renderAll(force = false) {
+    ensureEquipInstancesBootstrapped();
     if (inSimulationTick && !force) {
         deferredRenderInTick = true;
         return;
@@ -6710,6 +7016,7 @@ function updateSimulation(ms) {
     try {
     const scaledMs = ms * timeScale;
     simulationTimeMs += scaledMs;
+    refreshKoiWindowIfNeeded();
     if (!avatarSessionExpired) {
         avatarOnlineAccumMs = Math.min(AVATAR_MAX_ONLINE_MS, avatarOnlineAccumMs + scaledMs);
         if (avatarOnlineAccumMs >= AVATAR_MAX_ONLINE_MS) {
@@ -6894,6 +7201,9 @@ function renderGameToText() {
             bloodPillCarryTarget,
             bloodPillReturnThreshold,
             autoBuyBloodPill,
+            meritPoints,
+            worldProjectProgress,
+            koiHourly: { dropped: koiWindowDropped, target: koiWindowTarget },
             injuryDebuffRemainMs: Math.max(0, Math.floor(injuryDebuffUntilMs - simulationTimeMs)),
             ironBodyBuffRemainMs: Math.max(0, Math.floor(ironBodyBuffUntilMs - simulationTimeMs)),
             swiftTalismanBuffRemainMs: Math.max(0, Math.floor(swiftTalismanBuffUntilMs - simulationTimeMs)),
@@ -6965,7 +7275,7 @@ function buildSavePayload() {
         home: { x: HOME_X, y: HOME_Y },
         avatar: { x: avatarX, y: avatarY, hp: avatarHp, mp: avatarMp, reviveUntilMs: avatarReviveUntilMs },
         day: { dayCount, dayOriginX, dayOriginY, dayMoveCount, dayMoveLogBatch, dayGatherUnits, dayStartMs },
-        runtime: { zoomLevel, strategyId, autoObjective, isAutoMode, timeScale, simulationTimeMs, buildingProductionAccumMs, worldEventId, worldEventUntilMs, nextWorldEventRollMs, nextBattleAvailableAtMs },
+        runtime: { zoomLevel, strategyId, autoObjective, isAutoMode, timeScale, simulationTimeMs, buildingProductionAccumMs, worldEventId, worldEventUntilMs, nextWorldEventRollMs, nextBattleAvailableAtMs, koiWindowStartMs, koiWindowTarget, koiWindowDropped, worldProjectProgress },
         combat: { battleTacticId, autoUsePillRatio, autoUseSalveRatio, bloodPillCarryTarget, bloodPillReturnThreshold, autoBuyBloodPill, injuryDebuffUntilMs, ironBodyBuffUntilMs, swiftTalismanBuffUntilMs, lastBattleFrame },
         flags: { devForceMonster, devFixedDrops, baitBoostUntilMs },
         progression: {
@@ -6974,6 +7284,7 @@ function buildSavePayload() {
             meditationExp,
             sharedStats: { ...sharedStats },
             goldCoins,
+            meritPoints,
             bodyCultivationExp,
             bodyCultivationAccumMs,
             avatarOnlineAccumMs,
@@ -6992,6 +7303,9 @@ function buildSavePayload() {
                 totalGatherUnits
             },
             equippedSlots: { ...equippedSlots },
+            equippedSlotInstances: { ...equippedSlotInstances },
+            equipInstances: equipInstances.map((it) => ({ ...it })),
+            equipInstanceSeq,
             equipmentEnhanceLevels: { ...equipmentEnhanceLevels }
         },
         inventories: { avatar: { ...avatarInventory }, home: { ...homeInventory }, equipment: { ...equipmentInventory } },
@@ -7041,6 +7355,10 @@ function applySavePayload(payload) {
     worldEventUntilMs = payload.runtime?.worldEventUntilMs ?? worldEventUntilMs;
     nextWorldEventRollMs = payload.runtime?.nextWorldEventRollMs ?? nextWorldEventRollMs;
     nextBattleAvailableAtMs = payload.runtime?.nextBattleAvailableAtMs ?? nextBattleAvailableAtMs;
+    koiWindowStartMs = payload.runtime?.koiWindowStartMs ?? koiWindowStartMs;
+    koiWindowTarget = payload.runtime?.koiWindowTarget ?? koiWindowTarget;
+    koiWindowDropped = payload.runtime?.koiWindowDropped ?? koiWindowDropped;
+    worldProjectProgress = payload.runtime?.worldProjectProgress ?? worldProjectProgress;
     battleTacticId = payload.combat?.battleTacticId ?? battleTacticId;
     autoUsePillRatio = payload.combat?.autoUsePillRatio ?? autoUsePillRatio;
     autoUseSalveRatio = payload.combat?.autoUseSalveRatio ?? autoUseSalveRatio;
@@ -7058,6 +7376,7 @@ function applySavePayload(payload) {
     meditationLevel = payload.progression?.meditationLevel ?? meditationLevel;
     meditationExp = payload.progression?.meditationExp ?? meditationExp;
     goldCoins = payload.progression?.goldCoins ?? goldCoins;
+    meritPoints = payload.progression?.meritPoints ?? meritPoints;
     bodyCultivationExp = payload.progression?.bodyCultivationExp ?? bodyCultivationExp;
     bodyCultivationAccumMs = payload.progression?.bodyCultivationAccumMs ?? bodyCultivationAccumMs;
     avatarOnlineAccumMs = payload.progression?.avatarOnlineAccumMs ?? avatarOnlineAccumMs;
@@ -7074,7 +7393,40 @@ function applySavePayload(payload) {
     totalBossKills = payload.progression?.social?.totalBossKills ?? totalBossKills;
     totalMoveCount = payload.progression?.social?.totalMoveCount ?? totalMoveCount;
     totalGatherUnits = payload.progression?.social?.totalGatherUnits ?? totalGatherUnits;
-    Object.assign(equippedSlots, payload.progression?.equippedSlots || {});
+    const savedEquippedSlots = payload.progression?.equippedSlots || {};
+    const savedEquippedSlotInstances = payload.progression?.equippedSlotInstances || {};
+    Object.assign(equippedSlots, savedEquippedSlots);
+    Object.assign(equippedSlotInstances, savedEquippedSlotInstances);
+    if (savedEquippedSlots.trinket && !equippedSlots.necklace && !equippedSlots.ring && !equippedSlots.earring) {
+        const oldId = savedEquippedSlots.trinket;
+        if (oldId === "koiNecklace") equippedSlots.necklace = oldId;
+        else if (oldId === "qilinRing") equippedSlots.ring = oldId;
+        else equippedSlots.earring = oldId;
+    }
+    if (savedEquippedSlotInstances.trinket && !equippedSlotInstances.necklace && !equippedSlotInstances.ring && !equippedSlotInstances.earring) {
+        const oldUid = savedEquippedSlotInstances.trinket;
+        const oldId = savedEquippedSlots.trinket;
+        if (oldId === "koiNecklace") equippedSlotInstances.necklace = oldUid;
+        else if (oldId === "qilinRing") equippedSlotInstances.ring = oldUid;
+        else equippedSlotInstances.earring = oldUid;
+    }
+    delete equippedSlots.trinket;
+    delete equippedSlotInstances.trinket;
+    equipInstances.length = 0;
+    (payload.progression?.equipInstances || []).forEach((it) => {
+        if (!it || !it.uid || !it.itemId) return;
+        equipInstances.push({
+            uid: String(it.uid),
+            itemId: String(it.itemId),
+            location: it.location || "home",
+            enhance: Math.max(0, Math.min(it.itemId === "koiNecklace" ? 20 : 10, Number(it.enhance) || 0))
+        });
+    });
+    const seqFromUids = equipInstances.reduce((mx, it) => {
+        const m = /^eq_(\d+)$/.exec(it.uid || "");
+        return m ? Math.max(mx, Number(m[1]) + 1) : mx;
+    }, 1);
+    equipInstanceSeq = Math.max(1, Number(payload.progression?.equipInstanceSeq) || 1, seqFromUids);
     Object.assign(equipmentEnhanceLevels, payload.progression?.equipmentEnhanceLevels || {});
     Object.assign(sharedStats, payload.progression?.sharedStats || {});
     Object.keys(avatarInventory).forEach((k) => { avatarInventory[k] = 0; });
@@ -7083,7 +7435,8 @@ function applySavePayload(payload) {
     Object.assign(avatarInventory, payload.inventories?.avatar || {});
     Object.assign(homeInventory, payload.inventories?.home || {});
     Object.assign(equipmentInventory, payload.inventories?.equipment || {});
-    enforceNonStackEquipCounts(true);
+    ensureEquipInstancesBootstrapped();
+    syncEquipCountsToBags();
     Object.assign(town, payload.town || {});
     rightPanelTab = payload.ui?.rightPanelTab || rightPanelTab;
     resourcePanelTab = payload.ui?.resourcePanelTab || resourcePanelTab;
@@ -7315,6 +7668,18 @@ if (newbieGuideClaimBtn) {
     });
 }
 
+if (redeemKoiNecklaceBtn) {
+    redeemKoiNecklaceBtn.addEventListener("click", () => {
+        if (redeemKoiNecklace()) renderAll();
+    });
+}
+
+if (donateMeritBtn) {
+    donateMeritBtn.addEventListener("click", () => {
+        if (donateMeritToWorldProject(100)) renderAll();
+    });
+}
+
 returnBtn.addEventListener("click", () => {
     if (isBuildFocus) closeBuildPanel();
     releaseExploreTargetReservation();
@@ -7539,6 +7904,16 @@ resourceSummaryEl.addEventListener("click", (evt) => {
     openItemMenu(itemId, source, evt);
 });
 
+resourceSummaryEl.addEventListener("contextmenu", (evt) => {
+    const slot = evt.target.closest(".inv-slot[data-item-id]");
+    if (!slot || !resourceSummaryEl.contains(slot)) return;
+    evt.preventDefault();
+    evt.stopPropagation();
+    const itemId = slot.dataset.itemId;
+    const source = slot.dataset.itemSource || "avatar";
+    openItemMenu(itemId, source, evt);
+});
+
 if (worldSummaryToggleBtn) {
     worldSummaryToggleBtn.addEventListener("click", () => {
         showWorldSummary = !showWorldSummary;
@@ -7586,6 +7961,7 @@ itemMenuEl.addEventListener("click", (e) => {
     }
     let ok = false;
     if (btn.dataset.itemAction === "use") ok = useItemFrom(source, itemId, itemMenuQty);
+    if (btn.dataset.itemAction === "release") ok = releaseKoi(itemMenuQty, source);
     if (btn.dataset.itemAction === "equip") ok = equipItemFrom(source, itemId, 1);
     if (btn.dataset.itemAction === "recycle") ok = recycleItemFrom(source, itemId, itemMenuQty);
     closeItemMenu();
@@ -7607,10 +7983,15 @@ equipSlotMenuEl.addEventListener("click", (e) => {
     const slotId = btn.dataset.slotId;
     if (!slotId) return;
     if (btn.dataset.equipAction === "remove") {
+        ensureEquipInstancesBootstrapped();
         const current = equippedSlots[slotId];
-        if (current) {
-            avatarInventory[current] = (avatarInventory[current] || 0) + 1;
+        const curUid = equippedSlotInstances[slotId];
+        const curInst = curUid ? findEquipInstance(curUid) : null;
+        if (current && curInst) {
+            curInst.location = "avatar";
             equippedSlots[slotId] = null;
+            equippedSlotInstances[slotId] = null;
+            syncEquipCountsToBags();
             addLog(`卸下装备：${ITEM_DEFS[current]?.label || current}`);
             closeEquipSlotMenu();
             renderAll();
