@@ -1768,6 +1768,106 @@
         letter-spacing: 0.3px;
     }
 
+    #event-toast-stack {
+        position: fixed;
+        top: 52px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 120;
+        width: min(560px, calc(100vw - 32px));
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        pointer-events: none;
+    }
+
+    .event-toast {
+        border-radius: 8px;
+        border: 2px solid rgba(146, 176, 255, 0.75);
+        background: rgba(55, 73, 147, 0.9);
+        color: #eef4ff;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+        padding: 8px 12px;
+        line-height: 1.35;
+        text-align: center;
+        opacity: 0;
+        transform: translateY(-8px) scale(0.98);
+        animation: event-toast-in 160ms ease-out forwards;
+    }
+
+    .event-toast.income {
+        background: rgba(56, 78, 162, 0.92);
+        border-color: rgba(163, 188, 255, 0.82);
+    }
+
+    .event-toast.status {
+        background: rgba(44, 106, 135, 0.9);
+        border-color: rgba(136, 227, 255, 0.78);
+    }
+
+    .event-toast.rare {
+        background: linear-gradient(92deg, rgba(102, 56, 148, 0.95), rgba(196, 142, 52, 0.9));
+        border-color: rgba(255, 221, 136, 0.9);
+        box-shadow: 0 0 18px rgba(255, 209, 103, 0.42), 0 10px 28px rgba(0, 0, 0, 0.5);
+        font-weight: 700;
+    }
+
+    .event-toast.task {
+        background: rgba(53, 95, 122, 0.92);
+        border-color: rgba(150, 233, 255, 0.8);
+    }
+
+    .event-toast .t-title {
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 2px;
+    }
+
+    .event-toast .t-body {
+        font-size: 13px;
+        opacity: 0.96;
+    }
+
+    .event-toast.fade-out {
+        animation: event-toast-out 240ms ease-in forwards;
+    }
+
+    @keyframes event-toast-in {
+        from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes event-toast-out {
+        from { opacity: 1; transform: translateY(0) scale(1); }
+        to { opacity: 0; transform: translateY(-6px) scale(0.98); }
+    }
+
+    #battle-panel.collapsed-mode .battle-arena {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    #battle-panel.collapsed-mode #battleSelfCard,
+    #battle-panel.collapsed-mode #battleEnemyCard,
+    #battle-panel.collapsed-mode #battleLogList,
+    #battle-panel.collapsed-mode #battleResultCard {
+        display: none !important;
+    }
+
+    #battle-panel.collapsed-mode #battleTurnBanner {
+        display: none !important;
+    }
+
+    #battle-panel.collapsed-mode #battleRoundResult {
+        margin: 0;
+        font-size: 12px;
+        line-height: 1.35;
+        padding: 6px 8px;
+        border-radius: 6px;
+        background: rgba(22, 32, 50, 0.9);
+        border: 1px solid rgba(108, 140, 190, 0.4);
+    }
+
     @media (max-width: 1280px) {
         .container {
             grid-template-columns: 280px minmax(420px, 1fr) 250px;
@@ -1790,6 +1890,7 @@
         <button id="bossModeBtn" class="mini-btn" title="F9 一键切换工作模式">🧾 工作模式</button>
     </div>
 </header>
+<div id="event-toast-stack" aria-live="polite"></div>
 
 <div class="container">
     <div class="panel left-panel">
@@ -1882,6 +1983,15 @@
         <button id="enhanceBtn" class="control-btn">⚒ 装备强化</button>
         <button id="socialBtn" class="control-btn">🏆 排行榜</button>
         <button id="changelogBtn" class="control-btn">📝 更新日志</button>
+        <div class="card" style="margin:8px 0 0;">
+            <div style="font-size:1.02em; color:#a8d0ff; margin-bottom:6px;">⚙ 设置</div>
+            <label class="small-note" style="display:block; margin:6px 0;">
+                <input id="toastToggle" type="checkbox" checked> 顶部提示框
+            </label>
+            <label class="small-note" style="display:block; margin:6px 0;">
+                <input id="battleCompactToggle" type="checkbox"> 战斗详情折叠到底部
+            </label>
+        </div>
 
         <div class="section-title" style="margin-top:16px;">测试开关</div>
         <label class="small-note" style="display:block; margin:6px 0;">
@@ -2046,6 +2156,7 @@ const BUILDING_PRODUCTION_TICK_MS = 5000;
 const MONSTER_RESPAWN_MS = 45000;
 const AVATAR_REVIVE_COOLDOWN_MS = 600000;
 const BATTLE_GAP_CD_MS = 5000;
+const DAY_DURATION_MS = 15 * 60 * 1000;
 const HOME_HEAL_PER_SEC = 100;
 const HOME_SPAWN_VALIDATE_RADIUS = 4;
 const SAVE_KEY = "simpleworld_save_v2";
@@ -2157,7 +2268,8 @@ const ITEM_DEFS = {
     skyEarring: { label: "凌霄耳坠", icon: "🩵", rarity: "rare", category: "装备", source: "精英掉落", bonus: { hit: 0.02, dodge: 0.02, luck: 2 }, sellValue: 188 },
     cloudBoots: { label: "踏云履", icon: "👢", rarity: "rare", category: "装备", source: "精英/BOSS掉落", bonus: { def: 6, dodge: 0.03 }, sellValue: 196 },
     ironBodyPill: { label: "淬体丹", icon: "🧪", rarity: "uncommon", category: "消耗品", source: "商店 / 战斗掉落", bonus: { def: 2 }, buff: { type: "battle", def: 2, durationMs: 150000 }, sellValue: 20, usable: true },
-    swiftTalisman: { label: "疾风符", icon: "🪶", rarity: "rare", category: "符咒", source: "商店 / 合成 / 战斗掉落", bonus: { dodge: 0.03, hit: 0.01 }, buff: { type: "battle", dodge: 0.03, hit: 0.01, durationMs: 180000 }, sellValue: 34, usable: true }
+    swiftTalisman: { label: "疾风符", icon: "🪶", rarity: "rare", category: "符咒", source: "商店 / 合成 / 战斗掉落", bonus: { dodge: 0.03, hit: 0.01 }, buff: { type: "battle", dodge: 0.03, hit: 0.01, durationMs: 180000 }, sellValue: 34, usable: true },
+    pureSoulCharm: { label: "净魂符", icon: "☯", rarity: "epic", category: "符咒", source: "商店 / 合成 / 战斗掉落", bonus: { hit: 0.01 }, sellValue: 42, usable: true }
     ,koiFish: { label: "锦鲤", icon: "🐟", rarity: "rare", category: "道具", source: "采集 / 战斗随机掉落", sellValue: 1, usable: false }
     ,koiNecklace: { label: "锦鲤项链", icon: "🎏", rarity: "epic", category: "装备", source: "功德兑换", bonus: { luck: 6, dodge: 0.02 }, sellValue: 320 }
 };
@@ -2244,6 +2356,7 @@ const ITEM_ICON_SVG = {
     warDrum: `<svg viewBox="0 0 32 32"><ellipse cx="16" cy="16" rx="8" ry="10" fill="#8f5b3c"/><ellipse cx="16" cy="16" rx="6" ry="8" fill="#c58a61"/><path d="M10 9h12M10 23h12" stroke="#f2d3a7" stroke-width="1.2"/></svg>`,
     ironBodyPill: `<svg viewBox="0 0 32 32"><rect x="10" y="7" width="12" height="18" rx="4" fill="#a9d4e6"/><path d="M12 13h8M12 17h8" stroke="#2e5571" stroke-width="1.6"/></svg>`,
     swiftTalisman: `<svg viewBox="0 0 32 32"><path d="M5 18c5-6 12-8 22-7-4 5-11 9-20 10z" fill="#e9f2ff"/><path d="M7 21c6-1 12-4 17-9" stroke="#7aa8d6" stroke-width="1.5"/></svg>`,
+    pureSoulCharm: `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="10" fill="#d8f6ff"/><path d="M16 7a5 5 0 1 0 0 10a5 5 0 1 1 0 10a10 10 0 1 1 0-20Z" fill="#5ea2d1"/><circle cx="16" cy="11.5" r="1.3" fill="#0f3a59"/><circle cx="16" cy="20.5" r="1.3" fill="#eef8ff"/></svg>`,
     koiFish: `<svg viewBox="0 0 32 32"><path d="M7 16c3-5 9-7 15-5 2 1 3 2 4 5-1 3-2 4-4 5-6 2-12 0-15-5z" fill="#ff9a7a"/><circle cx="20" cy="14" r="1.2" fill="#1b1f2b"/><path d="M7 16l-4-3v6z" fill="#ffc3aa"/></svg>`,
     koiNecklace: `<svg viewBox="0 0 32 32"><path d="M8 10c2-4 5-6 8-6s6 2 8 6" stroke="#f6d78a" stroke-width="2" fill="none"/><circle cx="16" cy="19" r="5" fill="#8fd9ff"/><path d="M13 19h6" stroke="#2f6280" stroke-width="1.5"/></svg>`,
     default: `<svg viewBox="0 0 32 32"><rect x="8" y="8" width="16" height="16" rx="4" fill="#98a7c8"/></svg>`
@@ -2561,6 +2674,14 @@ const CRAFT_RECIPES = [
         use: "提供短时命中与闪避强化"
     },
     {
+        id: "pureSoulCharm",
+        label: "净魂符",
+        tier: 2,
+        out: { pureSoulCharm: 1 },
+        cost: { spiritStone: 30, herb: 2, demonCore: 1 },
+        use: "清除重伤/怪物减损并短时免疫减损"
+    },
+    {
         id: "baitFlag",
         label: "引妖旗",
         tier: 2,
@@ -2642,6 +2763,7 @@ const ITEM_USAGE_HINTS = {
     warDrum: "史诗法器。强化攻击、防御与整体战斗节奏。",
     ironBodyPill: "战斗增益药。短时提高防御，提升容错。",
     swiftTalisman: "战斗增益符。短时提升命中与闪避。",
+    pureSoulCharm: "净化符。清除重伤和怪物减损，并获得短时减损免疫。",
     koiFish: "可右键放生，随机获得功德并有概率触发世界修炼增益事件。",
     koiNecklace: "功德兑换饰件。佩戴后死亡时有极低概率满血逆转，可强化至+20。"
 };
@@ -2766,6 +2888,22 @@ let autoUseSalveRatio = 0.26;
 let bloodPillCarryTarget = 10;
 let bloodPillReturnThreshold = 1;
 let autoBuyBloodPill = true;
+const FIXED_HEAL_VALUES = {
+    spiritPill: 110,
+    bloodPill: 220,
+    healingSalve: 80
+};
+const MONSTER_WEAKEN_SKILL = {
+    damageMul: 0.82,
+    durationMs: 9000,
+    chanceByTier: {
+        1: 0.0,
+        2: 0.08,
+        3: 0.12,
+        4: 0.16,
+        5: 0.2
+    }
+};
 let nextBattleAvailableAtMs = 0;
 let hoveredMapCellEl = null;
 let bossModeActive = false;
@@ -2776,6 +2914,8 @@ let koiWindowTarget = 0;
 let koiWindowDropped = 0;
 let worldProjectProgress = 0;
 let injuryDebuffUntilMs = 0;
+let monsterWeakenUntilMs = 0;
+let monsterWeakenImmuneUntilMs = 0;
 let ironBodyBuffUntilMs = 0;
 let swiftTalismanBuffUntilMs = 0;
 let avatarReviveUntilMs = 0;
@@ -2818,14 +2958,14 @@ const equipmentEnhanceLevels = { sword: 0, bow: 0, shield: 0, artifact: 0, thund
 const avatarInventory = {
     spiritStone: 0, herb: 0, wood: 0, rareCrystal: 0, demonCore: 0,
     spiritPill: 0, healingSalve: 0, bloodPill: 0, wardCharm: 0, focusCharm: 0, baitFlag: 0, coreElixir: 0, starShard: 0, ascendSeal: 0,
-    ironBodyPill: 0, swiftTalisman: 0,
+    ironBodyPill: 0, swiftTalisman: 0, pureSoulCharm: 0,
     chestSmall: 0, chestMedium: 0, chestLarge: 0, bossSummonSigil: 0,
     thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, skyEarring: 0, cloudBoots: 0, warDrum: 0, koiNecklace: 0, koiFish: 0
 };
 const homeInventory = {
     spiritStone: 156, herb: 11, wood: 0, rareCrystal: 0, demonCore: 0,
     spiritPill: 0, healingSalve: 0, bloodPill: 0, wardCharm: 0, focusCharm: 0, baitFlag: 0, coreElixir: 0, starShard: 0, ascendSeal: 0,
-    ironBodyPill: 0, swiftTalisman: 0,
+    ironBodyPill: 0, swiftTalisman: 0, pureSoulCharm: 0,
     chestSmall: 0, chestMedium: 0, chestLarge: 0, bossSummonSigil: 0,
     thunderBlade: 0, phoenixBow: 0, voidArmor: 0, dragonRelic: 0, spiritBlade: 0, soulRobe: 0, qilinRing: 0, skyEarring: 0, cloudBoots: 0, warDrum: 0, koiNecklace: 0, koiFish: 0
 };
@@ -2960,6 +3100,9 @@ const saveBtn = document.getElementById("saveBtn");
 const loadBtn = document.getElementById("loadBtn");
 const compactSaveBtn = document.getElementById("compactSaveBtn");
 const saveSizeInfoEl = document.getElementById("saveSizeInfo");
+const eventToastStackEl = document.getElementById("event-toast-stack");
+const toastToggle = document.getElementById("toastToggle");
+const battleCompactToggle = document.getElementById("battleCompactToggle");
 const rebirthBtn = document.getElementById("rebirthBtn");
 const bagCapInput = document.getElementById("bagCapInput");
 const bagReturnInput = document.getElementById("bagReturnInput");
@@ -3058,6 +3201,32 @@ let itemMenuQty = 1;
 let controlButtonsInited = false;
 let manualMarkedTarget = null;
 let resourceTrendSamples = [];
+let activeToastCount = 0;
+let enableEventToasts = true;
+let battleCompactMode = false;
+
+function pushEventToast(type, title, body = "", durationMs = 2600) {
+    if (!enableEventToasts) return;
+    if (!eventToastStackEl) return;
+    const toast = document.createElement("div");
+    toast.className = `event-toast ${type || "income"}`;
+    toast.innerHTML = `<div class="t-title">${title}</div>${body ? `<div class="t-body">${body}</div>` : ""}`;
+    eventToastStackEl.prepend(toast);
+    activeToastCount += 1;
+    const trimTo = 3;
+    while (eventToastStackEl.children.length > trimTo) {
+        const last = eventToastStackEl.lastElementChild;
+        if (last) last.remove();
+    }
+    const ttl = Math.max(1200, durationMs);
+    setTimeout(() => {
+        toast.classList.add("fade-out");
+        setTimeout(() => {
+            if (toast.parentElement) toast.parentElement.removeChild(toast);
+            activeToastCount = Math.max(0, activeToastCount - 1);
+        }, 260);
+    }, ttl);
+}
 let returnHomeVisitMs = [];
 
 function simpleHash(x, y) {
@@ -3577,10 +3746,10 @@ function getCultivationRateMultiplier() {
     return base * statBonus * buildingBonus * arrayBonus * gatherArrayBonus;
 }
 
-function gainCultivationExp(expGain, reason = "修炼") {
+function gainCultivationExp(expGain, reason = "修炼", emitLog = true) {
     const gain = Math.max(1, Math.floor(expGain));
     bodyCultivationExp += gain;
-    addLog(`${reason}：修为 +${gain}`);
+    if (emitLog) addLog(`${reason}：修为 +${gain}`);
     while (cultivationLevel < CULTIVATION_MAX_LEVEL) {
         const needExp = getBodyCultivationExpNeed(cultivationLevel);
         if (bodyCultivationExp < needExp) break;
@@ -3591,7 +3760,8 @@ function gainCultivationExp(expGain, reason = "修炼") {
         sharedStats.mind += 1;
         sharedStats.body += 1;
         sharedStats.freePoints += 3;
-        addLog(`修为提升：境界达到 Lv.${cultivationLevel} · ${getRealmName()}`);
+        if (emitLog) addLog(`修为提升：境界达到 Lv.${cultivationLevel} · ${getRealmName()}`);
+        pushEventToast("status", `境界突破 · Lv.${cultivationLevel}`, `${getRealmName()}｜属性点 +3`, 3000);
     }
     if (cultivationLevel >= CULTIVATION_MAX_LEVEL) {
         bodyCultivationExp = Math.min(bodyCultivationExp, getBodyCultivationExpNeed(cultivationLevel));
@@ -3604,6 +3774,13 @@ function applyBodyCultivationTick() {
     const mult = getCultivationRateMultiplier();
     const expGain = Math.max(1, Math.floor((3 + Math.floor(sharedStats.mind / 4)) * mult));
     return gainCultivationExp(expGain, "打坐周天结算");
+}
+
+function applyBodyCultivationTickSilent() {
+    if (!isMeditating) return 0;
+    const mult = getCultivationRateMultiplier();
+    const expGain = Math.max(1, Math.floor((3 + Math.floor(sharedStats.mind / 4)) * mult));
+    return gainCultivationExp(expGain, "打坐周天结算", false);
 }
 
 function startMeditation() {
@@ -3625,15 +3802,54 @@ function startMeditation() {
     addLog(`开始打坐，预计 ${Math.ceil(duration / 1000)} 秒`);
 }
 
-function finishMeditation() {
+function finishMeditation(emitLog = true) {
     const bonuses = getBuildingBonuses();
     const mult = getCultivationRateMultiplier();
     const gain = Math.max(1, Math.floor((4 + Math.floor(sharedStats.mind / 4)) * bonuses.meditateExp * mult));
-    gainCultivationExp(gain, "打坐完成");
+    gainCultivationExp(gain, "打坐完成", emitLog);
     if (!isMeditating) return;
     const duration = Math.max(4000, Math.floor(MEDITATE_BASE_MS / bonuses.meditateSpeed));
     meditateTotalMs = duration;
     meditateRemainingMs = duration;
+    return gain;
+}
+
+function applyOfflineMeditationProgress(offlineMs) {
+    if (!isMeditating || offlineMs <= 0) return null;
+    const cappedMs = Math.max(0, Math.min(offlineMs, 24 * 60 * 60 * 1000));
+    let remaining = cappedMs;
+    let gainedExp = 0;
+    let tickCount = 0;
+    let cycleCount = 0;
+    while (remaining > 0) {
+        if (meditateRemainingMs <= 0 || !Number.isFinite(meditateRemainingMs)) {
+            const bonuses = getBuildingBonuses();
+            meditateTotalMs = Math.max(4000, Math.floor(MEDITATE_BASE_MS / bonuses.meditateSpeed));
+            meditateRemainingMs = meditateTotalMs;
+        }
+        const nextTickMs = Math.max(1, BODY_CULTIVATION_TICK_MS - bodyCultivationAccumMs);
+        const nextMeditateMs = Math.max(1, meditateRemainingMs);
+        const step = Math.max(1, Math.min(remaining, nextTickMs, nextMeditateMs));
+        simulationTimeMs += step;
+        bodyCultivationAccumMs += step;
+        meditateRemainingMs = Math.max(0, meditateRemainingMs - step);
+        remaining -= step;
+        while (bodyCultivationAccumMs >= BODY_CULTIVATION_TICK_MS) {
+            bodyCultivationAccumMs -= BODY_CULTIVATION_TICK_MS;
+            gainedExp += applyBodyCultivationTickSilent();
+            tickCount += 1;
+        }
+        if (meditateRemainingMs <= 0) {
+            gainedExp += finishMeditation(false) || 0;
+            cycleCount += 1;
+        }
+    }
+    return {
+        offlineMs: cappedMs,
+        gainedExp,
+        tickCount,
+        cycleCount
+    };
 }
 
 function chunkKeyFromTile(x, y) {
@@ -3887,8 +4103,7 @@ function getAvatarCombatPower() {
 function getAvatarCombatSnapshot() {
     const me = getAvatarCombatPower();
     const eq = getEquipmentBonus();
-    const tactic = currentBattleTactic();
-    const critRate = Math.max(0.03, Math.min(0.55, 0.08 + sharedStats.fortune * 0.006 + tactic.critBonus));
+    const critRate = Math.max(0.03, Math.min(0.55, 0.08 + sharedStats.fortune * 0.006));
     return {
         hp: avatarHp,
         maxHp: getAvatarMaxHp(),
@@ -4387,7 +4602,7 @@ function useItemFrom(source, itemId, count = 1) {
     if (itemId === "spiritPill") {
         bag[itemId] -= useCount;
         if (battleState || avatarHp < getAvatarMaxHp()) {
-            const heal = Math.floor(getAvatarMaxHp() * 0.28) * useCount;
+            const heal = FIXED_HEAL_VALUES.spiritPill * useCount;
             avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
             addLog(`使用聚灵丹 x${useCount}，恢复生命 ${heal}`);
         } else {
@@ -4398,14 +4613,14 @@ function useItemFrom(source, itemId, count = 1) {
     }
     if (itemId === "healingSalve") {
         bag[itemId] -= useCount;
-        const heal = Math.floor(getAvatarMaxHp() * 0.2) * useCount;
+        const heal = FIXED_HEAL_VALUES.healingSalve * useCount;
         avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
         addLog(`使用回春散 x${useCount}，恢复生命 ${heal}`);
         return true;
     }
     if (itemId === "bloodPill") {
         bag[itemId] -= useCount;
-        const heal = Math.floor(getAvatarMaxHp() * 0.36) * useCount;
+        const heal = FIXED_HEAL_VALUES.bloodPill * useCount;
         avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
         addLog(`使用回血丹 x${useCount}，恢复生命 ${heal}`);
         return true;
@@ -4456,6 +4671,14 @@ function useItemFrom(source, itemId, count = 1) {
         bag[itemId] -= useCount;
         swiftTalismanBuffUntilMs = Math.max(swiftTalismanBuffUntilMs, simulationTimeMs) + 180000 * useCount;
         addLog(`使用疾风符 x${useCount}：命中/闪避强化持续 ${180 * useCount} 秒`);
+        return true;
+    }
+    if (itemId === "pureSoulCharm") {
+        bag[itemId] -= useCount;
+        injuryDebuffUntilMs = 0;
+        monsterWeakenUntilMs = 0;
+        monsterWeakenImmuneUntilMs = Math.max(monsterWeakenImmuneUntilMs, simulationTimeMs) + 4000 * useCount;
+        addLog(`使用净魂符 x${useCount}：清除负面减损并获得 ${4 * useCount} 秒减损免疫`);
         return true;
     }
     return false;
@@ -4509,6 +4732,7 @@ function recycleItemFrom(source, itemId, count = 1) {
     }
     goldCoins += value * recycleCount;
     addLog(`回收 ${ITEM_DEFS[itemId]?.label || itemId} x${recycleCount}，获得金币 ${value * recycleCount}`);
+    pushEventToast("income", "交易结算", `出售 ${ITEM_DEFS[itemId]?.label || itemId} x${recycleCount} · 获得金币 ${value * recycleCount}`);
     return true;
 }
 
@@ -4791,6 +5015,8 @@ function evaluateBattleRisk(monster) {
 function getActiveBattleEffectsText() {
     const effects = [];
     if (simulationTimeMs < injuryDebuffUntilMs) effects.push(`重伤衰减 ${Math.ceil((injuryDebuffUntilMs - simulationTimeMs) / 1000)}s`);
+    if (simulationTimeMs < monsterWeakenUntilMs) effects.push(`怪物减损 ${Math.ceil((monsterWeakenUntilMs - simulationTimeMs) / 1000)}s（输出 -${Math.round((1 - MONSTER_WEAKEN_SKILL.damageMul) * 100)}%）`);
+    if (simulationTimeMs < monsterWeakenImmuneUntilMs) effects.push(`净魂庇护 ${Math.ceil((monsterWeakenImmuneUntilMs - simulationTimeMs) / 1000)}s`);
     if (simulationTimeMs < ironBodyBuffUntilMs) effects.push(`淬体丹 ${Math.ceil((ironBodyBuffUntilMs - simulationTimeMs) / 1000)}s`);
     if (simulationTimeMs < swiftTalismanBuffUntilMs) effects.push(`疾风符 ${Math.ceil((swiftTalismanBuffUntilMs - simulationTimeMs) / 1000)}s`);
     return effects.length ? effects.join(" / ") : "无";
@@ -4984,6 +5210,10 @@ function grantBattleLoot(monster) {
     if (monsterTier >= 5) totalBossKills += 1;
     tryDropKoiFromAction("战斗中");
     const lootText = `灵石×${gainStone}${gainHerb ? ` / 灵草×${gainHerb}` : ""}${gainCore ? ` / 妖丹×${gainCore}` : ""}${gainRare ? ` / 异晶×${gainRare}` : ""}${gainSmallChest ? ` / 小宝箱×${gainSmallChest}` : ""}${gainMediumChest ? ` / 中宝箱×${gainMediumChest}` : ""}${gainLargeChest ? ` / 大宝箱×${gainLargeChest}` : ""}${gainBossSummonSigil ? " / BOSS召唤符×1" : ""}${gainThunderBlade ? " / 雷劫断岳×1" : ""}${gainPhoenixBow ? " / 赤凰长弓×1" : ""}${gainVoidArmor ? " / 太虚战铠×1" : ""}${gainSpiritBlade ? " / 玄霄灵刃×1" : ""}${gainSoulRobe ? " / 玄冥法衣×1" : ""}${gainQilinRing ? " / 麒麟戒×1" : ""}${gainWarDrum ? " / 战魂鼓×1" : ""}${gainDragonRelic ? " / 天龙遗宝×1" : ""}${buildBonus.battleDropMul > 0 ? ` / 阵法加成 +${Math.round(buildBonus.battleDropMul * 100)}%` : ""}`;
+    pushEventToast("income", `战利品结算`, `获得：${lootText}`, 3200);
+    if (gainDragonRelic || gainWarDrum || gainThunderBlade || gainPhoenixBow || gainVoidArmor || gainSpiritBlade || gainSoulRobe || gainQilinRing) {
+        pushEventToast("rare", "稀有掉落触发", "本场出现高阶装备/遗宝", 3400);
+    }
     addLog(`战斗胜利：${monster.type}，掉落 ${lootText}`);
     return lootText;
 }
@@ -4997,11 +5227,13 @@ function resolveBattleStep(elapsedMs = 100) {
     const debuffActive = simulationTimeMs < injuryDebuffUntilMs;
     const meBase = getAvatarCombatPower();
     const debuffMul = debuffActive ? BALANCE_CONFIG.combat.injuryDebuffRatio : 1;
+    const weakenActive = simulationTimeMs < monsterWeakenUntilMs;
+    const weakenMul = weakenActive ? MONSTER_WEAKEN_SKILL.damageMul : 1;
     const me = {
-        atk: Math.max(1, Math.floor(meBase.atk * tactic.atkMul * debuffMul)),
-        def: Math.max(1, Math.floor(meBase.def * tactic.defMul * debuffMul)),
-        hit: Math.min(0.98, Math.max(0.55, meBase.hit + tactic.hitBonus - (debuffActive ? 0.03 : 0))),
-        dodge: Math.min(0.55, Math.max(0.03, meBase.dodge + tactic.dodgeBonus - (debuffActive ? 0.02 : 0)))
+        atk: Math.max(1, Math.floor(meBase.atk * debuffMul)),
+        def: Math.max(1, Math.floor(meBase.def * debuffMul)),
+        hit: Math.min(0.98, Math.max(0.55, meBase.hit - (debuffActive ? 0.03 : 0))),
+        dodge: Math.min(0.55, Math.max(0.03, meBase.dodge - (debuffActive ? 0.02 : 0)))
     };
     battleState.playerCdMs = Math.max(0, (battleState.playerCdMs || 0) - elapsedMs);
     battleState.enemyCdMs = Math.max(0, (battleState.enemyCdMs || 0) - elapsedMs);
@@ -5021,8 +5253,8 @@ function resolveBattleStep(elapsedMs = 100) {
         const avatarHit = rollHit <= me.hit;
         const avatarDmgBase = avatarHit ? Math.max(1, me.atk - battleState.def + (battleState.rounds % 3)) : 0;
         const critRoll = (simpleHash(battleState.x + seed * 5, battleState.y + dayCount * 5) % 1000) / 1000;
-        const didCrit = avatarHit && critRoll < (0.1 + tactic.critBonus + (buildBonus.battleCritRate || 0));
-        const avatarScaled = Math.max(0, Math.floor(avatarDmgBase * BALANCE_CONFIG.combat.playerDamageScale));
+        const didCrit = avatarHit && critRoll < (0.1 + (buildBonus.battleCritRate || 0));
+        const avatarScaled = Math.max(0, Math.floor(avatarDmgBase * BALANCE_CONFIG.combat.playerDamageScale * weakenMul));
         const finalAvatarDmg = didCrit ? Math.max(1, Math.floor(avatarScaled * (1.6 + (buildBonus.battleCritDmgMul || 0)))) : avatarScaled;
         const hpBeforeEnemy = battleState.hp;
         battleState.hp = Math.max(0, battleState.hp - finalAvatarDmg);
@@ -5065,7 +5297,7 @@ function resolveBattleStep(elapsedMs = 100) {
         const battleMonsterTier = getMonsterDropProfile(battleState.type)?.tier || 1;
         const bossMul = battleMonsterTier >= 5 ? 1.35 : battleMonsterTier >= 4 ? 1.22 : 1;
         const monsterDmgBase = monsterHit ? Math.max(2, Math.floor(rawMonsterDmg * bossMul)) : 0;
-        const monsterScaled = Math.max(0, Math.floor(monsterDmgBase * BALANCE_CONFIG.combat.monsterDamageScale * tactic.incomingMul * (1 + (getWorldEventEffects().monsterDamageMul || 0))));
+        const monsterScaled = Math.max(0, Math.floor(monsterDmgBase * BALANCE_CONFIG.combat.monsterDamageScale * (1 + (getWorldEventEffects().monsterDamageMul || 0))));
         const hpBeforeSelf = avatarHp;
         avatarHp = Math.max(0, avatarHp - monsterScaled);
         lastSelfLoss = Math.max(0, hpBeforeSelf - avatarHp);
@@ -5077,6 +5309,19 @@ function resolveBattleStep(elapsedMs = 100) {
         else {
             spawnCombatFx("敌方未命中", "info", 6);
             triggerEvents.push("闪避");
+        }
+        if (monsterHit) {
+            const tier = getMonsterDropProfile(battleState.type)?.tier || 1;
+            const weakenChance = MONSTER_WEAKEN_SKILL.chanceByTier[tier] || 0;
+            const weakenRoll = (simpleHash(battleState.x + seed * 19, battleState.y + dayCount * 29 + battleState.rounds) % 1000) / 1000;
+            if (weakenChance > 0 && weakenRoll < weakenChance && simulationTimeMs >= monsterWeakenImmuneUntilMs) {
+                monsterWeakenUntilMs = Math.max(monsterWeakenUntilMs, simulationTimeMs) + MONSTER_WEAKEN_SKILL.durationMs;
+                triggerEvents.push("怪物减损");
+                itemEvents.push(`输出压制 ${Math.round((1 - MONSTER_WEAKEN_SKILL.damageMul) * 100)}% ${Math.floor(MONSTER_WEAKEN_SKILL.durationMs / 1000)}s`);
+                spawnCombatFx("减损", "info", 14);
+            } else if (weakenChance > 0 && weakenRoll < weakenChance) {
+                triggerEvents.push("净魂免疫");
+            }
         }
         eventLines.push(monsterHit ? `敌方 → 我方 -${monsterScaled}HP` : "敌方 → 我方 未命中");
         detailMeta += `敌方命中检定 ${rollDodge.toFixed(3)}；`;
@@ -5146,7 +5391,7 @@ function resolveBattleStep(elapsedMs = 100) {
     }
     if (avatarHp <= Math.floor(getAvatarMaxHp() * autoUsePillRatio) && (avatarInventory.spiritPill || 0) > 0) {
         avatarInventory.spiritPill -= 1;
-        const heal = Math.floor(getAvatarMaxHp() * 0.32 * (1 + (buildBonus.battleHealMul || 0)));
+        const heal = FIXED_HEAL_VALUES.spiritPill;
         avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
         if (battleMetrics) battleMetrics.heals += heal;
         if (battleMetrics) battleMetrics.healTriggers += 1;
@@ -5155,7 +5400,7 @@ function resolveBattleStep(elapsedMs = 100) {
         triggerEvents.push("聚灵丹");
     } else if (avatarHp <= Math.floor(getAvatarMaxHp() * autoUsePillRatio) && (avatarInventory.bloodPill || 0) > 0) {
         avatarInventory.bloodPill -= 1;
-        const heal = Math.floor(getAvatarMaxHp() * 0.42 * (1 + (buildBonus.battleHealMul || 0)));
+        const heal = FIXED_HEAL_VALUES.bloodPill;
         avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
         if (battleMetrics) battleMetrics.heals += heal;
         if (battleMetrics) battleMetrics.healTriggers += 1;
@@ -5165,7 +5410,7 @@ function resolveBattleStep(elapsedMs = 100) {
     }
     if (avatarHp <= Math.floor(getAvatarMaxHp() * autoUseSalveRatio) && (avatarInventory.healingSalve || 0) > 0) {
         avatarInventory.healingSalve -= 1;
-        const heal = Math.floor(getAvatarMaxHp() * 0.22 * (1 + (buildBonus.battleHealMul || 0)));
+        const heal = FIXED_HEAL_VALUES.healingSalve;
         avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
         if (battleMetrics) battleMetrics.heals += heal;
         if (battleMetrics) battleMetrics.healTriggers += 1;
@@ -5204,6 +5449,7 @@ function resolveBattleStep(elapsedMs = 100) {
             if (procRoll < 0.01) {
                 avatarHp = getAvatarMaxHp();
                 addLog("锦鲤项链触发：化身濒死逆转，瞬间满血！");
+                pushEventToast("rare", "锦鲤项链触发", "濒死逆转，化身瞬间满血");
                 spawnCombatFx("锦鲤护佑 +满血", "heal", 8);
                 if (lastBattleFrame) {
                     lastBattleFrame.triggerText = lastBattleFrame.triggerText ? `${lastBattleFrame.triggerText} / 锦鲤项链逆转` : "锦鲤项链逆转";
@@ -5242,6 +5488,7 @@ function resolveBattleStep(elapsedMs = 100) {
         avatarMp = 0;
         avatarReviveUntilMs = simulationTimeMs + AVATAR_REVIVE_COOLDOWN_MS;
         injuryDebuffUntilMs = simulationTimeMs + BALANCE_CONFIG.combat.injuryDurationMs;
+        monsterWeakenUntilMs = 0;
         battleSummaryData = {
             atMs: simulationTimeMs,
             result: "战败",
@@ -5491,6 +5738,7 @@ function tryClaimNewbieGuideStep() {
         step.reward.chestSmall ? `小宝箱+${step.reward.chestSmall}` : ""
     ].filter(Boolean).join(" / ");
     if (rewardText) addLog(`领取引导奖励：${rewardText}`);
+    pushEventToast("task", `任务完成：${step.title}`, rewardText ? `奖励：${rewardText}` : "奖励已发放", 3200);
     newbieGuideStepIndex = Math.min(NEWBIE_GUIDE_STEPS.length, newbieGuideStepIndex + 1);
     return true;
 }
@@ -5693,6 +5941,19 @@ function isWithinDailyMoveRadius(x, y) {
     const dx = x - dayOriginX;
     const dy = y - dayOriginY;
     return Math.hypot(dx, dy) <= DAILY_MOVE_RADIUS;
+}
+
+function rollToNextDay() {
+    dayCount += 1;
+    dayStartMs += DAY_DURATION_MS;
+    dayOriginX = avatarX;
+    dayOriginY = avatarY;
+    dayMoveCount = 0;
+    dayMoveLogBatch = 0;
+    dayGatherUnits = 0;
+    dayCombatWins = 0;
+    addLog(`进入第 ${dayCount} 天：每日统计已重置`);
+    pushEventToast("status", `进入第 ${dayCount} 天`, "每日移动/采集/战斗统计已重置");
 }
 
 function hasValidExploreTarget() {
@@ -6537,6 +6798,8 @@ function updateStatus() {
         战斗冷却: ${battleState ? "进行中" : `${Math.max(0, Math.ceil((nextBattleAvailableAtMs - simulationTimeMs) / 1000))}s`}<br>
         回血丹: 背包 ${avatarInventory.bloodPill || 0} / 库存 ${homeInventory.bloodPill || 0}（目标 ${bloodPillCarryTarget}，回城阈值 ${bloodPillReturnThreshold}）<br>
         伤势状态: ${simulationTimeMs < injuryDebuffUntilMs ? `重伤恢复中（剩余 ${Math.ceil((injuryDebuffUntilMs - simulationTimeMs) / 1000)}s）` : "正常"}<br>
+        减损状态: ${simulationTimeMs < monsterWeakenUntilMs ? `怪物减损中（输出 -${Math.round((1 - MONSTER_WEAKEN_SKILL.damageMul) * 100)}%，剩余 ${Math.ceil((monsterWeakenUntilMs - simulationTimeMs) / 1000)}s）` : "正常"}<br>
+        净魂状态: ${simulationTimeMs < monsterWeakenImmuneUntilMs ? `减损免疫中（剩余 ${Math.ceil((monsterWeakenImmuneUntilMs - simulationTimeMs) / 1000)}s）` : "无"}<br>
         世界事件: ${getWorldEventDef() ? `${getWorldEventDef().label}（剩余 ${Math.max(0, Math.ceil((worldEventUntilMs - simulationTimeMs) / 1000))}s）` : "无"}<br>
         共用属性: 体${sharedStats.body} 灵${sharedStats.spirit} 识${sharedStats.mind} 御${sharedStats.control} 运${sharedStats.fortune}<br>
         属性等级: Lv.${sharedStats.level}（待分配 ${sharedStats.freePoints}）<br>
@@ -6621,6 +6884,7 @@ function updateMovementStatus() {
 function updateBattlePanel() {
     if (battleInfoModeBtn) battleInfoModeBtn.textContent = battleInfoMode === "detail" ? "战斗视图：完整" : "战斗视图：简洁";
     if (battlePanelEl) battlePanelEl.classList.toggle("simple-mode", battleInfoMode === "simple");
+    if (battlePanelEl) battlePanelEl.classList.toggle("collapsed-mode", battleCompactMode);
     if (!battleState) {
         if (!battleSummaryData || simulationTimeMs - battleSummaryData.atMs > 10000) {
             battlePanelEl.classList.add("hidden");
@@ -6820,6 +7084,9 @@ function updateBattlePanel() {
             </div>
         `;
         battleRoundResultEl.classList.add("minor");
+        if (battleCompactMode) {
+            battleRoundResultEl.innerHTML = `战斗中：${battleState.type} Lv.${battleState.level} ｜ 我方 ${avatarHp}/${getAvatarMaxHp()} ｜ 敌方 ${battleState.hp}/${battleState.maxHp} ｜ 事件 ${triggerText}`;
+        }
     } else {
         if (battleSelfCardEl) battleSelfCardEl.style.display = "";
         if (battleEnemyCardEl) battleEnemyCardEl.style.display = "";
@@ -7165,6 +7432,7 @@ function updateSidePanels() {
     const focusCharmPrice = getShopPrice(52);
     const ironBodyPillPrice = getShopPrice(42);
     const swiftTalismanPrice = getShopPrice(66);
+    const pureSoulCharmPrice = getShopPrice(58);
     shopSummaryEl.innerHTML = `
         <div class="small-note" style="margin-bottom:8px;">当前金币：${goldCoins}</div>
         <div class="codex-grid">
@@ -7216,6 +7484,13 @@ function updateSidePanels() {
                     <button class="mini-btn" data-shop-buy="swiftTalisman" data-cost="${swiftTalismanPrice}">购买 ${swiftTalismanPrice}</button>
                 </div>
                 <div class="small-note">短时命中/闪避强化，适合精英战</div>
+            </div>
+            <div class="codex-item">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong>${getItemIconMarkup("pureSoulCharm")} ${ITEM_DEFS.pureSoulCharm.label}</strong>
+                    <button class="mini-btn" data-shop-buy="pureSoulCharm" data-cost="${pureSoulCharmPrice}">购买 ${pureSoulCharmPrice}</button>
+                </div>
+                <div class="small-note">清除重伤和怪物减损，并获得短时减损免疫</div>
             </div>
         </div>
     `;
@@ -7450,6 +7725,8 @@ function renderButtons() {
     cameraResetBtn.textContent = cameraMode === "follow" ? "🎯 视角跟随中" : "🎯 回到化身";
     meditateBtn.classList.toggle("active", isMeditating);
     meditateBtn.textContent = isMeditating ? `🧘 打坐中 ${Math.ceil(meditateRemainingMs / 1000)}s` : "🧘 开始打坐";
+    if (toastToggle) toastToggle.checked = enableEventToasts;
+    if (battleCompactToggle) battleCompactToggle.checked = battleCompactMode;
 
 }
 
@@ -7459,6 +7736,9 @@ function updateSimulation(ms) {
     try {
     const scaledMs = ms * timeScale;
     simulationTimeMs += scaledMs;
+    while (simulationTimeMs - dayStartMs >= DAY_DURATION_MS) {
+        rollToNextDay();
+    }
     refreshKoiWindowIfNeeded();
     if (!avatarSessionExpired) {
         avatarOnlineAccumMs = Math.min(AVATAR_MAX_ONLINE_MS, avatarOnlineAccumMs + scaledMs);
@@ -7648,6 +7928,8 @@ function renderGameToText() {
             worldProjectProgress,
             koiHourly: { dropped: koiWindowDropped, target: koiWindowTarget },
             injuryDebuffRemainMs: Math.max(0, Math.floor(injuryDebuffUntilMs - simulationTimeMs)),
+            monsterWeakenRemainMs: Math.max(0, Math.floor(monsterWeakenUntilMs - simulationTimeMs)),
+            monsterWeakenImmuneRemainMs: Math.max(0, Math.floor(monsterWeakenImmuneUntilMs - simulationTimeMs)),
             ironBodyBuffRemainMs: Math.max(0, Math.floor(ironBodyBuffUntilMs - simulationTimeMs)),
             swiftTalismanBuffRemainMs: Math.max(0, Math.floor(swiftTalismanBuffUntilMs - simulationTimeMs)),
             reviveCooldownRemainMs: Math.max(0, Math.floor(avatarReviveUntilMs - simulationTimeMs)),
@@ -7719,7 +8001,7 @@ function buildSavePayload() {
         avatar: { x: avatarX, y: avatarY, hp: avatarHp, mp: avatarMp, reviveUntilMs: avatarReviveUntilMs },
         day: { dayCount, dayOriginX, dayOriginY, dayMoveCount, dayMoveLogBatch, dayGatherUnits, dayStartMs },
         runtime: { zoomLevel, strategyId, autoObjective, isAutoMode, timeScale, simulationTimeMs, buildingProductionAccumMs, worldEventId, worldEventUntilMs, nextWorldEventRollMs, nextBattleAvailableAtMs, koiWindowStartMs, koiWindowTarget, koiWindowDropped, worldProjectProgress },
-        combat: { battleTacticId, autoUsePillRatio, autoUseSalveRatio, bloodPillCarryTarget, bloodPillReturnThreshold, autoBuyBloodPill, injuryDebuffUntilMs, ironBodyBuffUntilMs, swiftTalismanBuffUntilMs, lastBattleFrame },
+        combat: { battleTacticId, autoUsePillRatio, autoUseSalveRatio, bloodPillCarryTarget, bloodPillReturnThreshold, autoBuyBloodPill, injuryDebuffUntilMs, monsterWeakenUntilMs, monsterWeakenImmuneUntilMs, ironBodyBuffUntilMs, swiftTalismanBuffUntilMs, lastBattleFrame },
         flags: { devForceMonster, devFixedDrops, baitBoostUntilMs },
         progression: {
             cultivationLevel,
@@ -7730,6 +8012,9 @@ function buildSavePayload() {
             meritPoints,
             bodyCultivationExp,
             bodyCultivationAccumMs,
+            isMeditating,
+            meditateRemainingMs,
+            meditateTotalMs,
             avatarOnlineAccumMs,
             avatarSessionExpired,
             cultivationBuffUntilMs,
@@ -7753,7 +8038,7 @@ function buildSavePayload() {
         },
         inventories: { avatar: { ...avatarInventory }, home: { ...homeInventory }, equipment: { ...equipmentInventory } },
         town: { ...town },
-        ui: { rightPanelTab, resourcePanelTab, codexTab, showEquipAttrDetail, showWorldSummary, inspectText, cameraMode, cameraX, cameraY, battleInfoMode, bossModeActive, bossModePrevZoomLevel },
+        ui: { rightPanelTab, resourcePanelTab, codexTab, showEquipAttrDetail, showWorldSummary, inspectText, cameraMode, cameraX, cameraY, battleInfoMode, bossModeActive, bossModePrevZoomLevel, enableEventToasts, battleCompactMode },
         maps: {
             homeBuildings: Array.from(homeBuildingMap.entries()),
             // 轻量存档：不保存大规模世界运行时缓存，避免读档后CPU飙升
@@ -7809,6 +8094,8 @@ function applySavePayload(payload) {
     bloodPillReturnThreshold = payload.combat?.bloodPillReturnThreshold ?? bloodPillReturnThreshold;
     autoBuyBloodPill = payload.combat?.autoBuyBloodPill ?? autoBuyBloodPill;
     injuryDebuffUntilMs = payload.combat?.injuryDebuffUntilMs ?? injuryDebuffUntilMs;
+    monsterWeakenUntilMs = payload.combat?.monsterWeakenUntilMs ?? monsterWeakenUntilMs;
+    monsterWeakenImmuneUntilMs = payload.combat?.monsterWeakenImmuneUntilMs ?? monsterWeakenImmuneUntilMs;
     ironBodyBuffUntilMs = payload.combat?.ironBodyBuffUntilMs ?? ironBodyBuffUntilMs;
     swiftTalismanBuffUntilMs = payload.combat?.swiftTalismanBuffUntilMs ?? swiftTalismanBuffUntilMs;
     lastBattleFrame = payload.combat?.lastBattleFrame ?? lastBattleFrame;
@@ -7822,6 +8109,9 @@ function applySavePayload(payload) {
     meritPoints = payload.progression?.meritPoints ?? meritPoints;
     bodyCultivationExp = payload.progression?.bodyCultivationExp ?? bodyCultivationExp;
     bodyCultivationAccumMs = payload.progression?.bodyCultivationAccumMs ?? bodyCultivationAccumMs;
+    isMeditating = payload.progression?.isMeditating ?? isMeditating;
+    meditateRemainingMs = payload.progression?.meditateRemainingMs ?? meditateRemainingMs;
+    meditateTotalMs = payload.progression?.meditateTotalMs ?? meditateTotalMs;
     avatarOnlineAccumMs = payload.progression?.avatarOnlineAccumMs ?? avatarOnlineAccumMs;
     avatarSessionExpired = payload.progression?.avatarSessionExpired ?? avatarSessionExpired;
     cultivationBuffUntilMs = payload.progression?.cultivationBuffUntilMs ?? cultivationBuffUntilMs;
@@ -7891,6 +8181,8 @@ function applySavePayload(payload) {
     cameraX = Number.isFinite(payload.ui?.cameraX) ? payload.ui.cameraX : cameraX;
     cameraY = Number.isFinite(payload.ui?.cameraY) ? payload.ui.cameraY : cameraY;
     battleInfoMode = payload.ui?.battleInfoMode === "detail" ? "detail" : "simple";
+    enableEventToasts = payload.ui?.enableEventToasts ?? enableEventToasts;
+    battleCompactMode = payload.ui?.battleCompactMode ?? battleCompactMode;
     bossModePrevZoomLevel = payload.ui?.bossModePrevZoomLevel ?? bossModePrevZoomLevel;
     setBossMode(payload.ui?.bossModeActive === true, true);
     newbieGuideStepIndex = Math.max(0, Math.min(NEWBIE_GUIDE_STEPS.length, newbieGuideStepIndex));
@@ -7966,6 +8258,16 @@ function loadFromLocal() {
                 }
                 : payloadRaw;
             if (applySavePayload(payload)) {
+                const savedAtMs = Number(payloadRaw?.ts || payload?.ts || 0);
+                const nowMs = Date.now();
+                if (Number.isFinite(savedAtMs) && savedAtMs > 0 && nowMs > savedAtMs) {
+                    const offlineMs = nowMs - savedAtMs;
+                    const offlineResult = applyOfflineMeditationProgress(offlineMs);
+                    if (offlineResult && offlineResult.offlineMs > 0) {
+                        addLog(`离线打坐结算：${Math.floor(offlineResult.offlineMs / 1000)}s，周天 ${offlineResult.tickCount} 次，打坐 ${offlineResult.cycleCount} 轮，修为 +${offlineResult.gainedExp}`);
+                        pushEventToast("income", "离线收益结算", `离线 ${Math.floor(offlineResult.offlineMs / 1000)}s · 修为 +${offlineResult.gainedExp}`, 3400);
+                    }
+                }
                 if (key !== SAVE_KEY || payloadRaw.v !== 3 || hasHeavyWorldCache) saveToLocal();
                 updateSaveSizeInfo();
                 return true;
@@ -8142,16 +8444,25 @@ if (battleInfoModeBtn) {
 }
 
 meditateBtn.addEventListener("click", () => {
-    if (isMeditating) {
-        isMeditating = false;
-        meditateRemainingMs = 0;
-        meditateTotalMs = 0;
-        addLog("已中止打坐");
-    } else {
-        startMeditation();
-    }
+    startMeditation();
     renderAll();
 });
+
+if (toastToggle) {
+    toastToggle.addEventListener("change", () => {
+        enableEventToasts = toastToggle.checked;
+        addLog(enableEventToasts ? "设置更新：顶部提示框已开启" : "设置更新：顶部提示框已关闭");
+        if (!enableEventToasts && eventToastStackEl) eventToastStackEl.innerHTML = "";
+    });
+}
+
+if (battleCompactToggle) {
+    battleCompactToggle.addEventListener("change", () => {
+        battleCompactMode = battleCompactToggle.checked;
+        addLog(battleCompactMode ? "设置更新：战斗详情已折叠到底部" : "设置更新：战斗详情已恢复完整显示");
+        renderAll();
+    });
+}
 
 helpBtn.addEventListener("click", () => {
     window.open("WIKI.html", "_blank", "noopener,noreferrer");
