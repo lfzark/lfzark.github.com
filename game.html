@@ -1697,21 +1697,74 @@
         font-size: 22px;
     }
 
-    .realm-style-low {
-        color: #9fd1ff;
-        text-shadow: 0 0 4px rgba(120, 185, 255, 0.35);
+    .realm-style-fanti {
+        color: #c7a8e8;
+        text-shadow: 0 0 6px rgba(199, 168, 232, 0.42);
     }
 
-    .realm-style-mid {
-        color: #8dffcf;
-        text-shadow: 0 0 6px rgba(114, 255, 198, 0.45);
-        font-weight: 600;
+    .realm-style-lianqi {
+        color: #9dcdf5;
+        text-shadow: 0 0 6px rgba(157, 205, 245, 0.45);
     }
 
-    .realm-style-high {
-        color: #ffd77f;
-        text-shadow: 0 0 8px rgba(255, 206, 110, 0.55);
+    .realm-style-zhuji {
+        color: #9be9d7;
+        text-shadow: 0 0 7px rgba(155, 233, 215, 0.5);
+    }
+
+    .realm-style-jindan {
+        color: #f7d07b;
+        text-shadow: 0 0 7px rgba(247, 208, 123, 0.5);
+    }
+
+    .realm-style-yuanying {
+        color: #eea287;
+        text-shadow: 0 0 7px rgba(238, 162, 135, 0.5);
+    }
+
+    .realm-style-huashen {
+        color: #f0b6c4;
+        text-shadow: 0 0 7px rgba(240, 182, 196, 0.5);
+    }
+
+    .realm-style-lianxu {
+        color: #e7d6ff;
+        background: linear-gradient(90deg, #bca0ea 0%, #f6efff 50%, #b294e4 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 10px rgba(204, 174, 255, 0.5);
         font-weight: 700;
+    }
+
+    .realm-style-heti {
+        color: #d5f0ff;
+        background: linear-gradient(90deg, #89bdf0 0%, #eff9ff 52%, #7ab3e8 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 10px rgba(149, 208, 255, 0.55);
+        font-weight: 700;
+    }
+
+    .realm-style-dacheng {
+        color: #cff6e9;
+        background: linear-gradient(90deg, #99e4ce 0%, #edfff9 50%, #82d7bf 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 10px rgba(138, 231, 203, 0.55);
+        font-weight: 700;
+    }
+
+    .realm-style-feisheng {
+        color: #ffd77e;
+        background: linear-gradient(90deg, #f9b23f 0%, #fff8dc 48%, #f2a52b 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 12px rgba(255, 199, 86, 0.62);
+        font-weight: 800;
         letter-spacing: 0.3px;
     }
 
@@ -1993,6 +2046,8 @@ const BUILDING_PRODUCTION_TICK_MS = 5000;
 const MONSTER_RESPAWN_MS = 45000;
 const AVATAR_REVIVE_COOLDOWN_MS = 600000;
 const BATTLE_GAP_CD_MS = 5000;
+const HOME_HEAL_PER_SEC = 100;
+const HOME_SPAWN_VALIDATE_RADIUS = 4;
 const SAVE_KEY = "simpleworld_save_v2";
 
 const BALANCE_CONFIG = {
@@ -2658,6 +2713,7 @@ let cultivationLevel = 1;
 let gatherCount = 0;
 let inspectText = "";
 let exploreTarget = null;
+let homeRecoveryEntered = false;
 let isMeditating = false;
 let meditateRemainingMs = 0;
 let meditateTotalMs = 0;
@@ -3080,6 +3136,57 @@ function setBossMode(enabled, silent = false) {
 
 function rollRandomHomeCoord() {
     return 4200 + Math.floor(Math.random() * 1601);
+}
+
+function isValidHomeSpawn(x, y) {
+    if (isWater(x, y)) return false;
+    const radius = HOME_SPAWN_VALIDATE_RADIUS;
+    const visited = new Set();
+    const queue = [{ x, y }];
+    visited.add(`${x},${y}`);
+    let clearTiles = 0;
+    let canReachEdge = false;
+    while (queue.length) {
+        const node = queue.shift();
+        clearTiles += 1;
+        if (Math.max(Math.abs(node.x - x), Math.abs(node.y - y)) >= radius) {
+            canReachEdge = true;
+        }
+        const dirs = [
+            [1, 0],
+            [-1, 0],
+            [0, 1],
+            [0, -1]
+        ];
+        for (const [dx, dy] of dirs) {
+            const nx = node.x + dx;
+            const ny = node.y + dy;
+            if (Math.abs(nx - x) > radius || Math.abs(ny - y) > radius) continue;
+            const key = `${nx},${ny}`;
+            if (visited.has(key) || isWater(nx, ny)) continue;
+            visited.add(key);
+            queue.push({ x: nx, y: ny });
+        }
+    }
+    return canReachEdge && clearTiles >= 14;
+}
+
+function rollRandomHomePosition() {
+    for (let i = 0; i < 260; i++) {
+        const x = rollRandomHomeCoord();
+        const y = rollRandomHomeCoord();
+        if (isValidHomeSpawn(x, y)) return { x, y };
+    }
+    for (let radius = 1; radius <= 40; radius++) {
+        for (let dy = -radius; dy <= radius; dy++) {
+            for (let dx = -radius; dx <= radius; dx++) {
+                const x = 5000 + dx;
+                const y = 5000 + dy;
+                if (isValidHomeSpawn(x, y)) return { x, y };
+            }
+        }
+    }
+    return { x: 5000, y: 5000 };
 }
 
 function applyHomeCoordinates(x, y) {
@@ -3593,7 +3700,19 @@ function getSharedPowerScore() {
     return sharedStats.body + sharedStats.spirit + sharedStats.mind + sharedStats.control + sharedStats.fortune;
 }
 
+function getStatEffectHint(statKey) {
+    const hints = {
+        body: "+1体魄：最大生命 +7，防御与闪避小幅提升",
+        spirit: "+1灵力：攻击小幅提升，最大灵力 +8，采集速度提升",
+        mind: "+1神识：命中/闪避提升，最大灵力 +4，探索范围提升",
+        control: "+1统御：攻击/防御/命中提升，采集速度提升",
+        fortune: "+1气运：暴击率 +0.6%，稀有掉落率提升"
+    };
+    return hints[statKey] || "提升对应派生属性";
+}
+
 function allocSharedStat(statKey) {
+    if (battleState) return false;
     if (sharedStats.freePoints <= 0) return false;
     if (!Object.prototype.hasOwnProperty.call(sharedStats, statKey)) return false;
     sharedStats[statKey] += 1;
@@ -4654,6 +4773,54 @@ function setMonsterHp(x, y, hp, maxHp) {
     monsterStateMap.set(key, entry);
 }
 
+function evaluateBattleRisk(monster) {
+    const me = getAvatarCombatPower();
+    const myHpRatio = avatarHp / Math.max(1, getAvatarMaxHp());
+    const expectedAtk = Math.max(1, me.atk * Math.max(0.65, me.hit));
+    const expectedDef = Math.max(1, me.def * (1 - Math.min(0.45, me.dodge * 0.6)));
+    const enemyPressure = monster.atk + monster.def * 0.75 + monster.maxHp * 0.08;
+    const myPressure = expectedAtk + expectedDef * 0.9 + avatarHp * 0.08;
+    const pressureRatio = enemyPressure / Math.max(1, myPressure);
+    const supplyScore = (avatarInventory.spiritPill || 0) + (avatarInventory.bloodPill || 0) + (avatarInventory.healingSalve || 0) * 0.5;
+    const score = pressureRatio + (myHpRatio < 0.6 ? 0.3 : 0) + (supplyScore <= 0 ? 0.25 : supplyScore < 2 ? 0.12 : 0);
+    if (score >= 1.2) return { level: "高", advice: "建议先回城补给或加体魄/统御后再战" };
+    if (score >= 0.85) return { level: "中", advice: "可战但有风险，建议保持自动用药阈值偏高" };
+    return { level: "低", advice: "可稳定挑战，适合继续同级战斗" };
+}
+
+function getActiveBattleEffectsText() {
+    const effects = [];
+    if (simulationTimeMs < injuryDebuffUntilMs) effects.push(`重伤衰减 ${Math.ceil((injuryDebuffUntilMs - simulationTimeMs) / 1000)}s`);
+    if (simulationTimeMs < ironBodyBuffUntilMs) effects.push(`淬体丹 ${Math.ceil((ironBodyBuffUntilMs - simulationTimeMs) / 1000)}s`);
+    if (simulationTimeMs < swiftTalismanBuffUntilMs) effects.push(`疾风符 ${Math.ceil((swiftTalismanBuffUntilMs - simulationTimeMs) / 1000)}s`);
+    return effects.length ? effects.join(" / ") : "无";
+}
+
+function buildFailureAnalysis(summary) {
+    const reasons = [];
+    const suggestions = [];
+    const hitRate = summary.playerAttacks > 0 ? (summary.playerHits / summary.playerAttacks) : 1;
+    const avgTaken = summary.enemyHits > 0 ? (summary.taken / summary.enemyHits) : 0;
+    const hpRatio = summary.maxHp > 0 ? (summary.taken / summary.maxHp) : 0;
+    if (hitRate < 0.72) {
+        reasons.push("命中不足（未命中率偏高）");
+        suggestions.push("优先加点：神识/统御，或切换稳健战术");
+    }
+    if (avgTaken > Math.max(18, summary.maxHp * 0.12) || hpRatio > 0.85) {
+        reasons.push("防御不足（单次受击偏高）");
+        suggestions.push("优先加点：体魄，并补充护体符/防具强化");
+    }
+    if ((summary.healTriggers || 0) <= 0 && summary.healed <= 0) {
+        reasons.push("续航不足（战斗中缺少有效恢复）");
+        suggestions.push("提高自动用药阈值并补足回血丹/聚灵丹");
+    }
+    if (!reasons.length) {
+        reasons.push("战力差距偏大（目标强度高于当前配置）");
+        suggestions.push("建议先刷同级目标，补装备强化与属性点后再挑战");
+    }
+    return { reasons: reasons.slice(0, 2), suggestions: suggestions.slice(0, 2) };
+}
+
 function startBattleWith(monster) {
     if (!monster) return false;
     if (!canStartBattleNow()) {
@@ -4687,11 +4854,17 @@ function startBattleWith(monster) {
     battleSummaryData = null;
     battleUiEnemyHpDisplay = monster.hp;
     battleUiSelfHpDisplay = avatarHp;
-    battleMetrics = { dealt: 0, taken: 0, crits: 0, heals: 0, startMs: simulationTimeMs };
+    battleMetrics = {
+        dealt: 0, taken: 0, crits: 0, heals: 0, startMs: simulationTimeMs,
+        playerAttacks: 0, playerHits: 0, enemyAttacks: 0, enemyHits: 0, healTriggers: 0
+    };
     lastDamageSnapshot = { selfLoss: 0, enemyLoss: 0 };
     battleKeyframes = [];
     lastBattleFrame = null;
-    movementStatusText = `遭遇 ${monster.type} Lv.${monster.level}，进入战斗`;
+    const risk = evaluateBattleRisk(monster);
+    battleState.riskLevel = risk.level;
+    movementStatusText = `遭遇 ${monster.type} Lv.${monster.level}，风险${risk.level}，进入战斗`;
+    addLog(`战斗预警：风险${risk.level}｜${risk.advice}`);
     return true;
 }
 
@@ -4838,9 +5011,11 @@ function resolveBattleStep(elapsedMs = 100) {
     let lastSelfLoss = 0;
     let lastCrit = false;
     const itemEvents = [];
+    const triggerEvents = [];
 
     if (battleState.playerCdMs <= 0 && battleState.hp > 0) {
         battleState.rounds += 1;
+        if (battleMetrics) battleMetrics.playerAttacks += 1;
         const seed = battleState.rounds * 11 + 1;
         const rollHit = (simpleHash(battleState.x + seed, battleState.y + dayCount * 17) % 1000) / 1000;
         const avatarHit = rollHit <= me.hit;
@@ -4857,10 +5032,13 @@ function resolveBattleStep(elapsedMs = 100) {
             avatarHp = Math.min(getAvatarMaxHp(), avatarHp + steal);
             if (battleMetrics) battleMetrics.heals += steal;
             itemEvents.push(`吸血 +${steal}HP`);
+            triggerEvents.push("吸血");
         }
         lastCrit = didCrit && lastEnemyLoss > 0;
+        if (lastCrit) triggerEvents.push("暴击");
         if (battleMetrics) {
             battleMetrics.dealt += Math.max(0, hpBeforeEnemy - battleState.hp);
+            if (avatarHit) battleMetrics.playerHits += 1;
             if (didCrit) battleMetrics.crits += 1;
         }
         if (didCrit) {
@@ -4871,6 +5049,7 @@ function resolveBattleStep(elapsedMs = 100) {
             triggerBattleImpactFx("hit");
         } else {
             spawnCombatFx("未命中", "info", -6);
+            triggerEvents.push("攻击未命中");
         }
         eventLines.push(avatarHit ? `我方 → 敌方 -${finalAvatarDmg}HP${didCrit ? "（暴击）" : ""}` : "我方 → 敌方 未命中");
         detailMeta += `我方命中检定 ${rollHit.toFixed(3)}；`;
@@ -4878,6 +5057,7 @@ function resolveBattleStep(elapsedMs = 100) {
     }
 
     if (battleState.hp > 0 && battleState.enemyCdMs <= 0) {
+        if (battleMetrics) battleMetrics.enemyAttacks += 1;
         const seed = battleState.rounds * 13 + 2;
         const rollDodge = (simpleHash(battleState.x + seed * 3, battleState.y + dayCount * 23) % 1000) / 1000;
         const monsterHit = rollDodge > me.dodge;
@@ -4891,15 +5071,19 @@ function resolveBattleStep(elapsedMs = 100) {
         lastSelfLoss = Math.max(0, hpBeforeSelf - avatarHp);
         if (battleMetrics) {
             battleMetrics.taken += Math.max(0, hpBeforeSelf - avatarHp);
+            if (monsterHit) battleMetrics.enemyHits += 1;
         }
         if (monsterHit) spawnCombatFx(`受击 -${monsterScaled}`, "damage", 6);
-        else spawnCombatFx("敌方未命中", "info", 6);
+        else {
+            spawnCombatFx("敌方未命中", "info", 6);
+            triggerEvents.push("闪避");
+        }
         eventLines.push(monsterHit ? `敌方 → 我方 -${monsterScaled}HP` : "敌方 → 我方 未命中");
         detailMeta += `敌方命中检定 ${rollDodge.toFixed(3)}；`;
         battleState.enemyCdMs = battleState.enemyAttackCdMs || 5000;
     }
 
-    lastBattleFrame = {
+    const currentFrame = {
         round: battleState.rounds,
         tactic: tactic.label,
         actor: "CD",
@@ -4935,6 +5119,12 @@ function resolveBattleStep(elapsedMs = 100) {
             taken: battleMetrics ? battleMetrics.taken : Math.max(0, getAvatarMaxHp() - avatarHp),
             crits: battleMetrics ? battleMetrics.crits : 0,
             healed: battleMetrics ? battleMetrics.heals : 0,
+            playerAttacks: battleMetrics ? battleMetrics.playerAttacks : 0,
+            playerHits: battleMetrics ? battleMetrics.playerHits : 0,
+            enemyAttacks: battleMetrics ? battleMetrics.enemyAttacks : 0,
+            enemyHits: battleMetrics ? battleMetrics.enemyHits : 0,
+            healTriggers: battleMetrics ? battleMetrics.healTriggers : 0,
+            riskLevel: battleState.riskLevel || "中",
             loot: lootText,
             keyframes: battleKeyframes.slice(-8)
         };
@@ -4959,27 +5149,37 @@ function resolveBattleStep(elapsedMs = 100) {
         const heal = Math.floor(getAvatarMaxHp() * 0.32 * (1 + (buildBonus.battleHealMul || 0)));
         avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
         if (battleMetrics) battleMetrics.heals += heal;
+        if (battleMetrics) battleMetrics.healTriggers += 1;
         spawnCombatFx(`+${heal}`, "heal", 12);
         itemEvents.push(`聚灵丹 +${heal}HP`);
+        triggerEvents.push("聚灵丹");
     } else if (avatarHp <= Math.floor(getAvatarMaxHp() * autoUsePillRatio) && (avatarInventory.bloodPill || 0) > 0) {
         avatarInventory.bloodPill -= 1;
         const heal = Math.floor(getAvatarMaxHp() * 0.42 * (1 + (buildBonus.battleHealMul || 0)));
         avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
         if (battleMetrics) battleMetrics.heals += heal;
+        if (battleMetrics) battleMetrics.healTriggers += 1;
         spawnCombatFx(`+${heal}`, "heal", 12);
         itemEvents.push(`回血丹 +${heal}HP`);
+        triggerEvents.push("回血丹");
     }
     if (avatarHp <= Math.floor(getAvatarMaxHp() * autoUseSalveRatio) && (avatarInventory.healingSalve || 0) > 0) {
         avatarInventory.healingSalve -= 1;
         const heal = Math.floor(getAvatarMaxHp() * 0.22 * (1 + (buildBonus.battleHealMul || 0)));
         avatarHp = Math.min(getAvatarMaxHp(), avatarHp + heal);
         if (battleMetrics) battleMetrics.heals += heal;
+        if (battleMetrics) battleMetrics.healTriggers += 1;
         spawnCombatFx(`+${heal}`, "heal", 16);
         itemEvents.push(`回春散 +${heal}HP`);
+        triggerEvents.push("回春散");
+    }
+    if ((currentFrame.avatarDmg || 0) > 0 || (currentFrame.monsterDmg || 0) > 0 || itemEvents.length > 0 || triggerEvents.length > 0) {
+        currentFrame.itemText = itemEvents.join("；");
+        currentFrame.crit = lastCrit;
+        currentFrame.triggerText = triggerEvents.length ? triggerEvents.join(" / ") : "无";
+        lastBattleFrame = currentFrame;
     }
     if (lastBattleFrame) {
-        lastBattleFrame.itemText = itemEvents.join("；");
-        lastBattleFrame.crit = lastCrit;
         if ((lastBattleFrame.avatarDmg || 0) > 0 || (lastBattleFrame.monsterDmg || 0) > 0 || (lastBattleFrame.itemText || "").length > 0) {
             battleKeyframes.push({
                 round: lastBattleFrame.round,
@@ -5005,6 +5205,28 @@ function resolveBattleStep(elapsedMs = 100) {
                 avatarHp = getAvatarMaxHp();
                 addLog("锦鲤项链触发：化身濒死逆转，瞬间满血！");
                 spawnCombatFx("锦鲤护佑 +满血", "heal", 8);
+                if (lastBattleFrame) {
+                    lastBattleFrame.triggerText = lastBattleFrame.triggerText ? `${lastBattleFrame.triggerText} / 锦鲤项链逆转` : "锦鲤项链逆转";
+                } else {
+                    lastBattleFrame = {
+                        round: battleState.rounds,
+                        tactic: tactic.label,
+                        actor: "CD",
+                        avatarHit: false,
+                        monsterHit: true,
+                        crit: false,
+                        avatarDmg: 0,
+                        monsterDmg: lastSelfLoss,
+                        hitRoll: 0,
+                        dodgeRoll: 0,
+                        hpBefore: {},
+                        hpAfter: { enemy: battleState.hp, self: avatarHp },
+                        eventText: "锦鲤项链触发濒死逆转",
+                        detailText: "",
+                        itemText: "锦鲤护佑 +满血",
+                        triggerText: "锦鲤项链逆转"
+                    };
+                }
                 return;
             }
         }
@@ -5032,9 +5254,19 @@ function resolveBattleStep(elapsedMs = 100) {
             taken: battleMetrics ? battleMetrics.taken : Math.max(0, getAvatarMaxHp() - avatarHp),
             crits: battleMetrics ? battleMetrics.crits : 0,
             healed: battleMetrics ? battleMetrics.heals : 0,
+            playerAttacks: battleMetrics ? battleMetrics.playerAttacks : 0,
+            playerHits: battleMetrics ? battleMetrics.playerHits : 0,
+            enemyAttacks: battleMetrics ? battleMetrics.enemyAttacks : 0,
+            enemyHits: battleMetrics ? battleMetrics.enemyHits : 0,
+            healTriggers: battleMetrics ? battleMetrics.healTriggers : 0,
+            maxHp: getAvatarMaxHp(),
+            riskLevel: battleState.riskLevel || "中",
             loot: `损失灵石 ${lostStone}${lostCore ? ` / 妖丹 ${lostCore}` : ""}`,
             keyframes: battleKeyframes.slice(-8)
         };
+        const analysis = buildFailureAnalysis(battleSummaryData);
+        battleSummaryData.failureReasons = analysis.reasons;
+        battleSummaryData.suggestions = analysis.suggestions;
         recentBattleHistory.push({
             result: "战败",
             durationSec: battleSummaryData.durationSec,
@@ -5064,9 +5296,21 @@ function getRealmName(level = cultivationLevel) {
 }
 
 function getRealmStyleClass(level = cultivationLevel) {
-    if (level >= 81) return "realm-style-high";
-    if (level >= 41) return "realm-style-mid";
-    return "realm-style-low";
+    const lv = Math.max(1, Math.min(CULTIVATION_MAX_LEVEL, level));
+    const majorIdx = Math.max(0, Math.min(REALM_MAJOR_STAGES.length - 1, Math.floor((lv - 1) / 10)));
+    const classByMajor = [
+        "realm-style-fanti",
+        "realm-style-lianqi",
+        "realm-style-zhuji",
+        "realm-style-jindan",
+        "realm-style-yuanying",
+        "realm-style-huashen",
+        "realm-style-lianxu",
+        "realm-style-heti",
+        "realm-style-dacheng",
+        "realm-style-feisheng"
+    ];
+    return classByMajor[majorIdx] || "realm-style-fanti";
 }
 
 function getRealmStyledText(level = cultivationLevel) {
@@ -5128,10 +5372,10 @@ function rankBy(list, key) {
     return [...list].sort((a, b) => (b[key] || 0) - (a[key] || 0));
 }
 
-function formatRankRows(list, key) {
+function formatRankRows(list, key, mode = "") {
     return list.map((row, idx) => `
         <div class="rank-row ${row.name === "ark1" ? "me" : ""}">
-            <span>#${idx + 1} ${row.name} · ${row.title || "-"}</span>
+            <span>#${idx + 1} ${row.name} · ${row.title || "-"}${mode === "realm" ? ` · <span class="${getRealmStyleClass(Math.max(1, Math.min(CULTIVATION_MAX_LEVEL, Math.floor((row.realmScore || 0) / 1000))))}">${getRealmName(Math.max(1, Math.min(CULTIVATION_MAX_LEVEL, Math.floor((row.realmScore || 0) / 1000))))}</span>` : ""}</span>
             <span>${row[key] || 0}</span>
         </div>
     `).join("");
@@ -5163,7 +5407,7 @@ function openSocialPanel() {
     socialSummaryEl.innerHTML = `
         <div class="small-note">当前名号：<strong>${me.title}</strong> · 洞府评分 ${calcHomeScore()} · 战斗胜场 ${totalBattleWins}</div>
         <div class="social-grid">
-            <div class="social-card"><strong>境界榜</strong><div style="margin-top:6px;">${formatRankRows(rankRealm, "realmScore")}</div></div>
+            <div class="social-card"><strong>境界榜</strong><div style="margin-top:6px;">${formatRankRows(rankRealm, "realmScore", "realm")}</div></div>
             <div class="social-card"><strong>战力榜</strong><div style="margin-top:6px;">${formatRankRows(rankPower, "powerScore")}</div></div>
             <div class="social-card"><strong>讨伐榜</strong><div style="margin-top:6px;">${formatRankRows(rankHunt, "huntScore")}</div></div>
         </div>
@@ -5733,16 +5977,29 @@ function autoExploreStep(elapsedMs = 100) {
         releaseExploreTargetReservation();
         exploreTarget = null;
         if (isAtHome()) {
-            depositAvatarInventoryToHome();
-            handleBloodPillResupplyAtHome();
-            avatarHp = getAvatarMaxHp();
-            avatarMp = getAvatarMaxMp();
+            if (!homeRecoveryEntered) {
+                depositAvatarInventoryToHome();
+                handleBloodPillResupplyAtHome();
+                avatarMp = getAvatarMaxMp();
+                returnHomeVisitMs.push(simulationTimeMs);
+                if (returnHomeVisitMs.length > 60) returnHomeVisitMs.shift();
+                addLog("已返回洞府，开始疗伤整备");
+                homeRecoveryEntered = true;
+            }
+            const maxHp = getAvatarMaxHp();
+            if (avatarHp < maxHp) {
+                const healAmount = Math.max(1, Math.floor(HOME_HEAL_PER_SEC * (elapsedMs / 1000)));
+                avatarHp = Math.min(maxHp, avatarHp + healAmount);
+                movementStatusText = `洞府疗伤中：${Math.floor(avatarHp)}/${maxHp}（每秒+${HOME_HEAL_PER_SEC}）`;
+                return;
+            }
+            homeRecoveryEntered = false;
             autoObjective = "explore";
-            returnHomeVisitMs.push(simulationTimeMs);
-            if (returnHomeVisitMs.length > 60) returnHomeVisitMs.shift();
-            addLog("已返回洞府，完成整备");
+            movementStatusText = "气血已完全恢复，继续探索";
+            addLog("气血已完全恢复，继续外出历练");
             return;
         }
+        homeRecoveryEntered = false;
         moveOneStep(HOME_X, HOME_Y);
         return;
     }
@@ -6410,13 +6667,47 @@ function updateBattlePanel() {
         }
         battleResultCardEl.innerHTML = `
             时长 ${battleSummaryData.durationSec || battleSummaryData.rounds}s ｜ 回合 ${battleSummaryData.rounds} ｜ 总伤害 ${battleSummaryData.dealt} ｜ 承伤 ${battleSummaryData.taken} ｜ 暴击 ${battleSummaryData.crits} ｜ 治疗 ${battleSummaryData.healed || 0}<br>
+            命中率：${battleSummaryData.playerAttacks > 0 ? Math.round((battleSummaryData.playerHits / battleSummaryData.playerAttacks) * 100) : 0}% ｜ 敌方命中率：${battleSummaryData.enemyAttacks > 0 ? Math.round((battleSummaryData.enemyHits / battleSummaryData.enemyAttacks) * 100) : 0}% ｜ 开战风险：${battleSummaryData.riskLevel || "中"}<br>
             战利品：${battleSummaryData.loot}<br>
             ${replayLine}<br>
             ${avg ? `对比近5场均值：时长 ${battleSummaryData.durationSec - avg.durationSec >= 0 ? "+" : ""}${battleSummaryData.durationSec - avg.durationSec}s ｜ 伤害 ${battleSummaryData.dealt - avg.dealt >= 0 ? "+" : ""}${battleSummaryData.dealt - avg.dealt} ｜ 承伤 ${battleSummaryData.taken - avg.taken >= 0 ? "+" : ""}${battleSummaryData.taken - avg.taken} ｜ 治疗 ${battleSummaryData.healed - avg.healed >= 0 ? "+" : ""}${battleSummaryData.healed - avg.healed}` : "对比近5场均值：数据不足"}
         `;
+        if (battleSummaryData.result !== "胜利" && battleSummaryData.failureReasons?.length) {
+            battleResultCardEl.innerHTML += `<br>失败归因：${battleSummaryData.failureReasons.join(" / ")}<br>建议：${(battleSummaryData.suggestions || []).join(" / ")}`;
+        }
+        battleResultCardEl.innerHTML += `
+            <div class="compact-row" style="grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:8px;">
+                <button class="mini-btn" data-battle-next="alloc">去加点</button>
+                <button class="mini-btn" data-battle-next="resupply">去补给</button>
+                <button class="mini-btn" data-battle-next="continue">继续挑战同级</button>
+                <button class="mini-btn" data-battle-next="return">切换回城优先</button>
+            </div>
+        `;
         if (battleInfoMode === "detail") {
             battleResultCardEl.innerHTML += `<br>结算时间：第 ${dayCount} 天 · ${Math.floor(simulationTimeMs / 1000)}s`;
         }
+        battleResultCardEl.querySelectorAll("button[data-battle-next]").forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const action = btn.dataset.battleNext;
+                if (action === "alloc") {
+                    rightPanelTab = "attributes";
+                    addLog("建议操作：已切换到属性面板，可直接加点");
+                } else if (action === "resupply") {
+                    autoObjective = "return_home";
+                    isAutoMode = true;
+                    addLog("建议操作：已切换回城补给");
+                } else if (action === "continue") {
+                    autoObjective = "explore";
+                    isAutoMode = true;
+                    addLog("建议操作：继续同级挑战");
+                } else if (action === "return") {
+                    autoObjective = "return_home";
+                    isAutoMode = true;
+                    addLog("建议操作：已切换回城优先");
+                }
+                renderAll();
+            });
+        });
         battleResultCardEl.classList.remove("hidden");
         battlePanelEl.classList.remove("hidden");
         return;
@@ -6510,6 +6801,7 @@ function updateBattlePanel() {
         const selfLossText = selfLoss > 0 ? `本轮扣血 -${selfLoss}` : "本轮扣血 无";
         const enemyLossText = enemyLoss > 0 ? `敌方受伤 -${enemyLoss}` : "敌方受伤 无";
         const itemText = lastBattleFrame?.itemText || "无";
+        const triggerText = lastBattleFrame?.triggerText || "无";
         battleRoundResultEl.innerHTML = `
             <div class="summary-line">
                 <span class="summary-pill hp">血量 ${avatarHp}/${getAvatarMaxHp()}</span>
@@ -6519,7 +6811,12 @@ function updateBattlePanel() {
             <div class="summary-line">
                 <span class="summary-pill damage">${selfLossText}</span>
                 <span class="summary-pill enemy">${enemyLossText}</span>
-                <span class="summary-pill heal">道具 ${itemText}</span>
+                <span class="summary-pill heal">上一轮事件 ${triggerText}</span>
+            </div>
+            <div class="summary-line">
+                <span class="summary-pill heal">状态 ${getActiveBattleEffectsText()}</span>
+                <span class="summary-pill cd">道具 ${itemText || "无"}</span>
+                <span class="summary-pill enemy">风险 ${battleState.riskLevel || "中"}</span>
             </div>
         `;
         battleRoundResultEl.classList.add("minor");
@@ -6708,16 +7005,21 @@ function updateSidePanels() {
         { key: "control", label: "统御" },
         { key: "fortune", label: "气运" }
     ];
+    const attrLockedByBattle = Boolean(battleState);
+    const attrDisabledReason = attrLockedByBattle
+        ? "战斗中不可加点：请先结束战斗"
+        : (sharedStats.freePoints <= 0 ? "当前无可分配属性点" : "可加点");
     const combat = getAvatarCombatSnapshot();
     attributeSummaryEl.innerHTML = `
         <div style="margin-bottom:8px;"><strong>共用属性（主角/化身）</strong></div>
-        <div class="small-note">属性等级 Lv.${sharedStats.level}，待分配点 ${sharedStats.freePoints}</div>
+        <div class="small-note">属性等级 Lv.${sharedStats.level}，待分配点 ${sharedStats.freePoints}｜${attrDisabledReason}｜点击各属性后的 ? 查看用途</div>
         ${statRows.map((row) => `
             <div class="attr-row">
                 <span>${row.label}</span>
                 <div class="attr-ops">
                     <strong>${sharedStats[row.key]}</strong>
-                    <button class="mini-btn" data-attr-add="${row.key}" ${sharedStats.freePoints > 0 ? "" : "disabled"}>+</button>
+                    <button class="mini-btn" title="${getStatEffectHint(row.key)}" data-attr-help="${row.key}">?</button>
+                    <button class="mini-btn" title="${getStatEffectHint(row.key)}" data-attr-add="${row.key}" ${(sharedStats.freePoints > 0 && !attrLockedByBattle) ? "" : "disabled"}>+</button>
                 </div>
             </div>
         `).join("")}
@@ -6742,11 +7044,21 @@ function updateSidePanels() {
     `;
     attributeSummaryEl.querySelectorAll("button[data-attr-add]").forEach((btn) => {
         btn.addEventListener("click", () => {
-            const ok = allocSharedStat(btn.dataset.attrAdd);
+            const statKey = btn.dataset.attrAdd;
+            const ok = allocSharedStat(statKey);
             if (ok) {
-                addLog(`属性提升：${btn.dataset.attrAdd} +1`);
+                addLog(`属性提升：${statKey} +1（${getStatEffectHint(statKey)}）`);
                 renderAll();
+                return;
             }
+            if (battleState) addLog("战斗中不可加点，请先结束战斗");
+            else if (sharedStats.freePoints <= 0) addLog("暂无可分配属性点");
+        });
+    });
+    attributeSummaryEl.querySelectorAll("button[data-attr-help]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const statKey = btn.dataset.attrHelp;
+            addLog(`属性说明｜${getStatEffectHint(statKey)}`);
         });
     });
 
@@ -8326,12 +8638,11 @@ avatarMp = getAvatarMaxMp();
 if (loadFromLocal()) {
     addLog("已自动读取本地存档");
 } else {
-    const nx = rollRandomHomeCoord();
-    const ny = rollRandomHomeCoord();
-    applyHomeCoordinates(nx, ny);
+    const homePos = rollRandomHomePosition();
+    applyHomeCoordinates(homePos.x, homePos.y);
     avatarHp = getAvatarMaxHp();
     avatarMp = getAvatarMaxMp();
-    addLog(`新账号已建立，洞府坐标 (${nx}, ${ny})`);
+    addLog(`新账号已建立，洞府坐标 (${homePos.x}, ${homePos.y})`);
 }
 trackResourceTrendSample(true);
 updateSaveSizeInfo();

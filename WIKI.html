@@ -120,6 +120,44 @@
       margin-top: 10px;
       text-align: right;
     }
+    .realm-swatch {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 84px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .realm-fanti { color: #c7a8e8; text-shadow: 0 0 6px rgba(199,168,232,.42); }
+    .realm-lianqi { color: #9dcdf5; text-shadow: 0 0 6px rgba(157,205,245,.45); }
+    .realm-zhuji { color: #9be9d7; text-shadow: 0 0 7px rgba(155,233,215,.5); }
+    .realm-jindan { color: #f7d07b; text-shadow: 0 0 7px rgba(247,208,123,.5); }
+    .realm-yuanying { color: #eea287; text-shadow: 0 0 7px rgba(238,162,135,.5); }
+    .realm-huashen { color: #f0b6c4; text-shadow: 0 0 7px rgba(240,182,196,.5); }
+    .realm-lianxu {
+      background: linear-gradient(90deg,#bca0ea 0%,#f6efff 50%,#b294e4 100%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 10px rgba(204,174,255,.5);
+    }
+    .realm-heti {
+      background: linear-gradient(90deg,#89bdf0 0%,#eff9ff 52%,#7ab3e8 100%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 10px rgba(149,208,255,.55);
+    }
+    .realm-dacheng {
+      background: linear-gradient(90deg,#99e4ce 0%,#edfff9 50%,#82d7bf 100%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 10px rgba(138,231,203,.55);
+    }
+    .realm-feisheng {
+      background: linear-gradient(90deg,#f9b23f 0%,#fff8dc 48%,#f2a52b 100%);
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 12px rgba(255,199,86,.62);
+    }
   </style>
 </head>
 <body>
@@ -179,6 +217,22 @@
           <tr><td>71-80</td><td>合体境</td><td>前/中/后期</td></tr>
           <tr><td>81-90</td><td>大乘境</td><td>前/中/后期</td></tr>
           <tr><td>91-100</td><td>飞升境</td><td>前/中/后期</td></tr>
+        </tbody>
+      </table>
+      <h3>境界名称配色规范（与游戏内一致）</h3>
+      <table class="table">
+        <thead><tr><th>境界</th><th>样式预览</th><th>参考色</th></tr></thead>
+        <tbody>
+          <tr><td>凡体</td><td><span class="realm-swatch realm-fanti">凡体前期</span></td><td>紫色系</td></tr>
+          <tr><td>练气</td><td><span class="realm-swatch realm-lianqi">练气中期</span></td><td>蓝色系</td></tr>
+          <tr><td>筑基</td><td><span class="realm-swatch realm-zhuji">筑基后期</span></td><td>绿色系</td></tr>
+          <tr><td>金丹</td><td><span class="realm-swatch realm-jindan">金丹前期</span></td><td>黄色系</td></tr>
+          <tr><td>元婴</td><td><span class="realm-swatch realm-yuanying">元婴中期</span></td><td>珊瑚色系</td></tr>
+          <tr><td>化神</td><td><span class="realm-swatch realm-huashen">化神后期</span></td><td>粉色系</td></tr>
+          <tr><td>炼虚</td><td><span class="realm-swatch realm-lianxu">炼虚前期</span></td><td>华丽紫色渐变</td></tr>
+          <tr><td>合体</td><td><span class="realm-swatch realm-heti">合体中期</span></td><td>华丽蓝色渐变</td></tr>
+          <tr><td>大乘</td><td><span class="realm-swatch realm-dacheng">大乘后期</span></td><td>华丽绿色渐变</td></tr>
+          <tr><td>飞升</td><td><span class="realm-swatch realm-feisheng">飞升前期</span></td><td>金色渐变</td></tr>
         </tbody>
       </table>
       <p>修为需求曲线：<code>needExp(lv) = floor(40 + lv^2.05 * 6 + lv * 18)</code>。</p>
