@@ -95,6 +95,14 @@
             linear-gradient(180deg, #0d131b 0%, #091018 100%);
         overflow: hidden;
     }
+    .map-container::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(circle at center, rgba(0, 0, 0, 0) 55%, rgba(4, 8, 14, 0.35) 100%);
+        z-index: 45;
+    }
     .map-container.dragging {
         cursor: grabbing;
         user-select: none;
@@ -186,11 +194,11 @@
     #map-grid {
         display: grid;
         gap: 1px;
-        background: #0c121a;
+        background: rgba(20, 29, 42, 0.48);
         padding: 10px;
-        border: 1px solid rgba(110, 140, 180, 0.22);
-        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
-        transition: transform 0.18s ease-out;
+        border: 1px solid rgba(110, 140, 180, 0.16);
+        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.3);
+        z-index: 50;
     }
 
     .cell {
@@ -206,16 +214,22 @@
         position: absolute;
         inset: 0;
         pointer-events: none;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(0, 0, 0, 0.18) 60%, rgba(0, 0, 0, 0.28) 100%);
-        opacity: var(--shadow-opacity, 0.6);
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.14) 68%, rgba(0, 0, 0, 0.2) 100%);
+        opacity: var(--shadow-opacity, 0.5);
+    }
+    #map-grid.fast-mode .cell::after {
+        display: none;
+    }
+    #map-grid.fast-mode .cell.monster-cell::before {
+        animation: none;
     }
 
-    .cell.plain     { background: #1e252c; --shadow-opacity: 0.42; }
-    .cell.forest    { background: #122013; --shadow-opacity: 0.56; }
-    .cell.hill      { background: #2a2d34; --shadow-opacity: 0.78; }
-    .cell.mountain  { background: #1b1e25; --shadow-opacity: 0.96; }
-    .cell.water     { background: #10203b; --shadow-opacity: 0.62; }
-    .cell.structure { background: #32233c; --shadow-opacity: 0.88; box-shadow: inset 0 0 10px rgba(110, 70, 40, 0.4); }
+    .cell.plain     { background: #27303a; --shadow-opacity: 0.34; }
+    .cell.forest    { background: #24332e; --shadow-opacity: 0.4; }
+    .cell.hill      { background: #31353f; --shadow-opacity: 0.5; }
+    .cell.mountain  { background: #2a2d35; --shadow-opacity: 0.62; }
+    .cell.water     { background: #243448; --shadow-opacity: 0.42; }
+    .cell.structure { background: #3a3242; --shadow-opacity: 0.58; box-shadow: inset 0 0 8px rgba(136, 110, 84, 0.3); }
 
     .cell.impassable::before {
         content: "";
@@ -263,6 +277,7 @@
     body.work-mode #craft-panel,
     body.work-mode #shop-panel,
     body.work-mode #enhance-panel,
+    body.work-mode #admin-panel,
     body.work-mode #social-panel,
     body.work-mode #build-panel {
         display: none !important;
@@ -400,18 +415,37 @@
         font-size: 10px;
         line-height: 1;
         pointer-events: none;
-        text-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.75);
+        border: 1px solid rgba(190, 208, 236, 0.22);
+        border-radius: 4px;
+        background: rgba(15, 24, 38, 0.6);
+        padding: 1px 3px;
     }
 
     .resource-tag {
         right: 2px;
         bottom: 2px;
+        color: #d6e7ff;
     }
 
     .chunk-tag {
         left: 2px;
         top: 2px;
-        color: rgba(255, 255, 255, 0.75);
+        color: rgba(229, 237, 250, 0.86);
+    }
+    .chunk-tag.building-tag {
+        left: auto;
+        right: 2px;
+        top: 2px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #ffe6a3;
+        background: rgba(32, 24, 10, 0.82);
+        border: 1px solid rgba(255, 214, 138, 0.65);
+        border-radius: 5px;
+        padding: 1px 3px;
+        box-shadow: 0 0 4px rgba(255, 198, 112, 0.3);
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.9);
     }
 
     .home-tag {
@@ -420,6 +454,8 @@
         transform: translate(-50%, -50%);
         color: #ffc87d;
         font-size: 12px;
+        border-color: rgba(255, 206, 142, 0.35);
+        background: rgba(40, 30, 16, 0.62);
     }
 
     .home-area-tag {
@@ -438,6 +474,8 @@
         bottom: -10px;
         transform: translateX(-50%);
         color: #9fe3b0;
+        border-color: rgba(162, 231, 185, 0.4);
+        background: rgba(16, 36, 24, 0.68);
     }
 
     .cell.monster-cell::before {
@@ -447,19 +485,19 @@
         border-radius: 3px;
         pointer-events: none;
         border: 1px solid rgba(255, 178, 96, 0.65);
-        box-shadow: 0 0 10px rgba(255, 160, 92, 0.38);
+        box-shadow: 0 0 6px rgba(255, 160, 92, 0.3);
         animation: monster-pulse 1.4s ease-in-out infinite;
         z-index: 3;
     }
 
     .cell.monster-elite::before {
         border-color: rgba(255, 106, 106, 0.72);
-        box-shadow: 0 0 12px rgba(255, 96, 96, 0.48);
+        box-shadow: 0 0 7px rgba(255, 96, 96, 0.34);
     }
 
     .cell.monster-boss::before {
         border-color: rgba(211, 124, 255, 0.8);
-        box-shadow: 0 0 14px rgba(198, 102, 255, 0.62);
+        box-shadow: 0 0 8px rgba(198, 102, 255, 0.38);
         animation-duration: 1s;
     }
 
@@ -516,17 +554,76 @@
 
     #tooltip {
         position: absolute;
-        background: rgba(20, 28, 40, 0.95);
-        border: 1px solid #334455;
-        border-radius: 6px;
-        padding: 8px 12px;
-        font-size: 13px;
+        background: rgba(14, 22, 34, 0.96);
+        border: 1px solid rgba(136, 164, 204, 0.42);
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 12px;
         pointer-events: none;
         z-index: 100;
-        max-width: 280px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+        max-width: 300px;
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.48);
         display: none;
+    }
+    #tooltip .tt-title {
+        font-weight: 700;
+        font-size: 13px;
+        color: #dceaff;
+        margin-bottom: 6px;
+        line-height: 1.35;
+    }
+    #tooltip .tt-body {
+        color: #a9bddf;
+        line-height: 1.45;
         white-space: pre-line;
+    }
+    #red-drop-cinematic {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at center, rgba(160, 10, 18, 0.36) 0%, rgba(10, 5, 8, 0.86) 70%);
+        z-index: 220;
+        pointer-events: none;
+    }
+    #red-drop-cinematic.show {
+        display: flex;
+        animation: red-cinematic-fade 2.6s ease-out forwards;
+    }
+    #red-drop-card {
+        padding: 18px 26px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 118, 118, 0.7);
+        background: linear-gradient(160deg, rgba(53, 8, 12, 0.95), rgba(24, 8, 14, 0.95));
+        box-shadow: 0 0 30px rgba(255, 70, 70, 0.45), 0 0 80px rgba(255, 30, 30, 0.22);
+        text-align: center;
+        min-width: 360px;
+    }
+    #red-drop-card .title {
+        font-size: 22px;
+        font-weight: 800;
+        color: #ffb0b0;
+        letter-spacing: 1px;
+        text-shadow: 0 0 12px rgba(255, 90, 90, 0.8);
+    }
+    #red-drop-card .name {
+        margin-top: 8px;
+        font-size: 26px;
+        font-weight: 800;
+        color: #ffd6d6;
+        text-shadow: 0 0 10px rgba(255, 120, 120, 0.85);
+    }
+    #red-drop-card .desc {
+        margin-top: 6px;
+        font-size: 13px;
+        color: #f2b6b6;
+    }
+    @keyframes red-cinematic-fade {
+        0% { opacity: 0; }
+        8% { opacity: 1; }
+        84% { opacity: 1; }
+        100% { opacity: 0; }
     }
 
     #build-panel {
@@ -870,6 +967,7 @@
         height: 111px;
         display: block;
         object-fit: contain;
+        overflow: visible;
     }
     .codex-tab-row {
         display: grid;
@@ -1560,7 +1658,8 @@
     #craft-panel,
     #shop-panel,
     #enhance-panel,
-    #social-panel {
+    #social-panel,
+    #admin-panel {
         position: fixed;
         left: 24px;
         top: 72px;
@@ -1591,6 +1690,20 @@
         border-radius: 8px;
         padding: 8px;
         background: rgba(23, 33, 49, 0.82);
+    }
+    .group-card {
+        margin: 8px 0 0;
+        padding: 10px;
+        border: 1px solid rgba(118, 145, 187, 0.32);
+        border-radius: 10px;
+        background: rgba(18, 28, 44, 0.72);
+    }
+    .group-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #b8d6ff;
+        margin-bottom: 8px;
+        letter-spacing: 0.3px;
     }
     .rank-row {
         display: flex;
@@ -1766,6 +1879,21 @@
         text-shadow: 0 0 12px rgba(255, 199, 86, 0.62);
         font-weight: 800;
         letter-spacing: 0.3px;
+    }
+    .realm-style-xianren {
+        background: linear-gradient(90deg, #ff5f6d 0%, #ffc371 16%, #ffe66d 32%, #7cf6b6 48%, #7ad7ff 64%, #9b8bff 80%, #ff7adf 100%);
+        background-size: 220% 220%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 10px rgba(255, 212, 250, 0.55);
+        font-weight: 900;
+        letter-spacing: 0.35px;
+        animation: xianren-rainbow 3.2s linear infinite;
+    }
+    @keyframes xianren-rainbow {
+        0% { background-position: 0% 50%; }
+        100% { background-position: 100% 50%; }
     }
 
     #event-toast-stack {
@@ -1967,46 +2095,39 @@
         <div class="section-title" style="margin-top:8px;">洞府建设</div>
         <button id="homeBuildBtn" class="control-btn">🏗 洞府建设/阵法</button>
 
-        <div class="section-title" style="margin-top:10px;">功能</div>
-        <div class="compact-row" style="grid-template-columns:repeat(2,minmax(0,1fr));">
-            <button id="craftBtn" class="mode-btn speed-btn">🧪 合成</button>
-            <button id="saveBtn" class="mode-btn speed-btn">💾 存档</button>
-            <button id="loadBtn" class="mode-btn speed-btn">📂 读档</button>
-            <button id="helpBtn" class="mode-btn speed-btn">📘 游戏百科</button>
+        <div class="group-card">
+            <div class="group-title">养成</div>
+            <div class="compact-row" style="grid-template-columns:repeat(2,minmax(0,1fr));">
+                <button id="craftBtn" class="mode-btn speed-btn">🧪 合成</button>
+                <button id="shopBtn" class="mode-btn speed-btn">🛒 丹药商店</button>
+                <button id="enhanceBtn" class="mode-btn speed-btn">⚒ 装备强化</button>
+                <button id="socialBtn" class="mode-btn speed-btn">🏆 排行榜</button>
+            </div>
         </div>
-        <div class="card" style="margin:8px 0 0; padding:8px;">
-            <div class="small-note" id="saveSizeInfo">存档体积：--</div>
-            <button id="compactSaveBtn" class="mini-btn" style="margin-top:6px; width:100%;">🧹 一键瘦身存档</button>
+        <div class="group-card">
+            <div class="group-title">系统</div>
+            <div class="compact-row" style="grid-template-columns:repeat(2,minmax(0,1fr));">
+                <button id="saveBtn" class="mode-btn speed-btn">💾 存档</button>
+                <button id="loadBtn" class="mode-btn speed-btn">📂 读档</button>
+                <button id="helpBtn" class="mode-btn speed-btn">📘 游戏百科</button>
+                <button id="changelogBtn" class="mode-btn speed-btn">📝 更新日志</button>
+                <button id="adminBtn" class="mode-btn speed-btn">🛠 后台控制</button>
+                <button id="rebirthBtn" class="mode-btn speed-btn">♻ 重生（清档）</button>
+            </div>
+            <div class="card" style="margin:8px 0 0; padding:8px;">
+                <div class="small-note" id="saveSizeInfo">存档体积：--</div>
+                <button id="compactSaveBtn" class="mini-btn" style="margin-top:6px; width:100%;">🧹 一键瘦身存档</button>
+            </div>
+            <div class="card" style="margin:8px 0 0;">
+                <div style="font-size:1.02em; color:#a8d0ff; margin-bottom:6px;">⚙ 设置</div>
+                <label class="small-note" style="display:block; margin:6px 0;">
+                    <input id="toastToggle" type="checkbox" checked> 顶部提示框
+                </label>
+                <label class="small-note" style="display:block; margin:6px 0;">
+                    <input id="battleCompactToggle" type="checkbox"> 战斗详情折叠到底部
+                </label>
+            </div>
         </div>
-        <button id="rebirthBtn" class="control-btn">♻ 重生（清档）</button>
-        <button id="shopBtn" class="control-btn">🛒 丹药商店</button>
-        <button id="enhanceBtn" class="control-btn">⚒ 装备强化</button>
-        <button id="socialBtn" class="control-btn">🏆 排行榜</button>
-        <button id="changelogBtn" class="control-btn">📝 更新日志</button>
-        <div class="card" style="margin:8px 0 0;">
-            <div style="font-size:1.02em; color:#a8d0ff; margin-bottom:6px;">⚙ 设置</div>
-            <label class="small-note" style="display:block; margin:6px 0;">
-                <input id="toastToggle" type="checkbox" checked> 顶部提示框
-            </label>
-            <label class="small-note" style="display:block; margin:6px 0;">
-                <input id="battleCompactToggle" type="checkbox"> 战斗详情折叠到底部
-            </label>
-        </div>
-
-        <div class="section-title" style="margin-top:16px;">测试开关</div>
-        <label class="small-note" style="display:block; margin:6px 0;">
-            <input id="forceMonsterToggle" type="checkbox"> 强制附近刷怪
-        </label>
-        <label class="small-note" style="display:block; margin:6px 0;">
-            <input id="fixedDropToggle" type="checkbox"> 固定掉落结果
-        </label>
-        <select id="debugMonsterSelect" class="mode-btn" style="width:100%; margin-bottom:6px;">
-            <option value="normal">调试怪：裂地凶兽</option>
-            <option value="elite">调试怪：玄甲统领</option>
-            <option value="boss">调试怪：天罚魔龙</option>
-            <option value="nearby">调试怪：当前位置怪物</option>
-        </select>
-        <button id="debugBattleBtn" class="control-btn">⚔ 一键触发战斗</button>
 
         <div class="section-title" style="margin-top:16px;">当前状态</div>
         <div id="avatarStatus" class="card" style="font-size:13px; line-height:1.6; margin-bottom:0;"></div>
@@ -2129,6 +2250,55 @@
     </div>
     <div id="enhanceSummary"></div>
 </div>
+<div id="admin-panel" class="hidden">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <strong>🛠 后台控制台</strong>
+        <button id="adminCloseBtn" class="mini-btn">关闭</button>
+    </div>
+    <div class="small-note" style="margin-bottom:8px;">
+        当前模拟倍速：<span id="adminTimeScaleLabel">1</span>x ｜ 世界击杀：<span id="adminWorldKillLabel">0</span> ｜ 世界BOSS：<span id="adminWorldBossStateLabel">未刷新</span>
+    </div>
+    <div class="card" style="margin-bottom:8px;">
+        <div style="margin-bottom:6px;"><strong>时间与速度</strong></div>
+        <input id="adminTimeScaleInput" type="range" min="1" max="20" step="1" value="1" style="width:100%;">
+        <div class="compact-row" style="grid-template-columns:repeat(4,minmax(0,1fr)); margin-top:6px;">
+            <button class="mini-btn" data-admin-speed="1">1x</button>
+            <button class="mini-btn" data-admin-speed="2">2x</button>
+            <button class="mini-btn" data-admin-speed="5">5x</button>
+            <button class="mini-btn" data-admin-speed="10">10x</button>
+        </div>
+    </div>
+    <div class="card" style="margin-bottom:8px;">
+        <div style="margin-bottom:6px;"><strong>战斗与刷怪调试</strong></div>
+        <label class="small-note" style="display:block; margin:6px 0;">
+            <input id="forceMonsterToggle" type="checkbox"> 强制附近刷怪
+        </label>
+        <label class="small-note" style="display:block; margin:6px 0;">
+            <input id="fixedDropToggle" type="checkbox"> 固定掉落结果
+        </label>
+        <select id="debugMonsterSelect" class="mode-btn" style="width:100%; margin-bottom:6px;">
+            <option value="normal">调试怪：裂地凶兽</option>
+            <option value="elite">调试怪：玄甲统领</option>
+            <option value="boss">调试怪：天罚魔龙</option>
+            <option value="nearby">调试怪：当前位置怪物</option>
+        </select>
+        <button id="debugBattleBtn" class="control-btn">⚔ 一键触发战斗</button>
+    </div>
+    <div class="card">
+        <div style="margin-bottom:6px;"><strong>世界BOSS调试</strong></div>
+        <div class="compact-row" style="grid-template-columns:repeat(2,minmax(0,1fr));">
+            <button id="adminFillWorldKillBtn" class="mini-btn">击杀进度补满</button>
+            <button id="adminSpawnWorldBossBtn" class="mini-btn">立即刷新BOSS</button>
+        </div>
+    </div>
+</div>
+<div id="red-drop-cinematic">
+    <div id="red-drop-card">
+        <div class="title">红装降世</div>
+        <div id="red-drop-name" class="name">---</div>
+        <div id="red-drop-desc" class="desc">稀有掉落演出</div>
+    </div>
+</div>
 
 <script src="core/equipment-core.js"></script>
 <script src="core/battle-core.js"></script>
@@ -2151,7 +2321,7 @@ const BODY_CULTIVATION_TICK_MS = 20000;
 const AVATAR_MAX_ONLINE_MS = 12 * 60 * 60 * 1000;
 const DAILY_MOVE_RADIUS = 15;
 const BOSS_SPAWN_MAX_HOME_DISTANCE = 12;
-const CULTIVATION_MAX_LEVEL = 100;
+const CULTIVATION_MAX_LEVEL = Number.MAX_SAFE_INTEGER;
 const BUILDING_PRODUCTION_TICK_MS = 5000;
 const MONSTER_RESPAWN_MS = 45000;
 const AVATAR_REVIVE_COOLDOWN_MS = 600000;
@@ -2303,6 +2473,42 @@ const ITEM_EQUIP_SLOT = {
     koiNecklace: "necklace"
 };
 
+const EQUIP_AFFIX_DEFS = {
+    razor_edge: { label: "锋刃", rarity: "common", text: "伤害 +8%", effects: { damageMul: 0.08 } },
+    precise: { label: "凝准", rarity: "common", text: "命中 +2%", effects: { hit: 0.02 } },
+    sturdy: { label: "坚壁", rarity: "common", text: "承伤 -8%", effects: { damageTakenMul: -0.08 } },
+    blood_drain: { label: "噬血", rarity: "rare", text: "吸血 +4%", effects: { lifesteal: 0.04 } },
+    heart_guard: { label: "守心", rarity: "rare", text: "每5秒回血 +2", effects: { regen: 2 } },
+    crit_eye: { label: "破绽洞察", rarity: "rare", text: "暴击率 +6%", effects: { critRate: 0.06 } },
+    execution: { label: "斩决", rarity: "rare", text: "对首领增伤 +15%", effects: { vsTagDamageMul: { boss: 0.15 } } },
+    armor_breaker: { label: "裂甲", rarity: "rare", text: "对重甲增伤 +12%", effects: { vsTagDamageMul: { armored: 0.12 } } },
+    anti_bleed: { label: "清煞", rarity: "rare", text: "受嗜血怪伤害 -12%", effects: { vsTagDamageTakenMul: { bloodthirst: -0.12 } } },
+    frenzy: { label: "狂战", rarity: "epic", text: "当前血量低于50%时伤害 +18%", effects: { lowHpDamageMul: 0.18 } },
+    giant_slayer: { label: "诛王", rarity: "epic", text: "对首领暴伤 +35%", effects: { vsTagCritDamageMul: { boss: 0.35 } } },
+    sky_shield: { label: "天幕", rarity: "epic", text: "怪物技能减损触发率 -35%", effects: { monsterWeakenResist: 0.35 } },
+    hunt_gold: { label: "猎财", rarity: "epic", text: "战斗金币 +12%", effects: { battleGoldMul: 0.12 } },
+    storm_chain: { label: "雷连", rarity: "epic", text: "暴击后额外造成 12% 伤害", effects: { onCritExtraDamageMul: 0.12 } }
+};
+
+const AFFIX_POOL_BY_RARITY = {
+    uncommon: ["precise", "razor_edge", "sturdy"],
+    rare: ["precise", "razor_edge", "sturdy", "blood_drain", "heart_guard", "crit_eye", "execution", "armor_breaker", "anti_bleed"],
+    epic: ["precise", "razor_edge", "sturdy", "blood_drain", "heart_guard", "crit_eye", "execution", "armor_breaker", "anti_bleed", "frenzy", "giant_slayer", "sky_shield", "hunt_gold", "storm_chain"]
+};
+
+const MONSTER_TAGS_BY_TYPE = {
+    荒原魔兵: ["armored"],
+    夜翼蝠: ["bloodthirst"],
+    岩甲战兽: ["armored"],
+    丛林狼王: ["bloodthirst"],
+    裂地凶兽: ["armored"],
+    毒刺蛛后: ["venom"],
+    狂刃魔将: ["bloodthirst", "elite"],
+    玄甲统领: ["armored", "elite"],
+    深渊君王: ["boss", "bloodthirst"],
+    天罚魔龙: ["boss", "armored"]
+};
+
 const EQUIP_LEVEL_REQUIREMENTS = {
     sword: 1,
     bow: 1,
@@ -2367,22 +2573,22 @@ function getItemIconMarkup(itemId) {
     return `<span class="icon-wrap" aria-hidden="true">${svg}</span>`;
 }
 
-const MONSTER_ICON_SVG = {
-    荒原魔兵: "assets/monsters/huangyuan_mobing.svg",
-    夜翼蝠: "assets/monsters/yeyi_fu.svg",
-    岩甲战兽: "assets/monsters/yanjia_zhanshou.svg",
-    丛林狼王: "assets/monsters/conglin_langwang.svg",
-    裂地凶兽: "assets/monsters/liedi_xiongshou.svg",
-    毒刺蛛后: "assets/monsters/duci_zhuhou.svg",
-    狂刃魔将: "assets/monsters/kuangren_mojiang.svg",
-    玄甲统领: "assets/monsters/xuanjia_tongling.svg",
-    深渊君王: "assets/monsters/shenyuan_junwang.svg",
-    天罚魔龙: "assets/monsters/tianfa_molong.svg"
+const MONSTER_ICON_INLINE = {
+    荒原魔兵: `<svg viewBox="0 0 200 200" class="boss-svg"><defs><linearGradient id="m_g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#475569"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><path d="M60 40 L140 40 L155 170 Q100 180, 45 170 Z" fill="url(#m_g1)" stroke="#64748b" stroke-width="2"/><rect x="70" y="65" width="60" height="15" rx="4" fill="#0f172a"/><circle cx="85" cy="72" r="5" fill="#f43f5e"><animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" /></circle><circle cx="115" cy="72" r="5" fill="#f43f5e"><animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" /></circle><path d="M40 80 L20 150 M160 80 L180 150" stroke="#475569" stroke-width="12" stroke-linecap="round"/><path d="M70 45 L130 45" stroke="#94a3b8" stroke-width="4" opacity="0.3"/></svg>`,
+    夜翼蝠: `<svg viewBox="0 0 200 200" class="boss-svg"><defs><linearGradient id="m_g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7e22ce"/><stop offset="100%" stop-color="#3b0764"/></linearGradient></defs><path d="M100 80 L190 30 Q160 130, 100 150 Q40 130, 10 30 Z" fill="url(#m_g2)" /><circle cx="100" cy="90" r="30" fill="#2e1065"/><circle cx="88" cy="85" r="4" fill="#f472b6"/><circle cx="112" cy="85" r="4" fill="#f472b6"/><path d="M80 50 L95 75 M120 50 L105 75" stroke="#a855f7" stroke-width="8" stroke-linecap="round"/></svg>`,
+    岩甲战兽: `<svg viewBox="0 0 200 200" class="boss-svg"><rect x="30" y="80" width="140" height="90" rx="30" fill="#78350f" stroke="#451a03" stroke-width="4"/><path d="M40 85 L70 40 L100 85 L130 40 L160 85" fill="#b45309"/><circle cx="140" cy="110" r="12" fill="#fbbf24" opacity="0.8"/><rect x="55" y="160" width="25" height="20" rx="5" fill="#451a03"/><rect x="120" y="160" width="25" height="20" rx="5" fill="#451a03"/></svg>`,
+    丛林狼王: `<svg viewBox="0 0 200 200" class="boss-svg"><path d="M100 30 L160 110 L100 180 L40 110 Z" fill="#14532d"/><path d="M50 50 L85 90 M150 50 L115 90" stroke="#22c55e" stroke-width="15" stroke-linecap="round"/><circle cx="85" cy="110" r="6" fill="#facc15"/><circle cx="115" cy="110" r="6" fill="#facc15"/><path d="M90 140 Q100 150, 110 140" stroke="#facc15" fill="none" stroke-width="4" stroke-linecap="round"/></svg>`,
+    裂地凶兽: `<svg viewBox="0 0 200 200" class="boss-svg"><circle cx="100" cy="100" r="80" fill="#7c2d12" stroke="#ea580c" stroke-width="4"/><path d="M20 100 Q100 130, 180 100" stroke="#f97316" stroke-width="10" fill="none" opacity="0.6"/><path d="M60 40 L80 80 M140 40 L120 80" stroke="#fdba74" stroke-width="15" stroke-linecap="round"/><circle cx="100" cy="80" r="20" fill="#fff" opacity="0.9"/><circle cx="100" cy="80" r="8" fill="#000"/></svg>`,
+    毒刺蛛后: `<svg viewBox="0 0 200 200" class="boss-svg"><defs><radialGradient id="m_g6"><stop offset="0%" stop-color="#065f46"/><stop offset="100%" stop-color="#022c22"/></radialGradient></defs><circle cx="100" cy="100" r="50" fill="url(#m_g6)"/><path d="M20 40 L80 90 M180 40 L120 90 M20 160 L80 110 M180 160 L120 110" stroke="#10b981" stroke-width="8" stroke-linecap="round"/><circle cx="85" cy="90" r="5" fill="#34d399"/><circle cx="115" cy="90" r="5" fill="#34d399"/><circle cx="100" cy="80" r="4" fill="#34d399"/><path d="M70 110 L130 110" stroke="#059669" stroke-width="4" opacity="0.5"/></svg>`,
+    狂刃魔将: `<svg viewBox="0 0 200 200" class="boss-svg"><path d="M70 30 L130 30 L140 160 L60 160 Z" fill="#450a0a" stroke="#ef4444" stroke-width="3"/><path d="M20 70 L180 70" stroke="#dc2626" stroke-width="15" stroke-linecap="round"/><path d="M50 20 L100 0 L150 20" fill="#991b1b"/><rect x="80" y="80" width="40" height="15" rx="5" fill="#fecaca"><animate attributeName="opacity" values="0.4;1;0.4" dur="1s" repeatCount="indefinite" /></rect><path d="M40 70 L30 180 M160 70 L170 180" stroke="#ef4444" stroke-width="8" opacity="0.6"/></svg>`,
+    玄甲统领: `<svg viewBox="0 0 200 200" class="boss-svg"><rect x="40" y="60" width="120" height="110" rx="20" fill="#1e293b" stroke="#64748b" stroke-width="5"/><rect x="75" y="30" width="50" height="50" rx="10" fill="#334155"/><path d="M60 90 L140 90 M60 120 L140 120 M60 150 L140 150" stroke="rgba(255,255,255,0.1)" stroke-width="4"/><circle cx="100" cy="50" r="10" fill="#38bdf8" filter="blur(2px)"/></svg>`,
+    深渊君王: `<svg viewBox="0 0 200 200" class="boss-svg"><defs><radialGradient id="m_g9"><stop offset="0%" stop-color="#fff"/><stop offset="30%" stop-color="#818cf8"/><stop offset="100%" stop-color="#1e1b4b"/></radialGradient></defs><circle cx="100" cy="100" r="75" fill="url(#m_g9)" opacity="0.9"><animate attributeName="r" values="70;78;70" dur="4s" repeatCount="indefinite" /></circle><circle cx="100" cy="100" r="30" fill="#000"/><path d="M100 0 L110 40 L100 80 L90 40 Z" fill="#fff" opacity="0.5"/><circle cx="100" cy="100" r="10" fill="#fff"><animate attributeName="opacity" values="1;0.2;1" dur="2s" repeatCount="indefinite" /></circle></svg>`,
+    天罚魔龙: `<svg viewBox="0 0 200 200" class="boss-svg"><path d="M30 110 Q100 0, 170 110 Q100 200, 30 110" fill="#92400e" stroke="#fbbf24" stroke-width="4"/><path d="M100 20 L130 80 L100 140 L70 80 Z" fill="#facc15"><animate attributeName="fill" values="#facc15;#fff;#facc15" dur="0.5s" repeatCount="indefinite" /></path><path d="M10 90 L50 110 M190 90 L150 110" stroke="#fbbf24" stroke-width="15" stroke-linecap="round"/><circle cx="85" cy="85" r="5" fill="#fff"/><circle cx="115" cy="85" r="5" fill="#fff"/></svg>`
 };
 
 function getMonsterIconMarkup(type) {
-    const src = MONSTER_ICON_SVG[type] || MONSTER_ICON_SVG.荒原魔兵;
-    return `<span class="monster-icon-wrap" aria-hidden="true"><img src="${src}" alt="${type}" loading="lazy" decoding="async"></span>`;
+    const svg = MONSTER_ICON_INLINE[type] || MONSTER_ICON_INLINE.荒原魔兵;
+    return `<span class="monster-icon-wrap" aria-hidden="true">${svg}</span>`;
 }
 
 function formatBonusText(bonus) {
@@ -2400,6 +2606,35 @@ function formatBonusText(bonus) {
 function getItemUsageText(itemId) {
     const def = ITEM_DEFS[itemId] || {};
     return def.use || ITEM_USAGE_HINTS[itemId] || "用于收集、建设、战斗或合成流程。";
+}
+
+function getAffixTextList(affixIds = []) {
+    if (!Array.isArray(affixIds) || !affixIds.length) return [];
+    return affixIds.map((id) => {
+        const def = EQUIP_AFFIX_DEFS[id];
+        return def ? `${def.label}：${def.text}` : "";
+    }).filter(Boolean);
+}
+
+function getMonsterTags(type) {
+    return MONSTER_TAGS_BY_TYPE[type] || [];
+}
+
+function getMonsterThreatRank(type) {
+    const tier = getMonsterDropProfile(type)?.tier || 1;
+    if (tier >= 5) return "SSR";
+    if (tier >= 4) return "SR";
+    if (tier >= 3) return "R";
+    return "N";
+}
+
+function getMonsterDropRank(type) {
+    const tier = getMonsterDropProfile(type)?.tier || 1;
+    if (tier >= 5) return "SS";
+    if (tier >= 4) return "S";
+    if (tier >= 3) return "A";
+    if (tier >= 2) return "B";
+    return "C";
 }
 
 function getChestLootChanceRows(chestId) {
@@ -2615,6 +2850,12 @@ const WORLD_EVENT_DEFS = [
     { id: "tiandao_project", label: "天道工程增益", durationMs: 300000, effects: { cultivationMul: 0.6, dropMul: 0.1 } }
 ];
 const AUTO_REGEN_INTERVAL_MS = 5000;
+const RED_DROP_ITEM_IDS = ["thunderBlade", "phoenixBow", "voidArmor", "dragonRelic", "warDrum"];
+const WORLD_BOSS_CONFIG = {
+    killsRequired: 120,
+    previewMs: 60000,
+    cooldownMs: 300000
+};
 
 const CRAFT_RECIPES = [
     {
@@ -2720,7 +2961,8 @@ const STRATEGIES = [
     { id: "battle", label: "战斗优先", hint: "优先清怪，资源其次。", weights: { herb: 0.8, wood: 0.8, stone: 0.8, rare: 1.1 }, combatBias: 1.55, avoidMonster: 0 },
     { id: "herb", label: "采药优先", hint: "偏向灵草与稳定续航。", weights: { herb: 2.3, wood: 0.9, stone: 0.5, rare: 1.2 }, combatBias: 0.25, avoidMonster: 0.35 },
     { id: "rare", label: "异晶搜寻", hint: "高风险高收益采集。", weights: { herb: 0.7, wood: 0.7, stone: 1.2, rare: 2.9 }, combatBias: 0.95, avoidMonster: 0.1 },
-    { id: "safe", label: "避战搬运", hint: "尽量规避战斗，快速回仓。", weights: { herb: 1.2, wood: 1.3, stone: 1.0, rare: 1.0 }, combatBias: 0.05, avoidMonster: 0.95 }
+    { id: "safe", label: "避战搬运", hint: "尽量规避战斗，快速回仓。", weights: { herb: 1.2, wood: 1.3, stone: 1.0, rare: 1.0 }, combatBias: 0.05, avoidMonster: 0.95 },
+    { id: "gather_only", label: "纯采集", hint: "只采集不战斗，遇怪立刻改道。", weights: { herb: 1.5, wood: 1.5, stone: 1.2, rare: 1.1 }, combatBias: 0, avoidMonster: 1, noCombat: true }
 ];
 const BATTLE_TACTICS = [
     { id: "steady", label: "稳健", hint: "抗压续航，适合挂机远行", atkMul: 0.9, defMul: 1.26, hitBonus: 0.01, dodgeBonus: 0.03, critBonus: -0.03, incomingMul: 0.8, pillRatio: 0.62, salveRatio: 0.4, retreatRatio: 0.34 },
@@ -2922,6 +3164,14 @@ let avatarReviveUntilMs = 0;
 let lastBattleFrame = null;
 let goldCoins = 0;
 let itemMenuState = null;
+let quickBuildTypeId = "herbGarden";
+let reviveStreak = 0;
+let reviveKingUnlocked = false;
+let reviveKingBonusRate = 0;
+let totalRevives = 0;
+let recentDeathRecords = [];
+let worldKillCount = 0;
+let worldBossState = { phase: "idle", spawnAtMs: 0, x: 0, y: 0, type: "天罚魔龙", level: 1, hp: 0, maxHp: 0, killedAtMs: -999999 };
 let bodyCultivationExp = 0;
 let bodyCultivationAccumMs = 0;
 let cultivationBuffUntilMs = 0;
@@ -3159,6 +3409,9 @@ const battleRoundResultEl = document.getElementById("battleRoundResult");
 const battleLogListEl = document.getElementById("battleLogList");
 const battleResultCardEl = document.getElementById("battleResultCard");
 const battleHitFlashEl = document.getElementById("battle-hit-flash");
+const redDropCinematicEl = document.getElementById("red-drop-cinematic");
+const redDropNameEl = document.getElementById("red-drop-name");
+const redDropDescEl = document.getElementById("red-drop-desc");
 const craftPanelEl = document.getElementById("craft-panel");
 const craftSummaryEl = document.getElementById("craftSummary");
 const shopPanelEl = document.getElementById("shop-panel");
@@ -3187,6 +3440,15 @@ const socialBtn = document.getElementById("socialBtn");
 const socialPanelEl = document.getElementById("social-panel");
 const socialCloseBtn = document.getElementById("socialCloseBtn");
 const socialSummaryEl = document.getElementById("socialSummary");
+const adminBtn = document.getElementById("adminBtn");
+const adminPanelEl = document.getElementById("admin-panel");
+const adminCloseBtn = document.getElementById("adminCloseBtn");
+const adminTimeScaleInput = document.getElementById("adminTimeScaleInput");
+const adminTimeScaleLabel = document.getElementById("adminTimeScaleLabel");
+const adminWorldKillLabel = document.getElementById("adminWorldKillLabel");
+const adminWorldBossStateLabel = document.getElementById("adminWorldBossStateLabel");
+const adminFillWorldKillBtn = document.getElementById("adminFillWorldKillBtn");
+const adminSpawnWorldBossBtn = document.getElementById("adminSpawnWorldBossBtn");
 const newbieGuideSummaryEl = document.getElementById("newbieGuideSummary");
 const newbieGuideClaimBtn = document.getElementById("newbieGuideClaimBtn");
 const meritSummaryEl = document.getElementById("meritSummary");
@@ -3201,6 +3463,7 @@ let itemMenuQty = 1;
 let controlButtonsInited = false;
 let manualMarkedTarget = null;
 let resourceTrendSamples = [];
+let hoverTooltipRaf = 0;
 let activeToastCount = 0;
 let enableEventToasts = true;
 let battleCompactMode = false;
@@ -3228,6 +3491,66 @@ function pushEventToast(type, title, body = "", durationMs = 2600) {
     }, ttl);
 }
 let returnHomeVisitMs = [];
+
+function escapeHtml(text = "") {
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function playRedDropCinematic(itemIds, source = "") {
+    if (!redDropCinematicEl || !redDropNameEl || !Array.isArray(itemIds) || !itemIds.length) return;
+    const labels = itemIds.map((id) => ITEM_DEFS[id]?.label || id);
+    redDropNameEl.textContent = labels.length > 1 ? `${labels[0]} 等 ${labels.length} 件` : labels[0];
+    redDropDescEl.textContent = source ? `${source} · 稀有红装掉落` : "稀有红装掉落";
+    redDropCinematicEl.classList.remove("show");
+    void redDropCinematicEl.offsetWidth;
+    redDropCinematicEl.classList.add("show");
+    setTimeout(() => redDropCinematicEl.classList.remove("show"), 2600);
+}
+
+function findWorldBossSpawnPos() {
+    for (let r = 10; r <= 26; r++) {
+        for (let i = 0; i < 42; i++) {
+            const ax = (simpleHash(dayCount + i * 13, Math.floor(simulationTimeMs / 1000) + r * 7) % (r * 2 + 1)) - r;
+            const ay = (simpleHash(dayCount + i * 19, Math.floor(simulationTimeMs / 1000) + r * 11) % (r * 2 + 1)) - r;
+            const x = HOME_X + ax;
+            const y = HOME_Y + ay;
+            if (!isPassable(x, y)) continue;
+            if (isHomeBuildTile(x, y)) continue;
+            return { x, y };
+        }
+    }
+    return { x: HOME_X + 12, y: HOME_Y + 7 };
+}
+
+function scheduleWorldBossPreview() {
+    if (worldBossState.phase !== "idle") return;
+    if (worldKillCount < WORLD_BOSS_CONFIG.killsRequired) return;
+    if (simulationTimeMs - (worldBossState.killedAtMs || -999999) < WORLD_BOSS_CONFIG.cooldownMs) return;
+    const pos = findWorldBossSpawnPos();
+    worldBossState.phase = "preview";
+    worldBossState.spawnAtMs = simulationTimeMs + WORLD_BOSS_CONFIG.previewMs;
+    worldBossState.x = pos.x;
+    worldBossState.y = pos.y;
+    worldBossState.type = "天罚魔龙";
+    const lv = Math.max(10, Math.min(18, Math.floor(cultivationLevel / 8) + 8));
+    worldBossState.level = lv;
+    worldBossState.maxHp = Math.floor((80 + lv * 44) * BALANCE_CONFIG.combat.monsterHpScale * 3.25);
+    worldBossState.hp = worldBossState.maxHp;
+    addLog(`世界播报：全服击杀达标，${WORLD_BOSS_CONFIG.previewMs / 1000}s 后世界BOSS将在 (${pos.x}, ${pos.y}) 降临`);
+    pushEventToast("task", "世界BOSS预告", `${WORLD_BOSS_CONFIG.previewMs / 1000}s 后刷新于 (${pos.x}, ${pos.y})`, 3800);
+}
+
+function spawnWorldBossNow() {
+    if (worldBossState.phase !== "preview") return;
+    worldBossState.phase = "active";
+    addLog(`世界BOSS已降临：${worldBossState.type} Lv.${worldBossState.level} @ (${worldBossState.x}, ${worldBossState.y})`);
+    pushEventToast("rare", "世界BOSS已刷新", `${worldBossState.type} Lv.${worldBossState.level}`, 3600);
+}
 
 function simpleHash(x, y) {
     let n = x * 374761393 + y * 668265263;
@@ -3267,6 +3590,7 @@ function closeAllFloatingPanels() {
     if (craftPanelEl) craftPanelEl.classList.add("hidden");
     if (shopPanelEl) shopPanelEl.classList.add("hidden");
     if (enhancePanelEl) enhancePanelEl.classList.add("hidden");
+    if (adminPanelEl) adminPanelEl.classList.add("hidden");
     if (socialPanelEl) socialPanelEl.classList.add("hidden");
     closeItemMenu();
     closeEquipSlotMenu();
@@ -3385,6 +3709,8 @@ function applyHomeCoordinates(x, y) {
     seedMap.clear();
     chunkHeatMap.clear();
     monsterStateMap.clear();
+    worldKillCount = 0;
+    worldBossState = { phase: "idle", spawnAtMs: 0, x: 0, y: 0, type: "天罚魔龙", level: 1, hp: 0, maxHp: 0, killedAtMs: -999999 };
 }
 
 function clampCameraOffsetFromAvatar(nextX, nextY) {
@@ -3545,6 +3871,29 @@ function countBuildingsByType(typeId) {
         if (building.type === typeId) count += 1;
     });
     return count;
+}
+
+function canBuildTypeUnique(typeId) {
+    if (!typeId || typeId === "none") return false;
+    return countBuildingsByType(typeId) < 1;
+}
+
+function getNextBuildTypeId() {
+    const candidates = BUILDING_TYPES.filter((b) => b.id !== "none");
+    const firstNotBuilt = candidates.find((b) => canBuildTypeUnique(b.id));
+    return firstNotBuilt ? firstNotBuilt.id : (quickBuildTypeId || "herbGarden");
+}
+
+function recordDeathEvent(enemyType, enemyLevel, lostStone, lostCore) {
+    recentDeathRecords.unshift({
+        atMs: simulationTimeMs,
+        day: dayCount,
+        enemy: enemyType,
+        level: enemyLevel,
+        lostStone,
+        lostCore
+    });
+    if (recentDeathRecords.length > 20) recentDeathRecords = recentDeathRecords.slice(0, 20);
 }
 
 function runBuildingProductionTick() {
@@ -3731,8 +4080,11 @@ function getMeditationExpNeed(level) {
 }
 
 function getBodyCultivationExpNeed(level) {
-    const lv = Math.max(1, Math.min(CULTIVATION_MAX_LEVEL, level));
-    return Math.floor(40 + Math.pow(lv, 2.05) * 6 + lv * 18);
+    const lv = Math.max(1, level);
+    if (lv <= 100) return Math.floor(40 + Math.pow(lv, 2.05) * 6 + lv * 18);
+    const base100 = Math.floor(40 + Math.pow(100, 2.05) * 6 + 100 * 18);
+    const over = lv - 100;
+    return Math.floor(base100 + Math.pow(over, 3.2) * 3800 + over * 6000);
 }
 
 function getCultivationRateMultiplier() {
@@ -3750,7 +4102,7 @@ function gainCultivationExp(expGain, reason = "修炼", emitLog = true) {
     const gain = Math.max(1, Math.floor(expGain));
     bodyCultivationExp += gain;
     if (emitLog) addLog(`${reason}：修为 +${gain}`);
-    while (cultivationLevel < CULTIVATION_MAX_LEVEL) {
+    while (true) {
         const needExp = getBodyCultivationExpNeed(cultivationLevel);
         if (bodyCultivationExp < needExp) break;
         bodyCultivationExp -= needExp;
@@ -3762,9 +4114,6 @@ function gainCultivationExp(expGain, reason = "修炼", emitLog = true) {
         sharedStats.freePoints += 3;
         if (emitLog) addLog(`修为提升：境界达到 Lv.${cultivationLevel} · ${getRealmName()}`);
         pushEventToast("status", `境界突破 · Lv.${cultivationLevel}`, `${getRealmName()}｜属性点 +3`, 3000);
-    }
-    if (cultivationLevel >= CULTIVATION_MAX_LEVEL) {
-        bodyCultivationExp = Math.min(bodyCultivationExp, getBodyCultivationExpNeed(cultivationLevel));
     }
     return gain;
 }
@@ -3961,6 +4310,79 @@ function getEquipmentBonus() {
     return bonus;
 }
 
+function getEquipmentAffixEffects() {
+    ensureEquipInstancesBootstrapped();
+    const fx = {
+        hit: 0,
+        dodge: 0,
+        lifesteal: 0,
+        regen: 0,
+        critRate: 0,
+        damageMul: 0,
+        damageTakenMul: 0,
+        lowHpDamageMul: 0,
+        onCritExtraDamageMul: 0,
+        monsterWeakenResist: 0,
+        battleGoldMul: 0,
+        vsTagDamageMul: {},
+        vsTagDamageTakenMul: {},
+        vsTagCritDamageMul: {}
+    };
+    Object.values(equippedSlotInstances).forEach((uid) => {
+        const inst = uid ? findEquipInstance(uid) : null;
+        if (!inst || !Array.isArray(inst.affixes)) return;
+        inst.affixes.forEach((aid) => {
+            const def = EQUIP_AFFIX_DEFS[aid];
+            if (!def || !def.effects) return;
+            const e = def.effects;
+            fx.hit += e.hit || 0;
+            fx.dodge += e.dodge || 0;
+            fx.lifesteal += e.lifesteal || 0;
+            fx.regen += e.regen || 0;
+            fx.critRate += e.critRate || 0;
+            fx.damageMul += e.damageMul || 0;
+            fx.damageTakenMul += e.damageTakenMul || 0;
+            fx.lowHpDamageMul += e.lowHpDamageMul || 0;
+            fx.onCritExtraDamageMul += e.onCritExtraDamageMul || 0;
+            fx.monsterWeakenResist += e.monsterWeakenResist || 0;
+            fx.battleGoldMul += e.battleGoldMul || 0;
+            if (e.vsTagDamageMul) Object.entries(e.vsTagDamageMul).forEach(([k, v]) => { fx.vsTagDamageMul[k] = (fx.vsTagDamageMul[k] || 0) + Number(v || 0); });
+            if (e.vsTagDamageTakenMul) Object.entries(e.vsTagDamageTakenMul).forEach(([k, v]) => { fx.vsTagDamageTakenMul[k] = (fx.vsTagDamageTakenMul[k] || 0) + Number(v || 0); });
+            if (e.vsTagCritDamageMul) Object.entries(e.vsTagCritDamageMul).forEach(([k, v]) => { fx.vsTagCritDamageMul[k] = (fx.vsTagCritDamageMul[k] || 0) + Number(v || 0); });
+        });
+    });
+    fx.monsterWeakenResist = Math.max(0, Math.min(0.85, fx.monsterWeakenResist));
+    return fx;
+}
+
+function getWeaponBonusBreakdown() {
+    const slots = ["weaponMain", "weaponOff"];
+    const total = { atk: 0, hit: 0, lifesteal: 0, luck: 0 };
+    const lines = [];
+    for (const slotId of slots) {
+        const uid = equippedSlotInstances[slotId];
+        const inst = uid ? findEquipInstance(uid) : null;
+        if (!inst) continue;
+        const def = ITEM_DEFS[inst.itemId];
+        if (!def) continue;
+        const cfg = def.bonus || {};
+        const enhanceMul = 1 + (inst.enhance || 0) * 0.12;
+        const atk = (cfg.atk || 0) * enhanceMul;
+        const hit = (cfg.hit || 0) * enhanceMul;
+        const lifesteal = (cfg.lifesteal || 0) * enhanceMul;
+        const luck = (cfg.luck || 0) * enhanceMul;
+        total.atk += atk;
+        total.hit += hit;
+        total.lifesteal += lifesteal;
+        total.luck += luck;
+        lines.push(`${def.label}+${inst.enhance || 0}：攻+${Math.floor(atk)} 命中+${(hit * 100).toFixed(1)}% 吸血+${(lifesteal * 100).toFixed(1)}%${luck > 0 ? ` 气运+${Math.floor(luck)}` : ""}`);
+    }
+    return {
+        total,
+        detail: lines.join("\n") || "未装备主副手武器"
+    };
+}
+
 function getEnhanceCost(itemId, level = 0) {
     if (itemId === "koiNecklace") {
         const stageMul = level >= 9 ? 1.85 : level >= 7 ? 1.45 : level >= 4 ? 1.2 : 1;
@@ -4064,8 +4486,14 @@ function bindItemHover(containerEl) {
             const bonus = `加成: ${formatBonusText(def.bonus)}`;
             const reqLine = isEquipItem(itemId) ? `<br>穿戴要求: 境界 Lv.${getEquipRequiredLevel(itemId)}` : "";
             const buff = def.buff ? `<br>增益: ${formatBonusText(def.buff)}（${Math.floor((def.buff.durationMs || 0) / 1000)}s）` : "";
+            let affixLine = "";
+            if (isEquipItem(itemId)) {
+                const anyInst = equipInstances.find((it) => it.itemId === itemId);
+                const affixText = getAffixTextList(anyInst?.affixes || []);
+                affixLine = `<br>词条: ${affixText.length ? affixText.join(" / ") : "暂无"}`;
+            }
             const useText = getItemUsageText(itemId);
-            itemDetailEl.innerHTML = `<strong>${getItemIconMarkup(itemId)} ${def.label}</strong><br>品质: ${rarity}<br>分类: ${itemGroupLabel(itemId, def)}<br>${bonus}${reqLine}${buff}<br>用途: ${useText}<br>来源: ${def.source}<br>回收: ${def.sellValue || 0} 金币<br>持有: ${qty}`;
+            itemDetailEl.innerHTML = `<strong>${getItemIconMarkup(itemId)} ${def.label}</strong><br>品质: ${rarity}<br>分类: ${itemGroupLabel(itemId, def)}<br>${bonus}${reqLine}${buff}${affixLine}<br>用途: ${useText}<br>来源: ${def.source}<br>回收: ${def.sellValue || 0} 金币<br>持有: ${qty}`;
             itemDetailEl.classList.remove("hidden");
             itemDetailEl.style.left = `${e.clientX + 12}px`;
             itemDetailEl.style.top = `${e.clientY + 12}px`;
@@ -4086,6 +4514,7 @@ function getAvatarMaxMp() {
 
 function getAvatarCombatPower() {
     const eq = getEquipmentBonus();
+    const affixFx = getEquipmentAffixEffects();
     const b = getBuildingBonuses();
     const wardBonus = Math.min(6, (homeInventory.wardCharm || 0));
     const focusBonus = Math.min(6, (homeInventory.focusCharm || 0));
@@ -4095,15 +4524,16 @@ function getAvatarCombatPower() {
     return {
         atk: Math.max(1, Math.floor((10 + Math.floor(sharedStats.spirit * 1.4) + Math.floor(sharedStats.control * 0.9) + Math.floor(eq.atk)) * (1 + b.battleAtkMul))),
         def: Math.max(1, Math.floor((4 + Math.floor(sharedStats.body * 0.9) + Math.floor(sharedStats.control * 0.4) + Math.floor(eq.def) + wardBonus + ironBodyActive) * (1 + b.battleDefMul))),
-        hit: Math.min(0.97, 0.78 + sharedStats.mind * 0.008 + sharedStats.control * 0.004 + eq.hit + focusBonus * 0.005 + swiftHit),
-        dodge: Math.min(0.42, 0.06 + sharedStats.body * 0.008 + sharedStats.mind * 0.004 + eq.dodge + swiftActive)
+        hit: Math.min(0.97, 0.78 + sharedStats.mind * 0.008 + sharedStats.control * 0.004 + eq.hit + focusBonus * 0.005 + swiftHit + affixFx.hit),
+        dodge: Math.min(0.42, 0.06 + sharedStats.body * 0.008 + sharedStats.mind * 0.004 + eq.dodge + swiftActive + affixFx.dodge)
     };
 }
 
 function getAvatarCombatSnapshot() {
     const me = getAvatarCombatPower();
     const eq = getEquipmentBonus();
-    const critRate = Math.max(0.03, Math.min(0.55, 0.08 + sharedStats.fortune * 0.006));
+    const affixFx = getEquipmentAffixEffects();
+    const critRate = Math.max(0.03, Math.min(0.75, 0.08 + sharedStats.fortune * 0.006 + affixFx.critRate));
     return {
         hp: avatarHp,
         maxHp: getAvatarMaxHp(),
@@ -4114,8 +4544,8 @@ function getAvatarCombatSnapshot() {
         hit: me.hit,
         dodge: me.dodge,
         critRate,
-        lifesteal: eq.lifesteal || 0,
-        regen: eq.regen || 0
+        lifesteal: (eq.lifesteal || 0) + (affixFx.lifesteal || 0),
+        regen: (eq.regen || 0) + (affixFx.regen || 0)
     };
 }
 
@@ -4278,6 +4708,14 @@ function openItemCodexDetail(itemId) {
     const usedBy = CRAFT_RECIPES.filter((r) => r.cost[itemId]);
     const dropBy = MONSTER_CODEX.filter((m) => m.drops.some((d) => d.id === itemId));
     const equipNeedLine = isEquipItem(itemId) ? `<br>穿戴要求：境界 Lv.${getEquipRequiredLevel(itemId)}` : "";
+    const affixPreview = isEquipItem(itemId)
+        ? (() => {
+            const rarity = def.rarity || "common";
+            const pool = AFFIX_POOL_BY_RARITY[rarity] || [];
+            const rows = pool.slice(0, 4).map((id) => `${EQUIP_AFFIX_DEFS[id]?.label || id}：${EQUIP_AFFIX_DEFS[id]?.text || ""}`);
+            return `<br>词条预览：${rows.length ? rows.join(" / ") : "暂无"}`;
+        })()
+        : "";
     const chestLootRows = itemId.startsWith("chest") ? getChestLootChanceRows(itemId) : "";
     itemCodexModalEl.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -4299,7 +4737,7 @@ function openItemCodexDetail(itemId) {
             </div>
             <div class="codex-col">
                 <strong>属性与转化</strong>
-                <div style="margin-top:6px;">基础属性：${formatBonusText(def.bonus)}${equipNeedLine}<br>增益效果：${def.buff ? `${formatBonusText(def.buff)}（${Math.floor((def.buff.durationMs || 0) / 1000)}秒）` : "无"}<br>用途说明：${getItemUsageText(itemId)}<br>回收金币：${def.sellValue || 0}<br>${canCraft.length ? `可直接合成：${canCraft.map((r) => r.label).join(" / ")}` : "非直接合成产出"}</div>
+                <div style="margin-top:6px;">基础属性：${formatBonusText(def.bonus)}${equipNeedLine}${affixPreview}<br>增益效果：${def.buff ? `${formatBonusText(def.buff)}（${Math.floor((def.buff.durationMs || 0) / 1000)}秒）` : "无"}<br>用途说明：${getItemUsageText(itemId)}<br>回收金币：${def.sellValue || 0}<br>${canCraft.length ? `可直接合成：${canCraft.map((r) => r.label).join(" / ")}` : "非直接合成产出"}</div>
             </div>
         </div>
         ${chestLootRows ? `<div class="codex-col" style="margin-top:10px;"><strong>宝箱掉落概率（单次抽取）</strong><div style="margin-top:6px;">${chestLootRows}</div></div>` : ""}
@@ -4317,6 +4755,9 @@ function openMonsterCodexDetail(type) {
         const def = ITEM_DEFS[d.id];
         return `<span class="drop-chip rarity-${def?.rarity || "common"}">${def?.label || d.id} ${d.chance}</span>`;
     }).join("");
+    const tags = getMonsterTags(monster.type);
+    const threatRank = getMonsterThreatRank(monster.type);
+    const dropRank = getMonsterDropRank(monster.type);
     monsterCodexModalEl.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
             <strong>👹 ${monster.type}</strong>
@@ -4327,6 +4768,8 @@ function openMonsterCodexDetail(type) {
             <div class="small-note" style="line-height:1.6;">
                 等级段：${monster.levelRange}<br>
                 威胁层级：T${monster.tier || 1}<br>
+                评级：威胁 <strong>${threatRank}</strong> / 掉落 <strong>${dropRank}</strong><br>
+                战斗标签：${tags.length ? tags.join(" / ") : "无"}<br>
                 来源区域：${monster.source || "未知地带"}<br>
                 怪物简介：${monster.intro || "暂无资料"}
             </div>
@@ -4514,6 +4957,18 @@ function isEquipSource(source) {
 
 function createEquipInstance(itemId, location = "avatar", enhance = 0) {
     const inst = SimpleWorldEquipCore.createEquipInstance(itemId, location, enhance, equipInstanceSeq++);
+    const rarity = ITEM_DEFS[itemId]?.rarity || "common";
+    const pool = AFFIX_POOL_BY_RARITY[rarity] || [];
+    if (!Array.isArray(inst.affixes) || !inst.affixes.length) {
+        const count = rarity === "epic" ? 3 : rarity === "rare" ? 2 : rarity === "uncommon" ? 1 : 0;
+        const picked = [];
+        for (let i = 0; i < count && pool.length; i++) {
+            const idx = simpleHash(equipInstanceSeq * 17 + i, itemId.length * 13 + i * 19) % pool.length;
+            const aid = pool[idx];
+            if (!picked.includes(aid)) picked.push(aid);
+        }
+        inst.affixes = picked;
+    }
     equipInstances.push(inst);
     return inst;
 }
@@ -4964,6 +5419,20 @@ function getMonsterSeed(x, y) {
 }
 
 function getMonsterAt(x, y) {
+    if (worldBossState.phase === "active" && x === worldBossState.x && y === worldBossState.y && worldBossState.hp > 0) {
+        return {
+            x,
+            y,
+            type: worldBossState.type,
+            level: worldBossState.level,
+            maxHp: worldBossState.maxHp,
+            hp: worldBossState.hp,
+            atk: Math.floor((12 + worldBossState.level * 4) * 2.6),
+            def: Math.floor((6 + worldBossState.level * 2.4) * 2.2),
+            alive: true,
+            worldBoss: true
+        };
+    }
     const key = tileKey(x, y);
     const seed = getMonsterSeed(x, y);
     if (!seed) return null;
@@ -5070,6 +5539,7 @@ function startBattleWith(monster) {
         maxHp: monster.maxHp,
         atk: monster.atk,
         def: monster.def,
+        worldBoss: monster.worldBoss === true,
         rounds: 0,
         playerCdMs: 0,
         enemyCdMs: 0,
@@ -5082,15 +5552,22 @@ function startBattleWith(monster) {
     battleUiSelfHpDisplay = avatarHp;
     battleMetrics = {
         dealt: 0, taken: 0, crits: 0, heals: 0, startMs: simulationTimeMs,
-        playerAttacks: 0, playerHits: 0, enemyAttacks: 0, enemyHits: 0, healTriggers: 0
+        playerAttacks: 0, playerHits: 0, enemyAttacks: 0, enemyHits: 0, healTriggers: 0,
+        lifesteal: 0, regen: 0, critBonusDamage: 0, avoidedDamage: 0,
+        affixProcExecution: 0, affixProcArmorBreaker: 0, affixProcAntiBleed: 0,
+        affixProcFrenzy: 0, affixProcStormChain: 0,
+        affixGainExecution: 0, affixGainArmorBreaker: 0, affixGainAntiBleed: 0,
+        affixGainFrenzy: 0, affixGainStormChain: 0
     };
     lastDamageSnapshot = { selfLoss: 0, enemyLoss: 0 };
     battleKeyframes = [];
     lastBattleFrame = null;
     const risk = evaluateBattleRisk(monster);
     battleState.riskLevel = risk.level;
-    movementStatusText = `遭遇 ${monster.type} Lv.${monster.level}，风险${risk.level}，进入战斗`;
-    addLog(`战斗预警：风险${risk.level}｜${risk.advice}`);
+    const threatRank = getMonsterThreatRank(monster.type);
+    const dropRank = getMonsterDropRank(monster.type);
+    movementStatusText = `遭遇 ${monster.type} Lv.${monster.level}｜威胁${threatRank}/掉落${dropRank}｜风险${risk.level}，进入战斗`;
+    addLog(`战斗预警：威胁${threatRank} / 掉落${dropRank}｜风险${risk.level}｜${risk.advice}`);
     return true;
 }
 
@@ -5116,6 +5593,7 @@ function grantBattleLoot(monster) {
     const isEliteTier = monsterTier >= 4;
     const isBossTier = monsterTier >= 5;
     const eq = getEquipmentBonus();
+    const affixFx = getEquipmentAffixEffects();
     const coreCtx = SimpleWorldBattleCore.calcLootBase({
         monsterTier,
         monsterLevel: monster.level,
@@ -5130,7 +5608,7 @@ function grantBattleLoot(monster) {
     const tierMul = coreCtx.tierMul;
     const eventDropMul = coreCtx.eventDropMul;
     const rewardBoost = coreCtx.rewardBoost;
-    const gainStone = coreCtx.gainStone;
+    const gainStone = Math.max(1, Math.floor(coreCtx.gainStone * (1 + (affixFx.battleGoldMul || 0))));
     const gainHerb = coreCtx.gainHerb;
     const rareChance = coreCtx.rareChance;
     const coreChance = coreCtx.coreChance;
@@ -5205,12 +5683,21 @@ function grantBattleLoot(monster) {
     if (gainDragonRelic > 0) discoveredItemSet.add("dragonRelic");
     enforceNonStackEquipCounts(true);
     dayCombatWins += 1;
+    worldKillCount += 1;
+    scheduleWorldBossPreview();
     totalBattleWins += 1;
     if (monsterTier >= 4) totalEliteKills += 1;
     if (monsterTier >= 5) totalBossKills += 1;
     tryDropKoiFromAction("战斗中");
     const lootText = `灵石×${gainStone}${gainHerb ? ` / 灵草×${gainHerb}` : ""}${gainCore ? ` / 妖丹×${gainCore}` : ""}${gainRare ? ` / 异晶×${gainRare}` : ""}${gainSmallChest ? ` / 小宝箱×${gainSmallChest}` : ""}${gainMediumChest ? ` / 中宝箱×${gainMediumChest}` : ""}${gainLargeChest ? ` / 大宝箱×${gainLargeChest}` : ""}${gainBossSummonSigil ? " / BOSS召唤符×1" : ""}${gainThunderBlade ? " / 雷劫断岳×1" : ""}${gainPhoenixBow ? " / 赤凰长弓×1" : ""}${gainVoidArmor ? " / 太虚战铠×1" : ""}${gainSpiritBlade ? " / 玄霄灵刃×1" : ""}${gainSoulRobe ? " / 玄冥法衣×1" : ""}${gainQilinRing ? " / 麒麟戒×1" : ""}${gainWarDrum ? " / 战魂鼓×1" : ""}${gainDragonRelic ? " / 天龙遗宝×1" : ""}${buildBonus.battleDropMul > 0 ? ` / 阵法加成 +${Math.round(buildBonus.battleDropMul * 100)}%` : ""}`;
     pushEventToast("income", `战利品结算`, `获得：${lootText}`, 3200);
+    const redDrops = [];
+    if (gainThunderBlade) redDrops.push("thunderBlade");
+    if (gainPhoenixBow) redDrops.push("phoenixBow");
+    if (gainVoidArmor) redDrops.push("voidArmor");
+    if (gainWarDrum) redDrops.push("warDrum");
+    if (gainDragonRelic) redDrops.push("dragonRelic");
+    if (redDrops.length) playRedDropCinematic(redDrops, monster.type);
     if (gainDragonRelic || gainWarDrum || gainThunderBlade || gainPhoenixBow || gainVoidArmor || gainSpiritBlade || gainSoulRobe || gainQilinRing) {
         pushEventToast("rare", "稀有掉落触发", "本场出现高阶装备/遗宝", 3400);
     }
@@ -5224,6 +5711,8 @@ function resolveBattleStep(elapsedMs = 100) {
     const tactic = currentBattleTactic();
     const buildBonus = getBuildingBonuses();
     const eqBonus = getEquipmentBonus();
+    const affixFx = getEquipmentAffixEffects();
+    const monsterTags = getMonsterTags(battleState.type);
     const debuffActive = simulationTimeMs < injuryDebuffUntilMs;
     const meBase = getAvatarCombatPower();
     const debuffMul = debuffActive ? BALANCE_CONFIG.combat.injuryDebuffRatio : 1;
@@ -5253,16 +5742,55 @@ function resolveBattleStep(elapsedMs = 100) {
         const avatarHit = rollHit <= me.hit;
         const avatarDmgBase = avatarHit ? Math.max(1, me.atk - battleState.def + (battleState.rounds % 3)) : 0;
         const critRoll = (simpleHash(battleState.x + seed * 5, battleState.y + dayCount * 5) % 1000) / 1000;
-        const didCrit = avatarHit && critRoll < (0.1 + (buildBonus.battleCritRate || 0));
-        const avatarScaled = Math.max(0, Math.floor(avatarDmgBase * BALANCE_CONFIG.combat.playerDamageScale * weakenMul));
-        const finalAvatarDmg = didCrit ? Math.max(1, Math.floor(avatarScaled * (1.6 + (buildBonus.battleCritDmgMul || 0)))) : avatarScaled;
+        const critRate = Math.max(0.03, Math.min(0.75, 0.1 + (buildBonus.battleCritRate || 0) + (affixFx.critRate || 0)));
+        const didCrit = avatarHit && critRoll < critRate;
+        let vsTagDmgMul = 0;
+        let vsTagCritMul = 0;
+        monsterTags.forEach((tag) => {
+            vsTagDmgMul += affixFx.vsTagDamageMul[tag] || 0;
+            vsTagCritMul += affixFx.vsTagCritDamageMul[tag] || 0;
+        });
+        const lowHpBonus = (avatarHp / Math.max(1, getAvatarMaxHp()) <= 0.5) ? (affixFx.lowHpDamageMul || 0) : 0;
+        const dmgMul = 1 + (affixFx.damageMul || 0) + vsTagDmgMul + lowHpBonus;
+        const avatarScaled = Math.max(0, Math.floor(avatarDmgBase * BALANCE_CONFIG.combat.playerDamageScale * weakenMul * Math.max(0.2, dmgMul)));
+        const critMul = 1.6 + (buildBonus.battleCritDmgMul || 0) + vsTagCritMul;
+        let finalAvatarDmg = didCrit ? Math.max(1, Math.floor(avatarScaled * Math.max(1, critMul))) : avatarScaled;
+        if (didCrit && (affixFx.onCritExtraDamageMul || 0) > 0) {
+            const extraDmg = Math.max(1, Math.floor(avatarScaled * affixFx.onCritExtraDamageMul));
+            finalAvatarDmg += extraDmg;
+            triggerEvents.push("雷连");
+            if (battleMetrics) {
+                battleMetrics.affixProcStormChain += 1;
+                battleMetrics.affixGainStormChain += extraDmg;
+            }
+        }
+        if (battleMetrics) {
+            const baseForAffix = Math.max(0, avatarScaled);
+            const exRate = affixFx.vsTagDamageMul.boss || 0;
+            const abRate = affixFx.vsTagDamageMul.armored || 0;
+            if (monsterTags.includes("boss") && exRate > 0) {
+                battleMetrics.affixProcExecution += 1;
+                battleMetrics.affixGainExecution += Math.max(0, Math.floor(baseForAffix * exRate));
+            }
+            if (monsterTags.includes("armored") && abRate > 0) {
+                battleMetrics.affixProcArmorBreaker += 1;
+                battleMetrics.affixGainArmorBreaker += Math.max(0, Math.floor(baseForAffix * abRate));
+            }
+            if (lowHpBonus > 0) {
+                battleMetrics.affixProcFrenzy += 1;
+                battleMetrics.affixGainFrenzy += Math.max(0, Math.floor(baseForAffix * lowHpBonus));
+            }
+        }
         const hpBeforeEnemy = battleState.hp;
         battleState.hp = Math.max(0, battleState.hp - finalAvatarDmg);
+        if (battleState.worldBoss) worldBossState.hp = battleState.hp;
         lastEnemyLoss = Math.max(0, hpBeforeEnemy - battleState.hp);
-        if (lastEnemyLoss > 0 && (eqBonus.lifesteal || 0) > 0 && avatarHp > 0) {
-            const steal = Math.max(1, Math.floor(lastEnemyLoss * eqBonus.lifesteal));
+        const totalLifesteal = (eqBonus.lifesteal || 0) + (affixFx.lifesteal || 0);
+        if (lastEnemyLoss > 0 && totalLifesteal > 0 && avatarHp > 0) {
+            const steal = Math.max(1, Math.floor(lastEnemyLoss * totalLifesteal));
             avatarHp = Math.min(getAvatarMaxHp(), avatarHp + steal);
             if (battleMetrics) battleMetrics.heals += steal;
+            if (battleMetrics) battleMetrics.lifesteal += steal;
             itemEvents.push(`吸血 +${steal}HP`);
             triggerEvents.push("吸血");
         }
@@ -5272,6 +5800,7 @@ function resolveBattleStep(elapsedMs = 100) {
             battleMetrics.dealt += Math.max(0, hpBeforeEnemy - battleState.hp);
             if (avatarHit) battleMetrics.playerHits += 1;
             if (didCrit) battleMetrics.crits += 1;
+            if (didCrit) battleMetrics.critBonusDamage += Math.max(0, finalAvatarDmg - avatarScaled);
         }
         if (didCrit) {
             spawnCombatFx(`暴击 ${finalAvatarDmg}`, "crit", -6);
@@ -5296,10 +5825,20 @@ function resolveBattleStep(elapsedMs = 100) {
         const rawMonsterDmg = Math.floor(battleState.atk * 0.58) - Math.floor(me.def * 0.28);
         const battleMonsterTier = getMonsterDropProfile(battleState.type)?.tier || 1;
         const bossMul = battleMonsterTier >= 5 ? 1.35 : battleMonsterTier >= 4 ? 1.22 : 1;
-        const monsterDmgBase = monsterHit ? Math.max(2, Math.floor(rawMonsterDmg * bossMul)) : 0;
-        const monsterScaled = Math.max(0, Math.floor(monsterDmgBase * BALANCE_CONFIG.combat.monsterDamageScale * (1 + (getWorldEventEffects().monsterDamageMul || 0))));
+        const monsterDmgBase = Math.max(2, Math.floor(rawMonsterDmg * bossMul));
+        let antiTagTaken = 0;
+        monsterTags.forEach((tag) => {
+            antiTagTaken += affixFx.vsTagDamageTakenMul[tag] || 0;
+        });
+        const takenMul = Math.max(0.25, 1 + (affixFx.damageTakenMul || 0) + antiTagTaken);
+        const monsterScaled = Math.max(0, Math.floor(monsterDmgBase * BALANCE_CONFIG.combat.monsterDamageScale * (1 + (getWorldEventEffects().monsterDamageMul || 0)) * takenMul));
+        if (battleMetrics && monsterTags.includes("bloodthirst") && (affixFx.vsTagDamageTakenMul.bloodthirst || 0) < 0) {
+            const rawBeforeReduce = Math.max(0, Math.floor(monsterDmgBase * BALANCE_CONFIG.combat.monsterDamageScale * (1 + (getWorldEventEffects().monsterDamageMul || 0))));
+            battleMetrics.affixProcAntiBleed += 1;
+            battleMetrics.affixGainAntiBleed += Math.max(0, rawBeforeReduce - monsterScaled);
+        }
         const hpBeforeSelf = avatarHp;
-        avatarHp = Math.max(0, avatarHp - monsterScaled);
+        avatarHp = monsterHit ? Math.max(0, avatarHp - monsterScaled) : avatarHp;
         lastSelfLoss = Math.max(0, hpBeforeSelf - avatarHp);
         if (battleMetrics) {
             battleMetrics.taken += Math.max(0, hpBeforeSelf - avatarHp);
@@ -5309,17 +5848,19 @@ function resolveBattleStep(elapsedMs = 100) {
         else {
             spawnCombatFx("敌方未命中", "info", 6);
             triggerEvents.push("闪避");
+            if (battleMetrics) battleMetrics.avoidedDamage += monsterScaled;
         }
         if (monsterHit) {
             const tier = getMonsterDropProfile(battleState.type)?.tier || 1;
             const weakenChance = MONSTER_WEAKEN_SKILL.chanceByTier[tier] || 0;
             const weakenRoll = (simpleHash(battleState.x + seed * 19, battleState.y + dayCount * 29 + battleState.rounds) % 1000) / 1000;
-            if (weakenChance > 0 && weakenRoll < weakenChance && simulationTimeMs >= monsterWeakenImmuneUntilMs) {
+            const realWeakenChance = weakenChance * (1 - (affixFx.monsterWeakenResist || 0));
+            if (realWeakenChance > 0 && weakenRoll < realWeakenChance && simulationTimeMs >= monsterWeakenImmuneUntilMs) {
                 monsterWeakenUntilMs = Math.max(monsterWeakenUntilMs, simulationTimeMs) + MONSTER_WEAKEN_SKILL.durationMs;
                 triggerEvents.push("怪物减损");
                 itemEvents.push(`输出压制 ${Math.round((1 - MONSTER_WEAKEN_SKILL.damageMul) * 100)}% ${Math.floor(MONSTER_WEAKEN_SKILL.durationMs / 1000)}s`);
                 spawnCombatFx("减损", "info", 14);
-            } else if (weakenChance > 0 && weakenRoll < weakenChance) {
+            } else if (realWeakenChance > 0 && weakenRoll < realWeakenChance) {
                 triggerEvents.push("净魂免疫");
             }
         }
@@ -5350,7 +5891,22 @@ function resolveBattleStep(elapsedMs = 100) {
         battleState.hp = 0;
         battleUiEnemyHpDisplay = 0;
         triggerEnemyKillBarClearFx();
-        setMonsterHp(battleState.x, battleState.y, 0, battleState.maxHp);
+        if (battleState.worldBoss) {
+            worldBossState.hp = 0;
+            worldBossState.phase = "idle";
+            worldBossState.killedAtMs = simulationTimeMs;
+            worldKillCount = 0;
+            addLog(`世界BOSS被击退：${battleState.type}`);
+            pushEventToast("rare", "世界BOSS讨伐成功", `${battleState.type} 已被击败`, 3600);
+            const redPool = ["dragonRelic", "warDrum", "voidArmor"];
+            const redId = redPool[simpleHash(dayCount + totalBossKills, totalBattleWins + battleState.rounds) % redPool.length];
+            avatarInventory[redId] = (avatarInventory[redId] || 0) + 1;
+            discoveredItemSet.add(redId);
+            playRedDropCinematic([redId], "世界BOSS奖励");
+            pushEventToast("rare", "红装掉落", `${ITEM_DEFS[redId]?.label || redId} ×1`, 3600);
+        } else {
+            setMonsterHp(battleState.x, battleState.y, 0, battleState.maxHp);
+        }
         const lootText = grantBattleLoot(battleState);
         battleSummaryData = {
             atMs: simulationTimeMs,
@@ -5369,6 +5925,20 @@ function resolveBattleStep(elapsedMs = 100) {
             enemyAttacks: battleMetrics ? battleMetrics.enemyAttacks : 0,
             enemyHits: battleMetrics ? battleMetrics.enemyHits : 0,
             healTriggers: battleMetrics ? battleMetrics.healTriggers : 0,
+            lifesteal: battleMetrics ? battleMetrics.lifesteal : 0,
+            regen: battleMetrics ? battleMetrics.regen : 0,
+            critBonusDamage: battleMetrics ? battleMetrics.critBonusDamage : 0,
+            avoidedDamage: battleMetrics ? battleMetrics.avoidedDamage : 0,
+            affixProcExecution: battleMetrics ? battleMetrics.affixProcExecution : 0,
+            affixProcArmorBreaker: battleMetrics ? battleMetrics.affixProcArmorBreaker : 0,
+            affixProcAntiBleed: battleMetrics ? battleMetrics.affixProcAntiBleed : 0,
+            affixProcFrenzy: battleMetrics ? battleMetrics.affixProcFrenzy : 0,
+            affixProcStormChain: battleMetrics ? battleMetrics.affixProcStormChain : 0,
+            affixGainExecution: battleMetrics ? battleMetrics.affixGainExecution : 0,
+            affixGainArmorBreaker: battleMetrics ? battleMetrics.affixGainArmorBreaker : 0,
+            affixGainAntiBleed: battleMetrics ? battleMetrics.affixGainAntiBleed : 0,
+            affixGainFrenzy: battleMetrics ? battleMetrics.affixGainFrenzy : 0,
+            affixGainStormChain: battleMetrics ? battleMetrics.affixGainStormChain : 0,
             riskLevel: battleState.riskLevel || "中",
             loot: lootText,
             keyframes: battleKeyframes.slice(-8)
@@ -5383,6 +5953,7 @@ function resolveBattleStep(elapsedMs = 100) {
             auto: battleState.autoStart === true
         });
         if (recentBattleHistory.length > 40) recentBattleHistory.shift();
+        reviveStreak = 0;
         battleMetrics = null;
         battleState = null;
         nextBattleAvailableAtMs = simulationTimeMs + BATTLE_GAP_CD_MS;
@@ -5476,10 +6047,28 @@ function resolveBattleStep(elapsedMs = 100) {
                 return;
             }
         }
+        if (reviveKingBonusRate > 0) {
+            const kingRoll = (simpleHash(dayCount * 17 + totalBattleWins, Math.floor(simulationTimeMs / 1000) + avatarX * 3 + avatarY * 5) % 10000) / 10000;
+            if (kingRoll < reviveKingBonusRate) {
+                avatarHp = getAvatarMaxHp();
+                addLog("复活之王BUFF触发：化身极限回魂，瞬间满血！");
+                pushEventToast("rare", "复活之王触发", "死亡判定被逆转，化身瞬间满血");
+                spawnCombatFx("回魂 +满血", "heal", 8);
+                if (lastBattleFrame) {
+                    lastBattleFrame.triggerText = lastBattleFrame.triggerText ? `${lastBattleFrame.triggerText} / 复活之王` : "复活之王";
+                }
+                return;
+            }
+        }
         const riskBonus = getRiskRewardBonusAt(battleState.x, battleState.y);
+        if (battleState.worldBoss) {
+            worldBossState.hp = Math.max(0, battleState.hp);
+            worldBossState.phase = worldBossState.hp > 0 ? "active" : "idle";
+        }
         const lossRatio = 0.12 + riskBonus * 0.18;
         const lostStone = Math.floor(avatarInventory.spiritStone * lossRatio);
         const lostCore = Math.floor((avatarInventory.demonCore || 0) * (0.08 + riskBonus * 0.12));
+        recordDeathEvent(battleState.type, battleState.level, lostStone, lostCore);
         avatarInventory.spiritStone = Math.max(0, avatarInventory.spiritStone - lostStone);
         avatarInventory.demonCore = Math.max(0, avatarInventory.demonCore - lostCore);
         avatarX = HOME_X;
@@ -5506,6 +6095,20 @@ function resolveBattleStep(elapsedMs = 100) {
             enemyAttacks: battleMetrics ? battleMetrics.enemyAttacks : 0,
             enemyHits: battleMetrics ? battleMetrics.enemyHits : 0,
             healTriggers: battleMetrics ? battleMetrics.healTriggers : 0,
+            lifesteal: battleMetrics ? battleMetrics.lifesteal : 0,
+            regen: battleMetrics ? battleMetrics.regen : 0,
+            critBonusDamage: battleMetrics ? battleMetrics.critBonusDamage : 0,
+            avoidedDamage: battleMetrics ? battleMetrics.avoidedDamage : 0,
+            affixProcExecution: battleMetrics ? battleMetrics.affixProcExecution : 0,
+            affixProcArmorBreaker: battleMetrics ? battleMetrics.affixProcArmorBreaker : 0,
+            affixProcAntiBleed: battleMetrics ? battleMetrics.affixProcAntiBleed : 0,
+            affixProcFrenzy: battleMetrics ? battleMetrics.affixProcFrenzy : 0,
+            affixProcStormChain: battleMetrics ? battleMetrics.affixProcStormChain : 0,
+            affixGainExecution: battleMetrics ? battleMetrics.affixGainExecution : 0,
+            affixGainArmorBreaker: battleMetrics ? battleMetrics.affixGainArmorBreaker : 0,
+            affixGainAntiBleed: battleMetrics ? battleMetrics.affixGainAntiBleed : 0,
+            affixGainFrenzy: battleMetrics ? battleMetrics.affixGainFrenzy : 0,
+            affixGainStormChain: battleMetrics ? battleMetrics.affixGainStormChain : 0,
             maxHp: getAvatarMaxHp(),
             riskLevel: battleState.riskLevel || "中",
             loot: `损失灵石 ${lostStone}${lostCore ? ` / 妖丹 ${lostCore}` : ""}`,
@@ -5535,7 +6138,8 @@ function resolveBattleStep(elapsedMs = 100) {
 }
 
 function getRealmName(level = cultivationLevel) {
-    const lv = Math.max(1, Math.min(CULTIVATION_MAX_LEVEL, level));
+    const lv = Math.max(1, level);
+    if (lv > 100) return "仙人境";
     const majorIdx = Math.max(0, Math.min(REALM_MAJOR_STAGES.length - 1, Math.floor((lv - 1) / 10)));
     const inBand = (lv - 1) % 10;
     const phaseIdx = inBand <= 2 ? 0 : inBand <= 6 ? 1 : 2;
@@ -5543,7 +6147,8 @@ function getRealmName(level = cultivationLevel) {
 }
 
 function getRealmStyleClass(level = cultivationLevel) {
-    const lv = Math.max(1, Math.min(CULTIVATION_MAX_LEVEL, level));
+    const lv = Math.max(1, level);
+    if (lv > 100) return "realm-style-xianren";
     const majorIdx = Math.max(0, Math.min(REALM_MAJOR_STAGES.length - 1, Math.floor((lv - 1) / 10)));
     const classByMajor = [
         "realm-style-fanti",
@@ -5569,7 +6174,8 @@ const SOCIAL_TITLE_DEFS = [
     { id: "pathfinder", label: "荒野开拓者", cond: () => totalMoveCount >= 1000 },
     { id: "slayer", label: "妖潮斩将", cond: () => totalEliteKills >= 20 },
     { id: "dragon", label: "屠龙者", cond: () => totalBossKills >= 5 },
-    { id: "sage", label: "洞府宗师", cond: () => calcHomeScore() >= 220 }
+    { id: "sage", label: "洞府宗师", cond: () => calcHomeScore() >= 220 },
+    { id: "revive_king", label: "复活之王", cond: () => reviveKingUnlocked }
 ];
 
 function calcHomeScore() {
@@ -5595,7 +6201,8 @@ function getSocialPlayerSnapshot() {
         title: getActiveTitle(),
         realmScore: cultivationLevel * 1000 + bodyCultivationExp,
         powerScore: getSharedPowerScore() * 100 + Math.floor(eq.atk * 20 + eq.def * 20),
-        huntScore: totalBattleWins * 30 + totalEliteKills * 90 + totalBossKills * 220
+        huntScore: totalBattleWins * 30 + totalEliteKills * 90 + totalBossKills * 220,
+        reviveScore: totalRevives * 20 + reviveStreak * 35 + (reviveKingUnlocked ? 500 : 0)
     };
 }
 
@@ -5610,7 +6217,8 @@ function getRivalSocialSnapshots() {
             title: ["游侠", "剑修", "战将", "道尊", "宗主", "王侯"][i] || "修士",
             realmScore: Math.max(300, Math.floor(me.realmScore * (0.75 + i * 0.08) * mul)),
             powerScore: Math.max(500, Math.floor(me.powerScore * (0.72 + i * 0.07) * mul)),
-            huntScore: Math.max(120, Math.floor(me.huntScore * (0.7 + i * 0.08) * mul))
+            huntScore: Math.max(120, Math.floor(me.huntScore * (0.7 + i * 0.08) * mul)),
+            reviveScore: Math.max(80, Math.floor((me.reviveScore || 100) * (0.68 + i * 0.06) * mul))
         };
     });
 }
@@ -5622,7 +6230,7 @@ function rankBy(list, key) {
 function formatRankRows(list, key, mode = "") {
     return list.map((row, idx) => `
         <div class="rank-row ${row.name === "ark1" ? "me" : ""}">
-            <span>#${idx + 1} ${row.name} · ${row.title || "-"}${mode === "realm" ? ` · <span class="${getRealmStyleClass(Math.max(1, Math.min(CULTIVATION_MAX_LEVEL, Math.floor((row.realmScore || 0) / 1000))))}">${getRealmName(Math.max(1, Math.min(CULTIVATION_MAX_LEVEL, Math.floor((row.realmScore || 0) / 1000))))}</span>` : ""}</span>
+            <span>#${idx + 1} ${row.name} · ${row.title || "-"}${mode === "realm" ? ` · <span class="${getRealmStyleClass(Math.max(1, Math.floor((row.realmScore || 0) / 1000)))}">${getRealmName(Math.max(1, Math.floor((row.realmScore || 0) / 1000)))}</span>` : ""}</span>
             <span>${row[key] || 0}</span>
         </div>
     `).join("");
@@ -5637,6 +6245,7 @@ function buildSocialProfileCode() {
         realmScore: me.realmScore,
         power: me.powerScore,
         hunt: me.huntScore,
+        revive: me.reviveScore,
         homeScore: calcHomeScore(),
         battle: { wins: totalBattleWins, elite: totalEliteKills, boss: totalBossKills },
         explore: { moves: totalMoveCount, gathers: totalGatherUnits }
@@ -5650,14 +6259,17 @@ function openSocialPanel() {
     const rankRealm = rankBy(rows, "realmScore");
     const rankPower = rankBy(rows, "powerScore");
     const rankHunt = rankBy(rows, "huntScore");
+    const rankRevive = rankBy(rows, "reviveScore");
     const titles = getUnlockedTitles();
     socialSummaryEl.innerHTML = `
-        <div class="small-note">当前名号：<strong>${me.title}</strong> · 洞府评分 ${calcHomeScore()} · 战斗胜场 ${totalBattleWins}</div>
+        <div class="small-note">当前名号：<strong>${me.title}</strong> · 洞府评分 ${calcHomeScore()} · 战斗胜场 ${totalBattleWins} · 连续复活 ${reviveStreak}${reviveKingUnlocked ? " · 永久BUFF 复活概率+1%" : ""}</div>
         <div class="social-grid">
             <div class="social-card"><strong>境界榜</strong><div style="margin-top:6px;">${formatRankRows(rankRealm, "realmScore", "realm")}</div></div>
             <div class="social-card"><strong>战力榜</strong><div style="margin-top:6px;">${formatRankRows(rankPower, "powerScore")}</div></div>
             <div class="social-card"><strong>讨伐榜</strong><div style="margin-top:6px;">${formatRankRows(rankHunt, "huntScore")}</div></div>
+            <div class="social-card"><strong>复活榜</strong><div style="margin-top:6px;">${formatRankRows(rankRevive, "reviveScore")}</div></div>
         </div>
+        <div class="social-card" style="margin-top:8px;"><strong>最近20次战败记录</strong><div style="margin-top:6px;">${recentDeathRecords.length ? recentDeathRecords.map((d, i) => `<div class=\"rank-row\"><span>#${i + 1} 第${d.day}天 · ${d.enemy} Lv.${d.level}</span><span>灵石-${d.lostStone}${d.lostCore ? ` / 妖丹-${d.lostCore}` : ""}</span></div>`).join("") : "暂无战败记录"}</div></div>
         <div class="social-card" style="margin-top:8px;">
             <strong>称号收集</strong>
             <div style="margin-top:6px;">${SOCIAL_TITLE_DEFS.map((t) => `<span class="title-chip ${titles.includes(t.label) ? "unlocked" : ""}">${t.label}</span>`).join("")}</div>
@@ -6126,6 +6738,12 @@ function startGathering(tx, ty) {
     if (isGathering || avatarX !== tx || avatarY !== ty) return;
     const monster = getMonsterAt(tx, ty);
     if (monster) {
+        if (currentStrategy().noCombat) {
+            markTargetBackoff(tx, ty);
+            exploreTarget = null;
+            movementStatusText = "纯采集策略：遇怪改道";
+            return;
+        }
         startBattleWith(monster);
         return;
     }
@@ -6274,7 +6892,8 @@ function autoExploreStep(elapsedMs = 100) {
     }
 
     const strategy = currentStrategy();
-    if ((strategy.combatBias || 0) >= 0.9 && canStartBattleNow()) {
+    const noCombat = Boolean(strategy.noCombat);
+    if (!noCombat && (strategy.combatBias || 0) >= 0.9 && canStartBattleNow()) {
         const monsterTargets = chooseMonsterTargets(1);
         if (monsterTargets.length) {
             const m = monsterTargets[0];
@@ -6322,6 +6941,12 @@ function autoExploreStep(elapsedMs = 100) {
 
     moveOneStep(target.x, target.y);
     const encountered = getMonsterAt(avatarX, avatarY);
+    if (encountered && noCombat) {
+        markTargetBackoff(avatarX, avatarY);
+        exploreTarget = null;
+        movementStatusText = "纯采集策略生效：已避战改道";
+        return;
+    }
     if (encountered && canStartBattleNow()) {
         startBattleWith(encountered);
     }
@@ -6437,6 +7062,10 @@ function performHomeBuildAction(wx, wy, action, targetType = null) {
     if (action !== "build") return false;
     const conf = getBuildingConfig(targetType);
     if (!conf || conf.id === "none") return false;
+    if (!canBuildTypeUnique(conf.id)) {
+        addLog(`建造失败：${conf.label} 只能建造 1 个`);
+        return false;
+    }
     if (current) {
         addLog("该地块已有建筑，请先拆除或切换升级模式");
         return false;
@@ -6447,6 +7076,7 @@ function performHomeBuildAction(wx, wy, action, targetType = null) {
         return false;
     }
     setHomeBuilding(wx, wy, { type: conf.id, level: 1 });
+    quickBuildTypeId = getNextBuildTypeId();
     addLog(`建造完成：${conf.label} Lv.1`);
     return true;
 }
@@ -6497,34 +7127,34 @@ function openBuildPanel(wx, wy) {
         html += `<div class="build-meta" style="margin:6px 0 4px;"><strong>基础建筑</strong></div>`;
         for (const conf of normalList) {
             const buildCost = getScaledCost(conf.buildCost, 1, 1, "build");
-            const canBuild = canAffordCost(buildCost);
+            const canBuild = canAffordCost(buildCost) && canBuildTypeUnique(conf.id);
             html += `
                 <div class="build-row">
                     <div>
                         <div><strong>${conf.icon} ${conf.label}</strong></div>
                         <div class="build-meta">需求: ${formatCostLine(buildCost)}</div>
                         ${formatCostStockLine(buildCost)}
-                        <div class="build-meta ${canBuild ? "" : "mini-meta-warn"}">${canBuild ? "库存满足" : "材料不足，点击可查看提示"}</div>
+                        <div class="build-meta ${canBuild ? "" : "mini-meta-warn"}">${canBuildTypeUnique(conf.id) ? (canBuild ? "库存满足" : "材料不足，点击可查看提示") : "已建造（每种仅1个）"}</div>
                         <div class="build-meta">效果: ${conf.effect}</div>
                     </div>
-                    <button class="mini-btn" data-build-action="build" data-build-type="${conf.id}">建造</button>
+                    <button class="mini-btn" data-build-action="build" data-build-type="${conf.id}" ${canBuild ? "" : "disabled"}>建造</button>
                 </div>
             `;
         }
         html += `<div class="build-meta" style="margin:8px 0 4px;"><strong>阵法（战斗 / 修炼）</strong></div>`;
         for (const conf of arrayList) {
             const buildCost = getScaledCost(conf.buildCost, 3, 1, "build");
-            const canBuild = canAffordCost(buildCost);
+            const canBuild = canAffordCost(buildCost) && canBuildTypeUnique(conf.id);
             html += `
                 <div class="build-row">
                     <div>
                         <div><strong>${conf.icon} ${conf.label}</strong></div>
                         <div class="build-meta">需求: ${formatCostLine(buildCost)}</div>
                         ${formatCostStockLine(buildCost)}
-                        <div class="build-meta ${canBuild ? "" : "mini-meta-warn"}">${canBuild ? "库存满足" : "材料不足，点击可查看提示"}</div>
+                        <div class="build-meta ${canBuild ? "" : "mini-meta-warn"}">${canBuildTypeUnique(conf.id) ? (canBuild ? "库存满足" : "材料不足，点击可查看提示") : "已建造（每种仅1个）"}</div>
                         <div class="build-meta">效果: ${conf.effect}</div>
                     </div>
-                    <button class="mini-btn" data-build-action="build" data-build-type="${conf.id}">建造</button>
+                    <button class="mini-btn" data-build-action="build" data-build-type="${conf.id}" ${canBuild ? "" : "disabled"}>建造</button>
                 </div>
             `;
         }
@@ -6588,6 +7218,11 @@ function formatChunkTooltip(wx, wy, span) {
         }
     }
     if (span === 1) {
+        if ((worldBossState.phase === "active" || worldBossState.phase === "preview") && wx === worldBossState.x && wy === worldBossState.y) {
+            text += `\n世界BOSS: ${worldBossState.type} Lv.${worldBossState.level}`;
+            if (worldBossState.phase === "active") text += ` HP ${worldBossState.hp}/${worldBossState.maxHp}`;
+            else text += `（预告中 ${Math.max(0, Math.ceil((worldBossState.spawnAtMs - simulationTimeMs) / 1000))}s）`;
+        }
         const reservation = getReservationAt(wx, wy);
         if (reservation) {
             text += `\n占位状态: ${reservation.owner === PLAYER_ID ? "本地占用" : "他人占用"}`;
@@ -6649,9 +7284,11 @@ function renderMap() {
     }
     const centerX = isBuildFocus ? HOME_X : (cameraMode === "follow" ? avatarX : cameraX);
     const centerY = isBuildFocus ? HOME_Y : (cameraMode === "follow" ? avatarY : cameraY);
+    grid.classList.toggle("fast-mode", cfg.span > 1);
     grid.style.gridTemplateColumns = `repeat(${cfg.size}, ${cfg.cellPx}px)`;
     grid.style.gridTemplateRows = `repeat(${cfg.size}, ${cfg.cellPx}px)`;
     grid.innerHTML = "";
+    const frag = document.createDocumentFragment();
 
     for (let gy = -half; gy <= half; gy++) {
         for (let gx = -half; gx <= half; gx++) {
@@ -6708,11 +7345,8 @@ function renderMap() {
                 if (building) {
                     const conf = getBuildingConfig(building.type);
                     const tag = document.createElement("div");
-                    tag.className = "chunk-tag";
+                    tag.className = "chunk-tag building-tag";
                     tag.textContent = `${conf ? conf.icon : "□"}${building.level}`;
-                    tag.style.left = "auto";
-                    tag.style.right = "2px";
-                    tag.style.top = "2px";
                     cell.appendChild(tag);
                 }
             }
@@ -6725,7 +7359,13 @@ function renderMap() {
                 cell.appendChild(tag);
             }
 
-            if (autoObjective === "return_home" && info.includesHome) {
+            if ((worldBossState.phase === "active" || worldBossState.phase === "preview") && wx === worldBossState.x && wy === worldBossState.y && cfg.span === 1) {
+                const targetTag = document.createElement("div");
+                targetTag.className = "target-tag";
+                targetTag.textContent = worldBossState.phase === "active" ? "界王" : "预告";
+                cell.classList.add("monster-cell", "monster-boss");
+                cell.appendChild(targetTag);
+            } else if (autoObjective === "return_home" && info.includesHome) {
                 const targetTag = document.createElement("div");
                 targetTag.className = "target-tag";
                 targetTag.textContent = "归";
@@ -6762,9 +7402,10 @@ function renderMap() {
                 }
             }
 
-            grid.appendChild(cell);
+            frag.appendChild(cell);
         }
     }
+    grid.appendChild(frag);
 
     updateHeader();
     updateGatheringRing();
@@ -6801,6 +7442,8 @@ function updateStatus() {
         减损状态: ${simulationTimeMs < monsterWeakenUntilMs ? `怪物减损中（输出 -${Math.round((1 - MONSTER_WEAKEN_SKILL.damageMul) * 100)}%，剩余 ${Math.ceil((monsterWeakenUntilMs - simulationTimeMs) / 1000)}s）` : "正常"}<br>
         净魂状态: ${simulationTimeMs < monsterWeakenImmuneUntilMs ? `减损免疫中（剩余 ${Math.ceil((monsterWeakenImmuneUntilMs - simulationTimeMs) / 1000)}s）` : "无"}<br>
         世界事件: ${getWorldEventDef() ? `${getWorldEventDef().label}（剩余 ${Math.max(0, Math.ceil((worldEventUntilMs - simulationTimeMs) / 1000))}s）` : "无"}<br>
+        世界击杀进度: ${worldKillCount}/${WORLD_BOSS_CONFIG.killsRequired}<br>
+        世界BOSS: ${worldBossState.phase === "active" ? `${worldBossState.type} Lv.${worldBossState.level}（${worldBossState.x}, ${worldBossState.y}）` : worldBossState.phase === "preview" ? `预告中（${Math.max(0, Math.ceil((worldBossState.spawnAtMs - simulationTimeMs) / 1000))}s）@ (${worldBossState.x}, ${worldBossState.y})` : "未刷新"}<br>
         共用属性: 体${sharedStats.body} 灵${sharedStats.spirit} 识${sharedStats.mind} 御${sharedStats.control} 运${sharedStats.fortune}<br>
         属性等级: Lv.${sharedStats.level}（待分配 ${sharedStats.freePoints}）<br>
         修炼境界: ${getRealmStyledText()}<br>
@@ -6881,6 +7524,20 @@ function updateMovementStatus() {
     `;
 }
 
+function updateAdminPanel() {
+    if (!adminPanelEl || adminPanelEl.classList.contains("hidden")) return;
+    if (adminTimeScaleInput) adminTimeScaleInput.value = String(timeScale);
+    if (adminTimeScaleLabel) adminTimeScaleLabel.textContent = String(timeScale);
+    if (adminWorldKillLabel) adminWorldKillLabel.textContent = `${worldKillCount}/${WORLD_BOSS_CONFIG.killsRequired}`;
+    if (adminWorldBossStateLabel) {
+        adminWorldBossStateLabel.textContent = worldBossState.phase === "active"
+            ? `${worldBossState.type} Lv.${worldBossState.level}`
+            : worldBossState.phase === "preview"
+                ? `预告中 ${Math.max(0, Math.ceil((worldBossState.spawnAtMs - simulationTimeMs) / 1000))}s`
+                : "未刷新";
+    }
+}
+
 function updateBattlePanel() {
     if (battleInfoModeBtn) battleInfoModeBtn.textContent = battleInfoMode === "detail" ? "战斗视图：完整" : "战斗视图：简洁";
     if (battlePanelEl) battlePanelEl.classList.toggle("simple-mode", battleInfoMode === "simple");
@@ -6931,6 +7588,8 @@ function updateBattlePanel() {
         }
         battleResultCardEl.innerHTML = `
             时长 ${battleSummaryData.durationSec || battleSummaryData.rounds}s ｜ 回合 ${battleSummaryData.rounds} ｜ 总伤害 ${battleSummaryData.dealt} ｜ 承伤 ${battleSummaryData.taken} ｜ 暴击 ${battleSummaryData.crits} ｜ 治疗 ${battleSummaryData.healed || 0}<br>
+            总吸血 ${battleSummaryData.lifesteal || 0} ｜ 自动回血 ${battleSummaryData.regen || 0} ｜ 总暴击增伤 ${battleSummaryData.critBonusDamage || 0} ｜ 总回避伤害 ${battleSummaryData.avoidedDamage || 0}<br>
+            词条触发：诛王 ${battleSummaryData.affixProcExecution || 0}(+${battleSummaryData.affixGainExecution || 0}) ｜ 裂甲 ${battleSummaryData.affixProcArmorBreaker || 0}(+${battleSummaryData.affixGainArmorBreaker || 0}) ｜ 清煞 ${battleSummaryData.affixProcAntiBleed || 0}(减${battleSummaryData.affixGainAntiBleed || 0}) ｜ 狂战 ${battleSummaryData.affixProcFrenzy || 0}(+${battleSummaryData.affixGainFrenzy || 0}) ｜ 雷连 ${battleSummaryData.affixProcStormChain || 0}(+${battleSummaryData.affixGainStormChain || 0})<br>
             命中率：${battleSummaryData.playerAttacks > 0 ? Math.round((battleSummaryData.playerHits / battleSummaryData.playerAttacks) * 100) : 0}% ｜ 敌方命中率：${battleSummaryData.enemyAttacks > 0 ? Math.round((battleSummaryData.enemyHits / battleSummaryData.enemyAttacks) * 100) : 0}% ｜ 开战风险：${battleSummaryData.riskLevel || "中"}<br>
             战利品：${battleSummaryData.loot}<br>
             ${replayLine}<br>
@@ -6990,9 +7649,12 @@ function updateBattlePanel() {
         buildingBonus.battleDropMul > 0 ? `掉落+${Math.round(buildingBonus.battleDropMul * 100)}%` : null,
         buildingBonus.battleCritRate > 0 ? `暴击+${Math.round(buildingBonus.battleCritRate * 100)}%` : null
     ].filter(Boolean).join(" · ") || "无";
+    const liveStatsText = battleMetrics
+        ? `实时统计：总回血 ${battleMetrics.heals || 0} / 总吸血 ${battleMetrics.lifesteal || 0} / 自动回血 ${battleMetrics.regen || 0} / 暴击增伤 ${battleMetrics.critBonusDamage || 0} / 回避伤害 ${battleMetrics.avoidedDamage || 0}`
+        : "实时统计：--";
     battleSummaryEl.innerHTML = battleInfoMode === "detail"
-        ? `⚔ ${bossTag} ${battleState.type} Lv.${battleState.level} · 回合 ${battleState.rounds} · CD模式<br><span class="small-note">战术：${currentBattleTactic().label}｜阵法：${formationText}｜掉落预览：${dropPreview}</span>`
-        : `⚔ ${battleState.type} Lv.${battleState.level}｜CD战斗中`;
+        ? `⚔ ${bossTag} ${battleState.type} Lv.${battleState.level} · 回合 ${battleState.rounds} · CD模式<br><span class="small-note">战术：${currentBattleTactic().label}｜阵法：${formationText}｜掉落预览：${dropPreview}</span><br><span class="small-note">${liveStatsText}</span>`
+        : `⚔ ${battleState.type} Lv.${battleState.level}｜CD战斗中<br><span class="small-note">${liveStatsText}</span>`;
     if (battleSelfNameEl) battleSelfNameEl.textContent = "ark1";
     if (battleEnemyLabelEl) battleEnemyLabelEl.textContent = `${bossTag || ""}${battleState.type}`;
     if (battleSelfStatusEl) battleSelfStatusEl.textContent = `攻击CD ${Math.ceil((battleState.playerCdMs || 0) / 1000)}s`;
@@ -7066,6 +7728,7 @@ function updateBattlePanel() {
         const enemyLossText = enemyLoss > 0 ? `敌方受伤 -${enemyLoss}` : "敌方受伤 无";
         const itemText = lastBattleFrame?.itemText || "无";
         const triggerText = lastBattleFrame?.triggerText || "无";
+        const metrics = battleMetrics || { heals: 0, lifesteal: 0, regen: 0, critBonusDamage: 0, avoidedDamage: 0, affixProcExecution: 0, affixProcArmorBreaker: 0, affixProcAntiBleed: 0, affixProcFrenzy: 0, affixProcStormChain: 0, affixGainExecution: 0, affixGainArmorBreaker: 0, affixGainAntiBleed: 0, affixGainFrenzy: 0, affixGainStormChain: 0 };
         battleRoundResultEl.innerHTML = `
             <div class="summary-line">
                 <span class="summary-pill hp">血量 ${avatarHp}/${getAvatarMaxHp()}</span>
@@ -7081,6 +7744,16 @@ function updateBattlePanel() {
                 <span class="summary-pill heal">状态 ${getActiveBattleEffectsText()}</span>
                 <span class="summary-pill cd">道具 ${itemText || "无"}</span>
                 <span class="summary-pill enemy">风险 ${battleState.riskLevel || "中"}</span>
+            </div>
+            <div class="summary-line">
+                <span class="summary-pill heal">总回血 ${metrics.heals || 0}</span>
+                <span class="summary-pill heal">总吸血 ${metrics.lifesteal || 0} / 自动回 ${metrics.regen || 0}</span>
+                <span class="summary-pill enemy">暴击增伤 ${metrics.critBonusDamage || 0} / 回避伤害 ${metrics.avoidedDamage || 0}</span>
+            </div>
+            <div class="summary-line">
+                <span class="summary-pill player">诛王 ${metrics.affixProcExecution || 0}(+${metrics.affixGainExecution || 0})</span>
+                <span class="summary-pill player">裂甲 ${metrics.affixProcArmorBreaker || 0}(+${metrics.affixGainArmorBreaker || 0}) / 清煞 ${metrics.affixProcAntiBleed || 0}(减${metrics.affixGainAntiBleed || 0})</span>
+                <span class="summary-pill enemy">狂战 ${metrics.affixProcFrenzy || 0}(+${metrics.affixGainFrenzy || 0}) / 雷连 ${metrics.affixProcStormChain || 0}(+${metrics.affixGainStormChain || 0})</span>
             </div>
         `;
         battleRoundResultEl.classList.add("minor");
@@ -7277,6 +7950,7 @@ function updateSidePanels() {
         ? "战斗中不可加点：请先结束战斗"
         : (sharedStats.freePoints <= 0 ? "当前无可分配属性点" : "可加点");
     const combat = getAvatarCombatSnapshot();
+    const weaponBonus = getWeaponBonusBreakdown();
     attributeSummaryEl.innerHTML = `
         <div style="margin-bottom:8px;"><strong>共用属性（主角/化身）</strong></div>
         <div class="small-note">属性等级 Lv.${sharedStats.level}，待分配点 ${sharedStats.freePoints}｜${attrDisabledReason}｜点击各属性后的 ? 查看用途</div>
@@ -7306,6 +7980,7 @@ function updateSidePanels() {
             <span class="pill">暴击 ${(combat.critRate * 100).toFixed(1)}%</span>
             <span class="pill">吸血 ${(combat.lifesteal * 100).toFixed(1)}%</span>
             <span class="pill">自动回血 ${Math.floor(combat.regen || 0)}/5秒</span>
+            <span class="pill" title="${weaponBonus.detail.replace(/"/g, "&quot;")}">武器总加成 攻+${Math.floor(weaponBonus.total.atk)} 命中+${(weaponBonus.total.hit * 100).toFixed(1)}% 吸血+${(weaponBonus.total.lifesteal * 100).toFixed(1)}%</span>
             <span class="pill">战斗策略 ${currentBattleTactic().label}</span>
         </div>
     `;
@@ -7378,7 +8053,7 @@ function updateSidePanels() {
                             <div class="monster-title">${getMonsterIconMarkup(m.type)} ${discoveredMonsterSet.has(m.type) ? m.type : "？？？"}</div>
                             <span class="small-note">${discoveredMonsterSet.has(m.type) ? m.levelRange : "未发现"}</span>
                         </div>
-                        <div class="codex-item-meta">威胁层级 T${m.tier || 1} · ${discoveredMonsterSet.has(m.type) ? (m.source || "未知区域") : "未知"}</div>
+                        <div class="codex-item-meta">威胁层级 T${m.tier || 1} · 评级 ${getMonsterThreatRank(m.type)}/${getMonsterDropRank(m.type)} · ${discoveredMonsterSet.has(m.type) ? (m.source || "未知区域") : "未知"}</div>
                         <div class="small-note" style="margin-top:4px;">${discoveredMonsterSet.has(m.type) ? (m.intro || "暂无资料") : "尚未遭遇此怪物，建议使用“标记缺失怪”追踪。"}</div>
                         <div class="small-note" style="margin-top:2px;">${discoveredMonsterSet.has(m.type) ? `HP ${m.stats?.hp || "?"} · 攻 ${m.stats?.atk || "?"} · 防 ${m.stats?.def || "?"}` : "属性未知"}</div>
                         <div class="drop-chips">
@@ -7631,6 +8306,7 @@ function renderAll(force = false) {
         updateSidePanels();
     }
     renderButtons();
+    updateAdminPanel();
 }
 
 function renderButtons() {
@@ -7768,11 +8444,25 @@ function updateSimulation(ms) {
         rollWorldEvent();
         nextWorldEventRollMs = simulationTimeMs + 120000 + (simpleHash(dayCount + gatherCount, Math.floor(simulationTimeMs / 1000)) % 120000);
     }
+    if (worldBossState.phase === "preview" && simulationTimeMs >= worldBossState.spawnAtMs) {
+        spawnWorldBossNow();
+    }
+    if (worldBossState.phase === "idle") {
+        scheduleWorldBossPreview();
+    }
     if (avatarHp <= 0 && avatarReviveUntilMs > 0 && simulationTimeMs >= avatarReviveUntilMs) {
         avatarReviveUntilMs = 0;
         avatarHp = Math.floor(getAvatarMaxHp() * 0.7);
         avatarMp = Math.floor(getAvatarMaxMp() * 0.7);
         autoObjective = "explore";
+        totalRevives += 1;
+        reviveStreak += 1;
+        if (!reviveKingUnlocked && reviveStreak >= 10) {
+            reviveKingUnlocked = true;
+            reviveKingBonusRate = 0.01;
+            pushEventToast("rare", "称号达成：复活之王", "永久BUFF解锁：复活概率 +1%", 3800);
+            addLog("达成成就：连续复活10次，上榜并获得永久BUFF【复活概率+1%】");
+        }
         addLog("化身已在洞府复活，可重新外出历练");
         renderAll();
     }
@@ -7820,6 +8510,10 @@ function updateSimulation(ms) {
         const regen = Math.floor(eq.regen || 0);
         if (regen > 0) {
             avatarHp = Math.min(getAvatarMaxHp(), avatarHp + regen);
+            if (battleMetrics) {
+                battleMetrics.heals += regen;
+                battleMetrics.regen += regen;
+            }
         }
         nextAutoRegenAtMs = simulationTimeMs + AUTO_REGEN_INTERVAL_MS;
     } else if (!battleState) {
@@ -7933,6 +8627,10 @@ function renderGameToText() {
             ironBodyBuffRemainMs: Math.max(0, Math.floor(ironBodyBuffUntilMs - simulationTimeMs)),
             swiftTalismanBuffRemainMs: Math.max(0, Math.floor(swiftTalismanBuffUntilMs - simulationTimeMs)),
             reviveCooldownRemainMs: Math.max(0, Math.floor(avatarReviveUntilMs - simulationTimeMs)),
+            reviveStreak,
+            reviveKingUnlocked,
+            reviveKingBonusRate,
+            totalRevives,
             bodyCultivationExp,
             bodyCultivationExpNeed: getBodyCultivationExpNeed(cultivationLevel),
             cultivationLevel,
@@ -8000,7 +8698,7 @@ function buildSavePayload() {
         home: { x: HOME_X, y: HOME_Y },
         avatar: { x: avatarX, y: avatarY, hp: avatarHp, mp: avatarMp, reviveUntilMs: avatarReviveUntilMs },
         day: { dayCount, dayOriginX, dayOriginY, dayMoveCount, dayMoveLogBatch, dayGatherUnits, dayStartMs },
-        runtime: { zoomLevel, strategyId, autoObjective, isAutoMode, timeScale, simulationTimeMs, buildingProductionAccumMs, worldEventId, worldEventUntilMs, nextWorldEventRollMs, nextBattleAvailableAtMs, koiWindowStartMs, koiWindowTarget, koiWindowDropped, worldProjectProgress },
+        runtime: { zoomLevel, strategyId, autoObjective, isAutoMode, timeScale, simulationTimeMs, buildingProductionAccumMs, worldEventId, worldEventUntilMs, nextWorldEventRollMs, nextBattleAvailableAtMs, koiWindowStartMs, koiWindowTarget, koiWindowDropped, worldProjectProgress, worldKillCount, worldBossState },
         combat: { battleTacticId, autoUsePillRatio, autoUseSalveRatio, bloodPillCarryTarget, bloodPillReturnThreshold, autoBuyBloodPill, injuryDebuffUntilMs, monsterWeakenUntilMs, monsterWeakenImmuneUntilMs, ironBodyBuffUntilMs, swiftTalismanBuffUntilMs, lastBattleFrame },
         flags: { devForceMonster, devFixedDrops, baitBoostUntilMs },
         progression: {
@@ -8028,7 +8726,12 @@ function buildSavePayload() {
                 totalEliteKills,
                 totalBossKills,
                 totalMoveCount,
-                totalGatherUnits
+                totalGatherUnits,
+                reviveStreak,
+                reviveKingUnlocked,
+                reviveKingBonusRate,
+                totalRevives,
+                recentDeathRecords
             },
             equippedSlots: { ...equippedSlots },
             equippedSlotInstances: { ...equippedSlotInstances },
@@ -8087,6 +8790,10 @@ function applySavePayload(payload) {
     koiWindowTarget = payload.runtime?.koiWindowTarget ?? koiWindowTarget;
     koiWindowDropped = payload.runtime?.koiWindowDropped ?? koiWindowDropped;
     worldProjectProgress = payload.runtime?.worldProjectProgress ?? worldProjectProgress;
+    worldKillCount = payload.runtime?.worldKillCount ?? worldKillCount;
+    if (payload.runtime?.worldBossState) {
+        worldBossState = { ...worldBossState, ...payload.runtime.worldBossState };
+    }
     battleTacticId = payload.combat?.battleTacticId ?? battleTacticId;
     autoUsePillRatio = payload.combat?.autoUsePillRatio ?? autoUsePillRatio;
     autoUseSalveRatio = payload.combat?.autoUseSalveRatio ?? autoUseSalveRatio;
@@ -8126,6 +8833,11 @@ function applySavePayload(payload) {
     totalBossKills = payload.progression?.social?.totalBossKills ?? totalBossKills;
     totalMoveCount = payload.progression?.social?.totalMoveCount ?? totalMoveCount;
     totalGatherUnits = payload.progression?.social?.totalGatherUnits ?? totalGatherUnits;
+    reviveStreak = payload.progression?.social?.reviveStreak ?? reviveStreak;
+    reviveKingUnlocked = payload.progression?.social?.reviveKingUnlocked ?? reviveKingUnlocked;
+    reviveKingBonusRate = payload.progression?.social?.reviveKingBonusRate ?? reviveKingBonusRate;
+    totalRevives = payload.progression?.social?.totalRevives ?? totalRevives;
+    recentDeathRecords = Array.isArray(payload.progression?.social?.recentDeathRecords) ? payload.progression.social.recentDeathRecords.slice(0, 20) : recentDeathRecords;
     const savedEquippedSlots = payload.progression?.equippedSlots || {};
     const savedEquippedSlotInstances = payload.progression?.equippedSlotInstances || {};
     Object.assign(equippedSlots, savedEquippedSlots);
@@ -8148,11 +8860,23 @@ function applySavePayload(payload) {
     equipInstances.length = 0;
     (payload.progression?.equipInstances || []).forEach((it) => {
         if (!it || !it.uid || !it.itemId) return;
+        const rarity = ITEM_DEFS[it.itemId]?.rarity || "common";
+        const pool = AFFIX_POOL_BY_RARITY[rarity] || [];
+        const needCount = rarity === "epic" ? 3 : rarity === "rare" ? 2 : rarity === "uncommon" ? 1 : 0;
+        let affixes = Array.isArray(it.affixes) ? it.affixes.filter((id) => EQUIP_AFFIX_DEFS[id]) : [];
+        if (!affixes.length && needCount > 0 && pool.length) {
+            for (let i = 0; i < needCount; i++) {
+                const idx = simpleHash((Number(String(it.uid).replace("eq_", "")) || 1) * 17 + i, String(it.itemId).length * 13 + i * 19) % pool.length;
+                const aid = pool[idx];
+                if (!affixes.includes(aid)) affixes.push(aid);
+            }
+        }
         equipInstances.push({
             uid: String(it.uid),
             itemId: String(it.itemId),
             location: it.location || "home",
-            enhance: Math.max(0, Math.min(it.itemId === "koiNecklace" ? 20 : 10, Number(it.enhance) || 0))
+            enhance: Math.max(0, Math.min(it.itemId === "koiNecklace" ? 20 : 10, Number(it.enhance) || 0)),
+            affixes
         });
     });
     const seqFromUids = equipInstances.reduce((mx, it) => {
@@ -8497,10 +9221,10 @@ enhanceBtn.addEventListener("click", () => {
 
 if (homeBuildBtn) {
     homeBuildBtn.addEventListener("click", () => {
-        if (isBuildFocus || zoomLevel !== 1) {
-            zoomLevel = 1;
-        }
-        openBuildPanel(HOME_X, HOME_Y);
+        zoomLevel = 1;
+        isBuildFocus = true;
+        quickBuildTypeId = getNextBuildTypeId();
+        addLog(`已进入快速建造：当前类型 ${getBuildingConfig(quickBuildTypeId)?.label || quickBuildTypeId}（点击格子建造/升级，Shift+点击拆除）`);
         renderAll();
     });
 }
@@ -8508,6 +9232,58 @@ if (homeBuildBtn) {
 enhanceCloseBtn.addEventListener("click", () => {
     enhancePanelEl.classList.add("hidden");
 });
+
+if (adminBtn && adminPanelEl) {
+    adminBtn.addEventListener("click", () => {
+        updateAdminPanel();
+        adminPanelEl.classList.remove("hidden");
+    });
+}
+if (adminCloseBtn && adminPanelEl) {
+    adminCloseBtn.addEventListener("click", () => {
+        adminPanelEl.classList.add("hidden");
+    });
+}
+if (adminTimeScaleInput && adminTimeScaleLabel) {
+    adminTimeScaleInput.addEventListener("input", () => {
+        timeScale = Math.max(1, Math.min(20, Number(adminTimeScaleInput.value) || 1));
+        adminTimeScaleLabel.textContent = String(timeScale);
+        addLog(`后台调整：模拟倍速 ${timeScale}x`);
+        renderAll();
+    });
+}
+if (adminPanelEl) {
+    adminPanelEl.querySelectorAll("button[data-admin-speed]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            const next = Number(btn.dataset.adminSpeed || 1);
+            timeScale = Math.max(1, Math.min(20, next));
+            if (adminTimeScaleInput) adminTimeScaleInput.value = String(timeScale);
+            if (adminTimeScaleLabel) adminTimeScaleLabel.textContent = String(timeScale);
+            addLog(`后台调整：模拟倍速 ${timeScale}x`);
+            renderAll();
+        });
+    });
+}
+if (adminFillWorldKillBtn) {
+    adminFillWorldKillBtn.addEventListener("click", () => {
+        worldKillCount = WORLD_BOSS_CONFIG.killsRequired;
+        scheduleWorldBossPreview();
+        addLog("后台操作：世界击杀进度已补满");
+        renderAll();
+    });
+}
+if (adminSpawnWorldBossBtn) {
+    adminSpawnWorldBossBtn.addEventListener("click", () => {
+        if (worldBossState.phase === "idle") {
+            worldKillCount = WORLD_BOSS_CONFIG.killsRequired;
+            scheduleWorldBossPreview();
+        }
+        worldBossState.spawnAtMs = simulationTimeMs;
+        spawnWorldBossNow();
+        addLog("后台操作：世界BOSS立即刷新");
+        renderAll();
+    });
+}
 
 if (bagCapInput && bagCapLabel) {
     bagCapInput.addEventListener("input", () => {
@@ -8829,19 +9605,31 @@ grid.addEventListener("mousemove", (e) => {
         tooltip.style.display = "none";
         return;
     }
-    if (hoveredMapCellEl && hoveredMapCellEl !== cell) hoveredMapCellEl.classList.remove("hovered");
-    hoveredMapCellEl = cell;
-    hoveredMapCellEl.classList.add("hovered");
+    if (hoveredMapCellEl !== cell) {
+        if (hoveredMapCellEl) hoveredMapCellEl.classList.remove("hovered");
+        hoveredMapCellEl = cell;
+        hoveredMapCellEl.classList.add("hovered");
+    }
 
     const wx = Number(cell.dataset.wx);
     const wy = Number(cell.dataset.wy);
     const span = Number(cell.dataset.span);
     inspectText = formatChunkTooltip(wx, wy, span);
-    tooltip.textContent = inspectText;
+    const lines = String(inspectText || "").split("\n");
+    const title = lines.shift() || `坐标 (${wx}, ${wy})`;
+    tooltip.innerHTML = `<div class="tt-title">${escapeHtml(title)}</div><div class="tt-body">${escapeHtml(lines.join("\n"))}</div>`;
     tooltip.style.display = "block";
-    tooltip.style.left = `${e.clientX + 16}px`;
-    tooltip.style.top = `${e.clientY + 16}px`;
-    scheduleSidePanelRefresh();
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+    if (hoverTooltipRaf) cancelAnimationFrame(hoverTooltipRaf);
+    hoverTooltipRaf = requestAnimationFrame(() => {
+        const hostRect = mapContainerEl?.getBoundingClientRect();
+        if (!hostRect) return;
+        const offsetX = clientX - hostRect.left + 12;
+        const offsetY = clientY - hostRect.top + 12;
+        tooltip.style.left = `${Math.max(6, offsetX)}px`;
+        tooltip.style.top = `${Math.max(6, offsetY)}px`;
+    });
 });
 
 grid.addEventListener("mouseleave", () => {
@@ -8851,7 +9639,10 @@ grid.addEventListener("mouseleave", () => {
         hoveredMapCellEl = null;
     }
     inspectText = "";
-    scheduleSidePanelRefresh();
+    if (hoverTooltipRaf) {
+        cancelAnimationFrame(hoverTooltipRaf);
+        hoverTooltipRaf = 0;
+    }
 });
 
 grid.addEventListener("click", (e) => {
@@ -8867,10 +9658,29 @@ grid.addEventListener("click", (e) => {
     if (span === 1) {
         setManualMarkedTarget(wx, wy, "地图点击");
     }
+    if (isBuildFocus && span === 1 && isHomeBuildTile(wx, wy)) {
+        let acted = false;
+        const current = getHomeBuilding(wx, wy);
+        if (e.shiftKey) {
+            acted = performHomeBuildAction(wx, wy, "remove");
+        } else if (current) {
+            acted = performHomeBuildAction(wx, wy, "upgrade");
+        } else {
+            const buildType = quickBuildTypeId || getNextBuildTypeId();
+            acted = performHomeBuildAction(wx, wy, "build", buildType);
+            if (!acted) {
+                const fallback = getNextBuildTypeId();
+                if (fallback && fallback !== buildType) acted = performHomeBuildAction(wx, wy, "build", fallback);
+            }
+        }
+        if (!acted) addLog("快速建造未执行：可按 Shift+点击拆除，或打开面板手动选择类型");
+        renderAll();
+        return;
+    }
     if (span !== 1) {
         if (isHomeBuildTile(wx, wy)) {
             zoomLevel = 1;
-            openBuildPanel(wx, wy);
+            if (!isBuildFocus) openBuildPanel(wx, wy);
             renderAll();
         } else {
             closeBuildPanel();
@@ -8882,7 +9692,7 @@ grid.addEventListener("click", (e) => {
         renderAll();
         return;
     }
-    openBuildPanel(wx, wy);
+    if (!isBuildFocus) openBuildPanel(wx, wy);
     renderAll();
 });
 

@@ -120,6 +120,159 @@
       margin-top: 10px;
       text-align: right;
     }
+    .wiki-monster-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #0f1930;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .wiki-monster-icon svg {
+      width: 56px;
+      height: 56px;
+      display: block;
+    }
+    .monster-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .monster-card {
+      position: relative;
+      border-radius: 12px;
+      padding: 10px;
+      border: 1px solid rgba(120, 164, 232, 0.35);
+      background: linear-gradient(160deg, rgba(18,31,53,0.95), rgba(10,18,32,0.96));
+      box-shadow: inset 0 0 0 1px rgba(196,220,255,0.08), 0 8px 20px rgba(0,0,0,0.35);
+      overflow: hidden;
+    }
+    .monster-card::after {
+      content: "";
+      position: absolute;
+      right: -24px;
+      top: -24px;
+      width: 90px;
+      height: 90px;
+      background: radial-gradient(circle, rgba(131,197,255,0.3) 0%, rgba(131,197,255,0) 70%);
+      pointer-events: none;
+    }
+    .monster-card.rank-ssr {
+      border-color: rgba(255, 198, 109, 0.7);
+      box-shadow: inset 0 0 0 1px rgba(255,236,170,0.18), 0 0 18px rgba(255,196,98,0.25);
+    }
+    .monster-card.rank-sr {
+      border-color: rgba(191, 154, 255, 0.65);
+      box-shadow: inset 0 0 0 1px rgba(220,200,255,0.16), 0 0 16px rgba(186,142,255,0.2);
+    }
+    .monster-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .rank-chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      border: 1px solid rgba(200,220,255,0.4);
+      background: rgba(23, 40, 65, 0.8);
+      color: #dcecff;
+    }
+    .rank-chip.threat-ssr { color: #ffd68a; border-color: rgba(255,208,129,0.55); }
+    .rank-chip.threat-sr { color: #dfc8ff; border-color: rgba(201,171,255,0.55); }
+    .rank-chip.drop-ss { color: #9be7ff; border-color: rgba(125,213,255,0.55); }
+    .monster-card-sub {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    .monster-card-desc {
+      font-size: 12px;
+      color: #d8e6ff;
+      line-height: 1.5;
+      min-height: 54px;
+    }
+    .monster-card-btn {
+      all: unset;
+      display: block;
+      cursor: pointer;
+    }
+    .monster-modal.hidden { display: none; }
+    .monster-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(4, 8, 16, 0.66);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .monster-modal-panel {
+      width: min(560px, 96vw);
+      border-radius: 14px;
+      border: 1px solid rgba(145, 190, 255, 0.45);
+      background: linear-gradient(165deg, rgba(15, 28, 50, 0.98), rgba(8, 14, 26, 0.98));
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+      padding: 12px;
+    }
+    .monster-modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .monster-modal-close {
+      border: 1px solid var(--line);
+      background: rgba(24, 39, 63, 0.9);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 2px 8px;
+      cursor: pointer;
+    }
+    .monster-modal-body {
+      display: grid;
+      grid-template-columns: 104px 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+    .monster-modal-icon {
+      width: 96px;
+      height: 96px;
+      border-radius: 12px;
+      border: 1px solid rgba(151, 188, 245, 0.42);
+      background: rgba(13, 24, 40, 0.95);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .monster-modal-icon svg {
+      width: 86px;
+      height: 86px;
+      display: block;
+    }
+    .monster-modal-sub {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+    .monster-modal-desc {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #dbe9ff;
+      line-height: 1.6;
+    }
     .realm-swatch {
       display: inline-flex;
       align-items: center;
@@ -157,6 +310,18 @@
       background: linear-gradient(90deg,#f9b23f 0%,#fff8dc 48%,#f2a52b 100%);
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
       text-shadow: 0 0 12px rgba(255,199,86,.62);
+    }
+    .realm-xianren {
+      background: linear-gradient(90deg,#ff5f6d 0%,#ffc371 16%,#ffe66d 32%,#7cf6b6 48%,#7ad7ff 64%,#9b8bff 80%,#ff7adf 100%);
+      background-size: 220% 220%;
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 10px rgba(255,212,250,.55);
+      animation: xianren-rainbow 3.2s linear infinite;
+      font-weight: 800;
+    }
+    @keyframes xianren-rainbow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
     }
   </style>
 </head>
@@ -202,8 +367,8 @@
     </section>
 
     <section id="realm">
-      <h2>2. 境界与修为（100级）</h2>
-      <p><span class="chip">等级上限</span> Lv.1 - Lv.100，最高为飞升境。境界保留 <strong>前期 / 中期 / 后期</strong> 命名。</p>
+      <h2>2. 境界与修为（100级后仙人）</h2>
+      <p><span class="chip">等级规则</span> Lv.1 - Lv.100 为凡体至飞升（保留前/中/后期）；Lv.101 起统一为 <strong>仙人境</strong>（不再区分前中后期），且升级所需修为断崖式增长。</p>
       <table class="table">
         <thead><tr><th>等级段</th><th>境界名</th><th>阶段</th></tr></thead>
         <tbody>
@@ -217,6 +382,7 @@
           <tr><td>71-80</td><td>合体境</td><td>前/中/后期</td></tr>
           <tr><td>81-90</td><td>大乘境</td><td>前/中/后期</td></tr>
           <tr><td>91-100</td><td>飞升境</td><td>前/中/后期</td></tr>
+          <tr><td>101+</td><td>仙人境</td><td>无阶段划分</td></tr>
         </tbody>
       </table>
       <h3>境界名称配色规范（与游戏内一致）</h3>
@@ -233,11 +399,12 @@
           <tr><td>合体</td><td><span class="realm-swatch realm-heti">合体中期</span></td><td>华丽蓝色渐变</td></tr>
           <tr><td>大乘</td><td><span class="realm-swatch realm-dacheng">大乘后期</span></td><td>华丽绿色渐变</td></tr>
           <tr><td>飞升</td><td><span class="realm-swatch realm-feisheng">飞升前期</span></td><td>金色渐变</td></tr>
+          <tr><td>仙人</td><td><span class="realm-swatch realm-xianren">仙人境</span></td><td>七彩绚烂动态渐变</td></tr>
         </tbody>
       </table>
-      <p>修为需求曲线：<code>needExp(lv) = floor(40 + lv^2.05 * 6 + lv * 18)</code>。</p>
+      <p>修为需求曲线：<code>lv ≤ 100: needExp(lv)=floor(40 + lv^2.05*6 + lv*18)</code>；<code>lv &gt; 100: 在100级基础上按高次幂断崖增长</code>。</p>
       <details>
-        <summary>每级所需经验值（折叠展开：Lv1-Lv100）</summary>
+        <summary>每级所需经验值（折叠展开：Lv1-Lv150）</summary>
         <table class="table">
           <thead><tr><th>等级</th><th>本级升下级所需修为</th><th>累计总修为（到达下级）</th></tr></thead>
           <tbody id="expRows"></tbody>
@@ -277,6 +444,114 @@
         <div class="card">进阶：丛林狼王、裂地凶兽、毒刺蛛后</div>
         <div class="card">精英：狂刃魔将、玄甲统领</div>
         <div class="card">Boss：深渊君王、天罚魔龙</div>
+      </div>
+      <h3>怪物评级（新增）</h3>
+      <ul>
+        <li>威胁评级：<strong>N / R / SR / SSR</strong>，用于表达战斗危险度与机制强度。</li>
+        <li>掉落评级：<strong>C / B / A / S / SS</strong>，用于表达战利品质量与稀有度。</li>
+        <li>游戏内展示为“双评级”：例如 <code>SR/S</code>（威胁/掉落）。</li>
+      </ul>
+      <table class="table">
+        <thead><tr><th>层级T</th><th>威胁评级</th><th>掉落评级</th></tr></thead>
+        <tbody>
+          <tr><td>T1-2</td><td>N</td><td>C-B</td></tr>
+          <tr><td>T3</td><td>R</td><td>A</td></tr>
+          <tr><td>T4</td><td>SR</td><td>S</td></tr>
+          <tr><td>T5</td><td>SSR</td><td>SS</td></tr>
+        </tbody>
+      </table>
+      <h3>怪物设定（新版美术同步）</h3>
+      <table class="table">
+        <thead><tr><th>图像</th><th>怪物</th><th>评级</th><th>称号</th><th>能量属性</th><th>设定说明</th></tr></thead>
+        <tbody>
+          <tr><td><span class="wiki-monster-icon"><svg viewBox="0 0 200 200"><defs><linearGradient id="w_g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#475569"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><path d="M60 40 L140 40 L155 170 Q100 180, 45 170 Z" fill="url(#w_g1)" stroke="#64748b" stroke-width="2"/><rect x="70" y="65" width="60" height="15" rx="4" fill="#0f172a"/><circle cx="85" cy="72" r="5" fill="#f43f5e"/><circle cx="115" cy="72" r="5" fill="#f43f5e"/><path d="M40 80 L20 150 M160 80 L180 150" stroke="#475569" stroke-width="12" stroke-linecap="round"/></svg></span></td><td>荒原魔兵</td><td>N/C</td><td>ANCIENT SOLDIER</td><td>荒土</td><td>被遗忘卫兵由诅咒之沙凝聚，盔甲缝隙中流淌幽冥之火。</td></tr>
+          <tr><td><span class="wiki-monster-icon"><svg viewBox="0 0 200 200"><defs><linearGradient id="w_g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7e22ce"/><stop offset="100%" stop-color="#3b0764"/></linearGradient></defs><path d="M100 80 L190 30 Q160 130, 100 150 Q40 130, 10 30 Z" fill="url(#w_g2)" /><circle cx="100" cy="90" r="30" fill="#2e1065"/><circle cx="88" cy="85" r="4" fill="#f472b6"/><circle cx="112" cy="85" r="4" fill="#f472b6"/></svg></span></td><td>夜翼蝠</td><td>N/C</td><td>VOID FLIER</td><td>暗影</td><td>振翼可遮蔽星光，伴随精神压制型恐惧频率。</td></tr>
+          <tr><td><span class="wiki-monster-icon"><svg viewBox="0 0 200 200"><rect x="30" y="80" width="140" height="90" rx="30" fill="#78350f" stroke="#451a03" stroke-width="4"/><path d="M40 85 L70 40 L100 85 L130 40 L160 85" fill="#b45309"/><circle cx="140" cy="110" r="12" fill="#fbbf24" opacity="0.8"/></svg></span></td><td>岩甲战兽</td><td>N/B</td><td>MOUNTAIN BREAKER</td><td>大地</td><td>近似移动火山碎片，背甲晶体蕴含高压地核能量。</td></tr>
+          <tr><td><span class="wiki-monster-icon"><svg viewBox="0 0 200 200"><path d="M100 30 L160 110 L100 180 L40 110 Z" fill="#14532d"/><path d="M50 50 L85 90 M150 50 L115 90" stroke="#22c55e" stroke-width="15" stroke-linecap="round"/><circle cx="85" cy="110" r="6" fill="#facc15"/><circle cx="115" cy="110" r="6" fill="#facc15"/></svg></span></td><td>丛林狼王</td><td>N/B</td><td>NATURE WRATH</td><td>自然</td><td>森林意志化身，外壳藤蔓化并带强烈侵袭性。</td></tr>
+          <tr><td><span class="wiki-monster-icon"><svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="80" fill="#7c2d12" stroke="#ea580c" stroke-width="4"/><path d="M20 100 Q100 130, 180 100" stroke="#f97316" stroke-width="10" fill="none" opacity="0.6"/><circle cx="100" cy="80" r="20" fill="#fff" opacity="0.9"/><circle cx="100" cy="80" r="8" fill="#000"/></svg></span></td><td>裂地凶兽</td><td>N/B</td><td>SEISMIC TERROR</td><td>震荡</td><td>愤怒时扭曲局部重力场，以震荡冲击为核心威胁。</td></tr>
+          <tr><td><span class="wiki-monster-icon"><svg viewBox="0 0 200 200"><defs><radialGradient id="w_g6"><stop offset="0%" stop-color="#065f46"/><stop offset="100%" stop-color="#022c22"/></radialGradient></defs><circle cx="100" cy="100" r="50" fill="url(#w_g6)"/><path d="M20 40 L80 90 M180 40 L120 90 M20 160 L80 110 M180 160 L120 110" stroke="#10b981" stroke-width="8" stroke-linecap="round"/><circle cx="85" cy="90" r="5" fill="#34d399"/><circle cx="115" cy="90" r="5" fill="#34d399"/></svg></span></td><td>毒刺蛛后</td><td>R/A</td><td>VENOM QUEEN</td><td>剧毒</td><td>深渊蛛网统治者，擅长持续性毒伤与区域封锁。</td></tr>
+          <tr><td><span class="wiki-monster-icon"><svg viewBox="0 0 200 200"><path d="M70 30 L130 30 L140 160 L60 160 Z" fill="#450a0a" stroke="#ef4444" stroke-width="3"/><path d="M20 70 L180 70" stroke="#dc2626" stroke-width="15" stroke-linecap="round"/><path d="M50 20 L100 0 L150 20" fill="#991b1b"/></svg></span></td><td>狂刃魔将</td><td>SR/S</td><td>BLOOD GENERAL</td><td>杀戮</td><td>亡魂统帅，主打高压连斩与节奏压制。</td></tr>
+          <tr><td><span class="wiki-monster-icon"><svg viewBox="0 0 200 200"><rect x="40" y="60" width="120" height="110" rx="20" fill="#1e293b" stroke="#64748b" stroke-width="5"/><rect x="75" y="30" width="50" height="50" rx="10" fill="#334155"/><path d="M60 90 L140 90 M60 120 L140 120 M60 150 L140 150" stroke="rgba(255,255,255,0.1)" stroke-width="4"/></svg></span></td><td>玄甲统领</td><td>SR/S</td><td>IRON FORTRESS</td><td>不坏</td><td>重甲防线型精英，偏向高减伤与反压制。</td></tr>
+          <tr><td><span class="wiki-monster-icon"><svg viewBox="0 0 200 200"><defs><radialGradient id="w_g9"><stop offset="0%" stop-color="#fff"/><stop offset="30%" stop-color="#818cf8"/><stop offset="100%" stop-color="#1e1b4b"/></radialGradient></defs><circle cx="100" cy="100" r="75" fill="url(#w_g9)" opacity="0.9"/><circle cx="100" cy="100" r="30" fill="#000"/><circle cx="100" cy="100" r="10" fill="#fff"/></svg></span></td><td>深渊君王</td><td>SSR/SS</td><td>ABYSSAL LORD</td><td>虚无</td><td>混沌规则化身，战斗表现偏向高强度压场。</td></tr>
+          <tr><td><span class="wiki-monster-icon"><svg viewBox="0 0 200 200"><path d="M30 110 Q100 0, 170 110 Q100 200, 30 110" fill="#92400e" stroke="#fbbf24" stroke-width="4"/><path d="M100 20 L130 80 L100 140 L70 80 Z" fill="#facc15"/><path d="M10 90 L50 110 M190 90 L150 110" stroke="#fbbf24" stroke-width="15" stroke-linecap="round"/><circle cx="85" cy="85" r="5" fill="#fff"/><circle cx="115" cy="85" r="5" fill="#fff"/></svg></span></td><td>天罚魔龙</td><td>SSR/SS</td><td>CELESTIAL DRAGON</td><td>雷劫</td><td>秩序执行者级首领，吐息具毁灭性范围压制。</td></tr>
+        </tbody>
+      </table>
+      <h3>怪物卡片（SSR 样式）</h3>
+      <div class="monster-cards">
+        <button class="monster-card-btn" data-monster-card data-monster-name="荒原魔兵" data-monster-rank="N / C" data-monster-title="ANCIENT SOLDIER" data-monster-type="荒土" data-monster-desc="被遗忘卫兵由诅咒之沙凝聚，擅长成群冲撞与持续压迫。">
+          <div class="monster-card">
+            <div class="monster-card-head"><strong>荒原魔兵</strong><span class="rank-chip">N / C</span></div>
+            <div class="monster-card-sub">ANCIENT SOLDIER · 荒土</div>
+            <div class="monster-card-desc">被遗忘卫兵由诅咒之沙凝聚，擅长成群冲撞与持续压迫。</div>
+          </div>
+        </button>
+        <button class="monster-card-btn" data-monster-card data-monster-name="夜翼蝠" data-monster-rank="N / C" data-monster-title="VOID FLIER" data-monster-type="暗影" data-monster-desc="高机动夜袭单位，压制视野并通过恐惧频率扰乱节奏。">
+          <div class="monster-card">
+            <div class="monster-card-head"><strong>夜翼蝠</strong><span class="rank-chip">N / C</span></div>
+            <div class="monster-card-sub">VOID FLIER · 暗影</div>
+            <div class="monster-card-desc">高机动夜袭单位，压制视野并通过恐惧频率扰乱节奏。</div>
+          </div>
+        </button>
+        <button class="monster-card-btn" data-monster-card data-monster-name="岩甲战兽" data-monster-rank="N / B" data-monster-title="MOUNTAIN BREAKER" data-monster-type="大地" data-monster-desc="重装前排，耐久高，适合作为防线型怪物模板。">
+          <div class="monster-card">
+            <div class="monster-card-head"><strong>岩甲战兽</strong><span class="rank-chip">N / B</span></div>
+            <div class="monster-card-sub">MOUNTAIN BREAKER · 大地</div>
+            <div class="monster-card-desc">重装前排，耐久高，适合作为防线型怪物模板。</div>
+          </div>
+        </button>
+        <button class="monster-card-btn" data-monster-card data-monster-name="毒刺蛛后" data-monster-rank="R / A" data-monster-title="VENOM QUEEN" data-monster-type="剧毒" data-monster-desc="擅长持续毒伤与区域封锁，对续航构筑压制明显。">
+          <div class="monster-card">
+            <div class="monster-card-head"><strong>毒刺蛛后</strong><span class="rank-chip">R / A</span></div>
+            <div class="monster-card-sub">VENOM QUEEN · 剧毒</div>
+            <div class="monster-card-desc">擅长持续毒伤与区域封锁，对续航构筑压制明显。</div>
+          </div>
+        </button>
+        <button class="monster-card-btn" data-monster-card data-monster-name="狂刃魔将" data-monster-rank="SR / S" data-monster-title="BLOOD GENERAL" data-monster-type="杀戮" data-monster-desc="高爆发精英，主打连斩节奏，要求玩家及时切换抗压方案。">
+          <div class="monster-card rank-sr">
+            <div class="monster-card-head"><strong>狂刃魔将</strong><span><span class="rank-chip threat-sr">SR</span> <span class="rank-chip">S</span></span></div>
+            <div class="monster-card-sub">BLOOD GENERAL · 杀戮</div>
+            <div class="monster-card-desc">高爆发精英，主打连斩节奏，要求玩家及时切换抗压方案。</div>
+          </div>
+        </button>
+        <button class="monster-card-btn" data-monster-card data-monster-name="玄甲统领" data-monster-rank="SR / S" data-monster-title="IRON FORTRESS" data-monster-type="不坏" data-monster-desc="高护甲精英，偏反制暴击流，适合检验破甲构筑上限。">
+          <div class="monster-card rank-sr">
+            <div class="monster-card-head"><strong>玄甲统领</strong><span><span class="rank-chip threat-sr">SR</span> <span class="rank-chip">S</span></span></div>
+            <div class="monster-card-sub">IRON FORTRESS · 不坏</div>
+            <div class="monster-card-desc">高护甲精英，偏反制暴击流，适合检验破甲构筑上限。</div>
+          </div>
+        </button>
+        <button class="monster-card-btn" data-monster-card data-monster-name="深渊君王" data-monster-rank="SSR / SS" data-monster-title="ABYSSAL LORD" data-monster-type="虚无" data-monster-desc="Boss级压场核心，机制与数值双高，掉落价值顶级。">
+          <div class="monster-card rank-ssr">
+            <div class="monster-card-head"><strong>深渊君王</strong><span><span class="rank-chip threat-ssr">SSR</span> <span class="rank-chip drop-ss">SS</span></span></div>
+            <div class="monster-card-sub">ABYSSAL LORD · 虚无</div>
+            <div class="monster-card-desc">Boss级压场核心，机制与数值双高，掉落价值顶级。</div>
+          </div>
+        </button>
+        <button class="monster-card-btn" data-monster-card data-monster-name="天罚魔龙" data-monster-rank="SSR / SS" data-monster-title="CELESTIAL DRAGON" data-monster-type="雷劫" data-monster-desc="世界级终盘目标，具范围压制与高演出价值，建议作为顶级挑战入口。">
+          <div class="monster-card rank-ssr">
+            <div class="monster-card-head"><strong>天罚魔龙</strong><span><span class="rank-chip threat-ssr">SSR</span> <span class="rank-chip drop-ss">SS</span></span></div>
+            <div class="monster-card-sub">CELESTIAL DRAGON · 雷劫</div>
+            <div class="monster-card-desc">世界级终盘目标，具范围压制与高演出价值，建议作为顶级挑战入口。</div>
+          </div>
+        </button>
+      </div>
+      <div id="monsterModal" class="monster-modal hidden" aria-hidden="true">
+        <div class="monster-modal-panel">
+          <div class="monster-modal-head">
+            <strong id="monsterModalName">怪物</strong>
+            <button id="monsterModalClose" class="monster-modal-close">关闭</button>
+          </div>
+          <div class="monster-modal-body">
+            <div id="monsterModalIcon" class="monster-modal-icon"></div>
+            <div>
+              <div>
+                <span id="monsterModalRank" class="rank-chip">N / C</span>
+              </div>
+              <div id="monsterModalSub" class="monster-modal-sub">TITLE · TYPE</div>
+              <div id="monsterModalDesc" class="monster-modal-desc">--</div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -349,6 +624,34 @@
         </tbody>
       </table>
       <p class="small-note">定位说明：聚灵丹（稳态续航）/ 回血丹（爆发保命）/ 回春散（低耗兜底）；淬体丹与疾风符为战斗短效强化，净魂符负责净化与抗减损。</p>
+      <h3>丹药与符咒合成配方（当前版本）</h3>
+      <table class="table">
+        <thead><tr><th>物品</th><th>工坊阶数</th><th>合成消耗</th></tr></thead>
+        <tbody>
+          <tr><td>聚灵丹</td><td>1阶</td><td>灵草4 / 灵石18</td></tr>
+          <tr><td>回春散</td><td>1阶</td><td>灵草3 / 灵木2</td></tr>
+          <tr><td>回血丹</td><td>1阶</td><td>灵草2 / 灵石14 / 妖丹1</td></tr>
+          <tr><td>护体符</td><td>1阶</td><td>灵石24 / 灵木3</td></tr>
+          <tr><td>凝神符</td><td>2阶</td><td>灵石20 / 灵草2</td></tr>
+          <tr><td>淬体丹</td><td>1阶</td><td>灵石16 / 灵草2</td></tr>
+          <tr><td>疾风符</td><td>2阶</td><td>灵石26 / 灵草2 / 灵木1</td></tr>
+          <tr><td>净魂符</td><td>2阶</td><td>灵石30 / 灵草2 / 妖丹1</td></tr>
+        </tbody>
+      </table>
+      <h3>丹药与符咒商店价格（基础价）</h3>
+      <table class="table">
+        <thead><tr><th>物品</th><th>基础价（金币）</th><th>结算规则</th></tr></thead>
+        <tbody>
+          <tr><td>聚灵丹</td><td>36</td><td rowspan="8">实际价格 = floor(基础价 × (1 - 折扣))；坊市事件可提供折扣</td></tr>
+          <tr><td>回春散</td><td>24</td></tr>
+          <tr><td>回血丹</td><td>42</td></tr>
+          <tr><td>护体符</td><td>48</td></tr>
+          <tr><td>凝神符</td><td>52</td></tr>
+          <tr><td>淬体丹</td><td>42</td></tr>
+          <tr><td>疾风符</td><td>66</td></tr>
+          <tr><td>净魂符</td><td>58</td></tr>
+        </tbody>
+      </table>
       <h3>装备穿戴境界要求</h3>
       <table>
         <thead><tr><th>装备</th><th>部位</th><th>穿戴要求</th></tr></thead>
@@ -432,15 +735,75 @@
     (function renderLevelExpTable() {
       const body = document.getElementById("expRows");
       if (!body) return;
-      const needExp = (lv) => Math.floor(40 + Math.pow(lv, 2.05) * 6 + lv * 18);
+      const needExp = (lv) => {
+        if (lv <= 100) return Math.floor(40 + Math.pow(lv, 2.05) * 6 + lv * 18);
+        const base100 = Math.floor(40 + Math.pow(100, 2.05) * 6 + 100 * 18);
+        const over = lv - 100;
+        return Math.floor(base100 + Math.pow(over, 3.2) * 3800 + over * 6000);
+      };
       let sum = 0;
       const rows = [];
-      for (let lv = 1; lv <= 100; lv++) {
+      for (let lv = 1; lv <= 150; lv++) {
         const need = needExp(lv);
         sum += need;
         rows.push(`<tr><td>Lv.${lv}</td><td>${need}</td><td>${sum}</td></tr>`);
       }
       body.innerHTML = rows.join("");
+    })();
+
+    (function bindMonsterModal() {
+      const modal = document.getElementById("monsterModal");
+      const closeBtn = document.getElementById("monsterModalClose");
+      const nameEl = document.getElementById("monsterModalName");
+      const rankEl = document.getElementById("monsterModalRank");
+      const subEl = document.getElementById("monsterModalSub");
+      const descEl = document.getElementById("monsterModalDesc");
+      const iconEl = document.getElementById("monsterModalIcon");
+      if (!modal || !nameEl || !rankEl || !subEl || !descEl || !iconEl) return;
+
+      const ICONS = {
+        "荒原魔兵": `<svg viewBox="0 0 200 200"><defs><linearGradient id="wm1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#475569"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><path d="M60 40 L140 40 L155 170 Q100 180, 45 170 Z" fill="url(#wm1)" stroke="#64748b" stroke-width="2"/><rect x="70" y="65" width="60" height="15" rx="4" fill="#0f172a"/><circle cx="85" cy="72" r="5" fill="#f43f5e"/><circle cx="115" cy="72" r="5" fill="#f43f5e"/></svg>`,
+        "夜翼蝠": `<svg viewBox="0 0 200 200"><defs><linearGradient id="wm2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7e22ce"/><stop offset="100%" stop-color="#3b0764"/></linearGradient></defs><path d="M100 80 L190 30 Q160 130, 100 150 Q40 130, 10 30 Z" fill="url(#wm2)" /><circle cx="100" cy="90" r="30" fill="#2e1065"/></svg>`,
+        "岩甲战兽": `<svg viewBox="0 0 200 200"><rect x="30" y="80" width="140" height="90" rx="30" fill="#78350f" stroke="#451a03" stroke-width="4"/><path d="M40 85 L70 40 L100 85 L130 40 L160 85" fill="#b45309"/></svg>`,
+        "毒刺蛛后": `<svg viewBox="0 0 200 200"><defs><radialGradient id="wm6"><stop offset="0%" stop-color="#065f46"/><stop offset="100%" stop-color="#022c22"/></radialGradient></defs><circle cx="100" cy="100" r="50" fill="url(#wm6)"/><path d="M20 40 L80 90 M180 40 L120 90 M20 160 L80 110 M180 160 L120 110" stroke="#10b981" stroke-width="8" stroke-linecap="round"/></svg>`,
+        "狂刃魔将": `<svg viewBox="0 0 200 200"><path d="M70 30 L130 30 L140 160 L60 160 Z" fill="#450a0a" stroke="#ef4444" stroke-width="3"/><path d="M20 70 L180 70" stroke="#dc2626" stroke-width="15" stroke-linecap="round"/></svg>`,
+        "玄甲统领": `<svg viewBox="0 0 200 200"><rect x="40" y="60" width="120" height="110" rx="20" fill="#1e293b" stroke="#64748b" stroke-width="5"/><rect x="75" y="30" width="50" height="50" rx="10" fill="#334155"/></svg>`,
+        "深渊君王": `<svg viewBox="0 0 200 200"><defs><radialGradient id="wm9"><stop offset="0%" stop-color="#fff"/><stop offset="30%" stop-color="#818cf8"/><stop offset="100%" stop-color="#1e1b4b"/></radialGradient></defs><circle cx="100" cy="100" r="75" fill="url(#wm9)" opacity="0.9"/><circle cx="100" cy="100" r="30" fill="#000"/></svg>`,
+        "天罚魔龙": `<svg viewBox="0 0 200 200"><path d="M30 110 Q100 0, 170 110 Q100 200, 30 110" fill="#92400e" stroke="#fbbf24" stroke-width="4"/><path d="M100 20 L130 80 L100 140 L70 80 Z" fill="#facc15"/></svg>`
+      };
+
+      function openModal(data) {
+        nameEl.textContent = data.name || "怪物";
+        rankEl.textContent = data.rank || "N / C";
+        subEl.textContent = `${data.title || "UNKNOWN"} · ${data.type || "未知"}`;
+        descEl.textContent = data.desc || "--";
+        iconEl.innerHTML = ICONS[data.name] || ICONS["荒原魔兵"];
+        modal.classList.remove("hidden");
+        modal.setAttribute("aria-hidden", "false");
+      }
+      function closeModal() {
+        modal.classList.add("hidden");
+        modal.setAttribute("aria-hidden", "true");
+      }
+
+      document.querySelectorAll("[data-monster-card]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          openModal({
+            name: btn.dataset.monsterName,
+            rank: btn.dataset.monsterRank,
+            title: btn.dataset.monsterTitle,
+            type: btn.dataset.monsterType,
+            desc: btn.dataset.monsterDesc
+          });
+        });
+      });
+      if (closeBtn) closeBtn.addEventListener("click", closeModal);
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+      });
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal();
+      });
     })();
   </script>
 </body>

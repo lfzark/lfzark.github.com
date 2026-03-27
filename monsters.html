@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arkpy BOSS 终极重绘</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #6366f1;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: #f8fafc;
+        }
+
+        .boss-card {
+            background: linear-gradient(145deg, #1e293b, #111827);
+            padding: 2rem;
+            border-radius: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.05);
+            max-width: 480px;
+            width: 95%;
+        }
+
+        .preview-window {
+            background-color: #0b1120;
+            background-image: 
+                radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+            background-size: 24px 24px;
+            width: 100%;
+            height: 300px;
+            margin-bottom: 1.5rem;
+            border-radius: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.5);
+        }
+
+        .boss-svg {
+            width: 200px;
+            height: 200px;
+            filter: drop-shadow(0 0 20px rgba(0,0,0,0.5));
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 1.5rem;
+        }
+
+        .nav-btn {
+            aspect-ratio: 1;
+            background: rgba(255,255,255,0.03);
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255,255,255,0.05);
+            font-weight: 800;
+            font-size: 0.75rem;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.active {
+            background: var(--accent);
+            border-color: #818cf8;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.03);
+            padding: 0.75rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        @keyframes boss-float {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-15px) scale(1.02); }
+        }
+
+        .animate-boss {
+            animation: boss-float 5s ease-in-out infinite;
+        }
+
+        /* 渐变文本 */
+        .gradient-text {
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="boss-card">
+        <div class="mb-6">
+            <span id="boss-rank" class="text-xs font-bold tracking-[0.2em] text-indigo-400 opacity-80 mb-2 block">DUNGEON OVERLORD</span>
+            <h1 id="boss-name" class="text-4xl font-black gradient-text">荒原魔兵</h1>
+        </div>
+
+        <div class="preview-window">
+            <div id="boss-visual" class="animate-boss">
+                <!-- SVG Content -->
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="stat-item">
+                <p class="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">生命储备</p>
+                <p id="stat-hp" class="text-xl font-bold text-rose-500">5,000</p>
+            </div>
+            <div class="stat-item">
+                <p class="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">能量频率</p>
+                <p id="stat-type" class="text-xl font-bold text-amber-400">荒土</p>
+            </div>
+        </div>
+
+        <p id="boss-desc" class="text-slate-400 text-sm leading-relaxed min-h-[4.5rem] px-4">
+            <!-- Description -->
+        </p>
+
+        <div class="nav-grid" id="nav-grid">
+            <!-- Buttons -->
+        </div>
+    </div>
+
+    <script>
+        const bosses = [
+            {
+                name: "荒原魔兵",
+                rank: "ANCIENT SOLDIER",
+                hp: "5,000",
+                type: "荒土",
+                desc: "这些被遗忘的卫兵由荒原的诅咒之沙凝聚而成，盔甲缝隙中流淌着永不熄灭的幽冥之火。",
+                color: "#94a3b8",
+                svg: `
+                <svg viewBox="0 0 200 200" class="boss-svg">
+                    <defs>
+                        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#475569"/><stop offset="100%" stop-color="#1e293b"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M60 40 L140 40 L155 170 Q100 180, 45 170 Z" fill="url(#g1)" stroke="#64748b" stroke-width="2"/>
+                    <rect x="70" y="65" width="60" height="15" rx="4" fill="#0f172a"/>
+                    <circle cx="85" cy="72" r="5" fill="#f43f5e">
+                        <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="115" cy="72" r="5" fill="#f43f5e">
+                        <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite" />
+                    </circle>
+                    <path d="M40 80 L20 150 M160 80 L180 150" stroke="#475569" stroke-width="12" stroke-linecap="round"/>
+                    <path d="M70 45 L130 45" stroke="#94a3b8" stroke-width="4" opacity="0.3"/>
+                </svg>`
+            },
+            {
+                name: "夜翼蝠",
+                rank: "VOID FLIER",
+                hp: "8,200",
+                type: "暗影",
+                desc: "它的双翼展开时能遮蔽星光，每一次振动都会散播让意志崩溃的恐怖频率。",
+                color: "#a855f7",
+                svg: `
+                <svg viewBox="0 0 200 200" class="boss-svg">
+                    <defs>
+                        <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#7e22ce"/><stop offset="100%" stop-color="#3b0764"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M100 80 L190 30 Q160 130, 100 150 Q40 130, 10 30 Z" fill="url(#g2)" />
+                    <circle cx="100" cy="90" r="30" fill="#2e1065"/>
+                    <circle cx="88" cy="85" r="4" fill="#f472b6"/>
+                    <circle cx="112" cy="85" r="4" fill="#f472b6"/>
+                    <path d="M80 50 L95 75 M120 50 L105 75" stroke="#a855f7" stroke-width="8" stroke-linecap="round"/>
+                </svg>`
+            },
+            {
+                name: "岩甲战兽",
+                rank: "MOUNTAIN BREAKER",
+                hp: "25,000",
+                type: "大地",
+                desc: "它不是生物，而是移动的活火山碎片。其背部的晶体蕴含着地核最深处的压力。",
+                color: "#f59e0b",
+                svg: `
+                <svg viewBox="0 0 200 200" class="boss-svg">
+                    <rect x="30" y="80" width="140" height="90" rx="30" fill="#78350f" stroke="#451a03" stroke-width="4"/>
+                    <path d="M40 85 L70 40 L100 85 L130 40 L160 85" fill="#b45309"/>
+                    <circle cx="140" cy="110" r="12" fill="#fbbf24" opacity="0.8"/>
+                    <rect x="55" y="160" width="25" height="20" rx="5" fill="#451a03"/>
+                    <rect x="120" y="160" width="25" height="20" rx="5" fill="#451a03"/>
+                </svg>`
+            },
+            {
+                name: "丛林狼王",
+                rank: "NATURE WRATH",
+                hp: "12,000",
+                type: "自然",
+                desc: "森林的意志化身。那些并非毛发，而是历经千年的剧毒藤蔓编织而成的杀戮外壳。",
+                color: "#22c55e",
+                svg: `
+                <svg viewBox="0 0 200 200" class="boss-svg">
+                    <path d="M100 30 L160 110 L100 180 L40 110 Z" fill="#14532d"/>
+                    <path d="M50 50 L85 90 M150 50 L115 90" stroke="#22c55e" stroke-width="15" stroke-linecap="round"/>
+                    <circle cx="85" cy="110" r="6" fill="#facc15"/>
+                    <circle cx="115" cy="110" r="6" fill="#facc15"/>
+                    <path d="M90 140 Q100 150, 110 140" stroke="#facc15" fill="none" stroke-width="4" stroke-linecap="round"/>
+                </svg>`
+            },
+            {
+                name: "裂地凶兽",
+                rank: "SEISMIC TERROR",
+                hp: "18,500",
+                type: "震荡",
+                desc: "当它愤怒时，周围的重力场会发生扭曲。它身下的裂纹中喷涌着纯净的动能。",
+                color: "#f97316",
+                svg: `
+                <svg viewBox="0 0 200 200" class="boss-svg">
+                    <circle cx="100" cy="100" r="80" fill="#7c2d12" stroke="#ea580c" stroke-width="4"/>
+                    <path d="M20 100 Q100 130, 180 100" stroke="#f97316" stroke-width="10" fill="none" opacity="0.6"/>
+                    <path d="M60 40 L80 80 M140 40 L120 80" stroke="#fdba74" stroke-width="15" stroke-linecap="round"/>
+                    <circle cx="100" cy="80" r="20" fill="#fff" opacity="0.9"/>
+                    <circle cx="100" cy="80" r="8" fill="#000"/>
+                </svg>`
+            },
+            {
+                name: "毒刺蛛后",
+                rank: "VENOM QUEEN",
+                hp: "15,000",
+                type: "剧毒",
+                desc: "她的网覆盖了整个深渊。每一根蛛丝都在震动，传递着猎物绝望的心跳声。",
+                color: "#10b981",
+                svg: `
+                <svg viewBox="0 0 200 200" class="boss-svg">
+                    <defs>
+                        <radialGradient id="g6">
+                            <stop offset="0%" stop-color="#065f46"/><stop offset="100%" stop-color="#022c22"/>
+                        </radialGradient>
+                    </defs>
+                    <circle cx="100" cy="100" r="50" fill="url(#g6)"/>
+                    <path d="M20 40 L80 90 M180 40 L120 90 M20 160 L80 110 M180 160 L120 110" stroke="#10b981" stroke-width="8" stroke-linecap="round"/>
+                    <circle cx="85" cy="90" r="5" fill="#34d399"/>
+                    <circle cx="115" cy="90" r="5" fill="#34d399"/>
+                    <circle cx="100" cy="80" r="4" fill="#34d399"/>
+                    <path d="M70 110 L130 110" stroke="#059669" stroke-width="4" opacity="0.5"/>
+                </svg>`
+            },
+            {
+                name: "狂刃魔将",
+                rank: "BLOOD GENERAL",
+                hp: "22,000",
+                type: "杀戮",
+                desc: "曾经的神话统帅，现在是血泊中的亡魂。他的每一刀都能切开空间的界限。",
+                color: "#ef4444",
+                svg: `
+                <svg viewBox="0 0 200 200" class="boss-svg">
+                    <path d="M70 30 L130 30 L140 160 L60 160 Z" fill="#450a0a" stroke="#ef4444" stroke-width="3"/>
+                    <path d="M20 70 L180 70" stroke="#dc2626" stroke-width="15" stroke-linecap="round"/>
+                    <path d="M50 20 L100 0 L150 20" fill="#991b1b"/>
+                    <rect x="80" y="80" width="40" height="15" rx="5" fill="#fecaca">
+                        <animate attributeName="opacity" values="0.4;1;0.4" dur="1s" repeatCount="indefinite" />
+                    </rect>
+                    <path d="M40 70 L30 180 M160 70 L170 180" stroke="#ef4444" stroke-width="8" opacity="0.6"/>
+                </svg>`
+            },
+            {
+                name: "玄甲统领",
+                rank: "IRON FORTRESS",
+                hp: "35,000",
+                type: "不坏",
+                desc: "他是不可逾越的高墙。其重甲由深海寒铁打造，能吸收并反弹所有的动能攻击。",
+                color: "#64748b",
+                svg: `
+                <svg viewBox="0 0 200 200" class="boss-svg">
+                    <rect x="40" y="60" width="120" height="110" rx="20" fill="#1e293b" stroke="#64748b" stroke-width="5"/>
+                    <rect x="75" y="30" width="50" height="50" rx="10" fill="#334155"/>
+                    <path d="M60 90 L140 90 M60 120 L140 120 M60 150 L140 150" stroke="rgba(255,255,255,0.1)" stroke-width="4"/>
+                    <circle cx="100" cy="50" r="10" fill="#38bdf8" filter="blur(2px)"/>
+                </svg>`
+            },
+            {
+                name: "深渊君王",
+                rank: "ABYSSAL LORD",
+                hp: "75,000",
+                type: "虚无",
+                desc: "万物归一的终点。当他睁开眼时，现实法则将暂时失效，化为最原始的混沌。",
+                color: "#6366f1",
+                svg: `
+                <svg viewBox="0 0 200 200" class="boss-svg">
+                    <defs>
+                        <radialGradient id="g9">
+                            <stop offset="0%" stop-color="#fff"/><stop offset="30%" stop-color="#818cf8"/><stop offset="100%" stop-color="#1e1b4b"/>
+                        </radialGradient>
+                    </defs>
+                    <circle cx="100" cy="100" r="75" fill="url(#g9)" opacity="0.9">
+                        <animate attributeName="r" values="70;78;70" dur="4s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="100" cy="100" r="30" fill="#000"/>
+                    <path d="M100 0 L110 40 L100 80 L90 40 Z" fill="#fff" opacity="0.5"/>
+                    <circle cx="100" cy="100" r="10" fill="#fff">
+                        <animate attributeName="opacity" values="1;0.2;1" dur="2s" repeatCount="indefinite" />
+                    </circle>
+                </svg>`
+            },
+            {
+                name: "天罚魔龙",
+                rank: "CELESTIAL DRAGON",
+                hp: "120,000",
+                type: "雷劫",
+                desc: "它是宇宙秩序的执行者，每一次吐息都是一场毁灭星系的等离子风暴。",
+                color: "#fbce11",
+                svg: `
+                <svg viewBox="0 0 200 200" class="boss-svg">
+                    <path d="M30 110 Q100 0, 170 110 Q100 200, 30 110" fill="#92400e" stroke="#fbbf24" stroke-width="4"/>
+                    <path d="M100 20 L130 80 L100 140 L70 80 Z" fill="#facc15">
+                        <animate attributeName="fill" values="#facc15;#fff;#facc15" dur="0.5s" repeatCount="indefinite" />
+                    </path>
+                    <path d="M10 90 L50 110 M190 90 L150 110" stroke="#fbbf24" stroke-width="15" stroke-linecap="round"/>
+                    <circle cx="85" cy="85" r="5" fill="#fff"/>
+                    <circle cx="115" cy="85" r="5" fill="#fff"/>
+                </svg>`
+            }
+        ];
+
+        let currentIndex = 0;
+
+        function updateBoss(index) {
+            currentIndex = index;
+            const boss = bosses[index];
+            
+            // Text Animations
+            const nameEl = document.getElementById('boss-name');
+            nameEl.style.opacity = 0;
+            
+            setTimeout(() => {
+                nameEl.innerText = boss.name;
+                document.getElementById('boss-rank').innerText = boss.rank;
+                document.getElementById('stat-hp').innerText = boss.hp;
+                document.getElementById('stat-type').innerText = boss.type;
+                document.getElementById('boss-desc').innerText = boss.desc;
+                document.getElementById('boss-visual').innerHTML = boss.svg;
+                
+                nameEl.style.opacity = 1;
+                // Apply specific theme color to active elements
+                document.querySelector('.nav-btn.active').style.backgroundColor = boss.color;
+            }, 150);
+            
+            renderButtons();
+        }
+
+        function renderButtons() {
+            const grid = document.getElementById('nav-grid');
+            grid.innerHTML = '';
+            bosses.forEach((boss, i) => {
+                const btn = document.createElement('div');
+                btn.className = `nav-btn ${i === currentIndex ? 'active' : ''}`;
+                btn.innerHTML = `B${i+1}`;
+                if(i === currentIndex) btn.style.backgroundColor = boss.color;
+                btn.onclick = () => updateBoss(i);
+                grid.appendChild(btn);
+            });
+        }
+
+        window.onload = () => updateBoss(0);
+    </script>
+</body>
+</html>
