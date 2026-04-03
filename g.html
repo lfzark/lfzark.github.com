@@ -91,6 +91,8 @@
 <script>
     let scene, camera, renderer, clock, mixer;
     let hero, base, heroAnimations = {};
+    let heroModels = {};
+    let heroMixers = {};
     let targetPosition = new THREE.Vector3(0, 0, 0);
     let isMoving = false;
     let ground;
@@ -145,7 +147,10 @@
         FROST: { name: '冰塔', cost: 55, range: 13, dmg: 6, cooldown: 1.0, color: 0x66ffff, size: 0.9 }
     };
 
-    const MODEL_URL = 'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb';
+    const HERO_MODEL_URLS = {
+        GUARDIAN: './Warrior.gltf',
+        RANGER: './Cleric.gltf'
+    };
 
     function init() {
         scene = new THREE.Scene();
@@ -173,7 +178,7 @@
 
         createGround();
         createBase();
-        loadHeroModel();
+        loadHeroModels();
         
         // 动态生成
         spawnIntervalId = setInterval(() => {
@@ -303,15 +308,47 @@
         scene.add(slash);
     }
 
-    function loadHeroModel() {
-        new THREE.GLTFLoader().load(MODEL_URL, (gltf) => {
-            hero = gltf.scene;
-            hero.scale.set(0.45, 0.45, 0.45);
-            scene.add(hero);
-            mixer = new THREE.AnimationMixer(hero);
-            gltf.animations.forEach(c => heroAnimations[c.name] = mixer.clipAction(c));
-            heroAnimations['Idle'].play();
+    function loadHeroModels() {
+        const loader = new THREE.GLTFLoader();
+        const entries = Object.entries(HERO_MODEL_URLS);
+        entries.forEach(([heroClass, url]) => {
+            loader.load(url, (gltf) => {
+                const model = gltf.scene;
+                model.scale.set(1.0, 1.0, 1.0);
+                model.visible = false;
+                scene.add(model);
+
+                const modelMixer = new THREE.AnimationMixer(model);
+                const actions = {};
+                gltf.animations.forEach((clip) => {
+                    actions[clip.name] = modelMixer.clipAction(clip);
+                });
+
+                heroModels[heroClass] = model;
+                heroMixers[heroClass] = { mixer: modelMixer, actions: actions };
+
+                if (heroClass === gameState.heroClass) {
+                    applyHeroClassModel(gameState.heroClass);
+                }
+            }, undefined, (err) => {
+                console.error('Hero model load failed:', url, err);
+            });
         });
+    }
+
+    function applyHeroClassModel(heroClass) {
+        const model = heroModels[heroClass];
+        if (!model) return;
+
+        Object.values(heroModels).forEach((m) => { m.visible = false; });
+        model.visible = true;
+        hero = model;
+        mixer = heroMixers[heroClass]?.mixer || null;
+        heroAnimations = heroMixers[heroClass]?.actions || {};
+        activeActionName = 'Idle';
+
+        const idle = heroAnimations['Idle'] || heroAnimations['idle'];
+        if (idle) idle.reset().fadeIn(0.15).play();
     }
 
     function onMouseDown(e) {
@@ -407,6 +444,7 @@
             gameState.heroClass = gameState.heroClass === 'GUARDIAN' ? 'RANGER' : 'GUARDIAN';
             const cls = HERO_CLASSES[gameState.heroClass];
             gameState.heroDmg = cls.dmg + Math.max(0, gameState.level - 1) * 0.4;
+            applyHeroClassModel(gameState.heroClass);
         }
         updateUI();
     }
