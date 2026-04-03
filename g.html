@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPG 3D 基地保卫战 - 终极版</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background: #050505; font-family: 'Segoe UI', sans-serif; }
+        canvas { display: block; }
+        #ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: none;
+            z-index: 10;
+            width: calc(100% - 40px);
+        }
+        .glass-panel {
+            background: rgba(0, 0, 0, 0.7);
+            border-left: 4px solid #c4a169;
+            padding: 15px;
+            color: #eee;
+            backdrop-filter: blur(8px);
+            border-radius: 0 4px 4px 0;
+            pointer-events: auto;
+        }
+        #game-over {
+            position: absolute;
+            inset: 0;
+            background: rgba(13, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            color: #ff4444;
+        }
+        .stats-bar {
+            width: 200px;
+            height: 6px;
+            background: #222;
+            margin-top: 4px;
+            overflow: hidden;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-over">
+    <h1 class="text-7xl font-black italic mb-2">基地陨落</h1>
+    <p id="final-score" class="text-xl text-gray-400 mb-8 tracking-widest">击杀总数: 0</p>
+    <button onclick="location.reload()" class="px-10 py-4 bg-white text-black font-bold uppercase hover:bg-yellow-500 transition-all">重新启程</button>
+</div>
+
+<div id="ui-overlay" class="flex justify-between items-start">
+    <div class="flex flex-col gap-3">
+        <div class="glass-panel">
+            <h2 class="text-xl font-bold text-yellow-500 tracking-tighter">守护者系统</h2>
+            <div class="mt-2 text-sm">
+                <div class="flex justify-between"><span>等级 <span id="lvl">1</span></span> <span id="xp-text">0/100 XP</span></div>
+                <div class="stats-bar"><div id="xp-bar" class="h-full bg-blue-500 w-0 transition-all"></div></div>
+            </div>
+            <div class="mt-2 text-sm text-gray-400">
+                金币: <span id="gold" class="text-yellow-400 font-mono">0</span>
+            </div>
+            <div class="mt-2 text-xs text-cyan-300">
+                职业: <span id="hero-class">守卫者</span>
+            </div>
+            <div class="mt-1 text-xs text-lime-300">
+                建造: <span id="build-mode">关闭</span> | 当前塔: <span id="tower-type">箭塔(30G)</span>
+            </div>
+        </div>
+        
+        <div class="glass-panel text-xs text-gray-400">
+            🖱️ 右键: 移动/建造 | B:建造模式 | 1/2/3:切塔 | C:切职业
+        </div>
+    </div>
+
+    <div class="glass-panel min-w-[240px]">
+        <h2 class="text-sm font-bold text-red-500 mb-2 italic">核心能源</h2>
+        <div class="flex justify-between text-xs mb-1"><span>HP</span> <span id="base-hp-text">1000/1000</span></div>
+        <div class="stats-bar w-full h-3"><div id="base-hp-bar" class="h-full bg-green-500 w-full transition-all"></div></div>
+        <p id="wave-info" class="text-[10px] mt-2 text-gray-500">波次: 1 (怪物增强中...)</p>
+    </div>
+</div>
+
+<script>
+    let scene, camera, renderer, clock, mixer;
+    let hero, base, heroAnimations = {};
+    let targetPosition = new THREE.Vector3(0, 0, 0);
+    let isMoving = false;
+    let ground;
+    
+    // 核心变量
+    let zoomDistance = 20;
+    let enemies = [];
+    let isGameOver = false;
+    let particles = [];
+    let vfxObjects = [];
+    let cameraShake = 0;
+    let spawnIntervalId = null;
+    let towers = [];
+    let isBuildMode = false;
+    let selectedTowerType = 'ARROW';
+    let moveInput = { w: false, a: false, s: false, d: false };
+
+    // 进度变量
+    let gameState = {
+        gold: 0,
+        xp: 0,
+        level: 1,
+        kills: 0,
+        wave: 1,
+        heroDmg: 5,
+        heroClass: 'GUARDIAN'
+    };
+
+    const ENEMY_MAX = 8;
+    const HERO_ATTACK_RANGE = 5;
+    const ENEMY_ATTACK_RANGE = 3;
+    const ENEMY_SPEED_TO_HERO = 3.6;
+    const ENEMY_SPEED_TO_BASE = 3.0;
+    const HERO_MOVE_SPEED = 13.2;
+    const BASE_DAMAGE_PER_SECOND = 30;
+    const TOWER_BUILD_RANGE_MIN = 7;
+    const TOWER_BUILD_RANGE_MAX = 55;
+    const explosionGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+    const explosionMatCache = new Map();
+    const tempVecA = new THREE.Vector3();
+    const tempVecB = new THREE.Vector3();
+
+    const HERO_CLASSES = {
+        GUARDIAN: { name: '守卫者', dmg: 5, range: 5 },
+        RANGER: { name: '游侠', dmg: 3.5, range: 9 }
+    };
+
+    const TOWER_TYPES = {
+        ARROW: { name: '箭塔', cost: 30, range: 16, dmg: 9, cooldown: 0.7, color: 0x66ccff, size: 0.8 },
+        CANNON: { name: '炮塔', cost: 60, range: 14, dmg: 22, cooldown: 1.6, color: 0xffaa33, size: 1.1 },
+        FROST: { name: '冰塔', cost: 55, range: 13, dmg: 6, cooldown: 1.0, color: 0x66ffff, size: 0.9 }
+    };
+
+    const MODEL_URL = 'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb';
+
+    function init() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x020305);
+        scene.fog = new THREE.FogExp2(0x020305, 0.015);
+
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 20, 30);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        clock = new THREE.Clock();
+
+        const ambLight = new THREE.AmbientLight(0x404040, 0.5);
+        scene.add(ambLight);
+        
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(20, 40, 20);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        createGround();
+        createBase();
+        loadHeroModel();
+        
+        // 动态生成
+        spawnIntervalId = setInterval(() => {
+            if(!isGameOver && enemies.length < ENEMY_MAX + gameState.level) createEnemy();
+        }, 2500);
+
+        window.addEventListener('resize', onWindowResize);
+        window.addEventListener('mousedown', onMouseDown);
+        window.addEventListener('touchstart', onTouchStart, { passive: false });
+        window.addEventListener('keydown', onKeyDown);
+        window.addEventListener('keyup', onKeyUp);
+        window.addEventListener('wheel', (e) => {
+            zoomDistance = THREE.MathUtils.clamp(zoomDistance + e.deltaY * 0.03, 10, 60);
+        });
+        window.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        animate();
+    }
+
+    function createGround() {
+        const groundGeo = new THREE.PlaneGeometry(600, 600);
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0x080808, roughness: 0.8 });
+        ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+        
+        const grid = new THREE.GridHelper(600, 40, 0x1a1a1a, 0x0a0a0a);
+        grid.position.y = 0.05;
+        scene.add(grid);
+    }
+
+    function createBase() {
+        base = new THREE.Group();
+        const baseMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, metalness: 0.9, roughness: 0.1 });
+        
+        const geoBottom = new THREE.CylinderGeometry(4, 5, 1.5, 6);
+        const meshBottom = new THREE.Mesh(geoBottom, baseMat);
+        base.add(meshBottom);
+
+        const crystalGeo = new THREE.OctahedronGeometry(2.5, 0);
+        const crystalMat = new THREE.MeshPhongMaterial({ 
+            color: 0x00ffff, 
+            emissive: 0x0055ff, 
+            transparent: true, 
+            opacity: 0.9,
+            shininess: 100 
+        });
+        const crystal = new THREE.Mesh(crystalGeo, crystalMat);
+        crystal.position.y = 4.5;
+        crystal.name = "crystal";
+        base.add(crystal);
+
+        const pointLight = new THREE.PointLight(0x00ffff, 2, 15);
+        pointLight.position.y = 4.5;
+        base.add(pointLight);
+
+        base.userData = { hp: 1000, maxHp: 1000 };
+        scene.add(base);
+    }
+
+    function createEnemy() {
+        const group = new THREE.Group();
+        // 怪物外观随等级变化
+        const size = 0.8 + (gameState.wave * 0.1);
+        const color = new THREE.Color().setHSL(0, 0.8, 0.4 + (Math.random()*0.2));
+        
+        const body = new THREE.Mesh(
+            new THREE.BoxGeometry(size, size, size),
+            new THREE.MeshStandardMaterial({ color: color, emissive: 0x220000 })
+        );
+        body.position.y = size/2;
+        body.castShadow = true;
+        group.add(body);
+
+        // 浮动血条小点
+        const hpBar = new THREE.Mesh(
+            new THREE.PlaneGeometry(1.2, 0.15),
+            new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide })
+        );
+        hpBar.position.y = 2.5;
+        hpBar.name = "hpBar";
+        group.add(hpBar);
+
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 60 + Math.random() * 20;
+        group.position.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+
+        group.userData = { 
+            hp: 30 + (gameState.wave * 10), 
+            maxHp: 30 + (gameState.wave * 10),
+            state: 'MARCH',
+            lastAttack: 0 
+        };
+
+        enemies.push(group);
+        scene.add(group);
+    }
+
+    // --- 视觉反馈系统 ---
+
+    function createExplosion(pos, color, count = 12) {
+        if (!explosionMatCache.has(color)) {
+            explosionMatCache.set(color, new THREE.MeshBasicMaterial({ color: color }));
+        }
+        const mat = explosionMatCache.get(color);
+        for(let i=0; i<count; i++) {
+            const p = new THREE.Mesh(explosionGeo, mat);
+            p.position.copy(pos);
+            p.position.y += 1;
+            const vel = new THREE.Vector3((Math.random()-0.5)*0.4, Math.random()*0.4, (Math.random()-0.5)*0.4);
+            particles.push({ mesh: p, vel: vel, life: 1.0 });
+            scene.add(p);
+        }
+    }
+
+    function createSlash(pos, rotY) {
+        const geo = new THREE.RingGeometry(1, 4, 32, 1, 0, Math.PI);
+        const mat = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.7, side: THREE.DoubleSide });
+        const slash = new THREE.Mesh(geo, mat);
+        slash.position.copy(pos).add(new THREE.Vector3(0, 1.5, 0));
+        slash.rotation.set(Math.PI/2, 0, rotY + Math.PI/2);
+        vfxObjects.push({ mesh: slash, life: 1.0 });
+        scene.add(slash);
+    }
+
+    function loadHeroModel() {
+        new THREE.GLTFLoader().load(MODEL_URL, (gltf) => {
+            hero = gltf.scene;
+            hero.scale.set(0.45, 0.45, 0.45);
+            scene.add(hero);
+            mixer = new THREE.AnimationMixer(hero);
+            gltf.animations.forEach(c => heroAnimations[c.name] = mixer.clipAction(c));
+            heroAnimations['Idle'].play();
+        });
+    }
+
+    function onMouseDown(e) {
+        if (!hero) return;
+        const mouse = new THREE.Vector2((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1);
+        const ray = new THREE.Raycaster();
+        ray.setFromCamera(mouse, camera);
+        const hit = ray.intersectObject(ground);
+        if (hit.length === 0 || e.button !== 2) return;
+        const point = hit[0].point;
+        if (isBuildMode) {
+            tryBuildTower(point);
+            return;
+        }
+        targetPosition.copy(point);
+        isMoving = true;
+        if(activeActionName !== 'Punch') fadeToAction('Running');
+    }
+
+    function onTouchStart(e) {
+        if (!hero || e.touches.length === 0) return;
+        e.preventDefault();
+        const t = e.touches[0];
+        const mouse = new THREE.Vector2((t.clientX/window.innerWidth)*2-1, -(t.clientY/window.innerHeight)*2+1);
+        const ray = new THREE.Raycaster();
+        ray.setFromCamera(mouse, camera);
+        const hit = ray.intersectObject(ground);
+        if (hit.length === 0) return;
+        const point = hit[0].point;
+
+        if (isBuildMode) {
+            tryBuildTower(point);
+            return;
+        }
+        targetPosition.copy(point);
+        isMoving = true;
+        if(activeActionName !== 'Punch') fadeToAction('Running');
+    }
+
+    function onKeyDown(e) {
+        const k = e.key.toLowerCase();
+        if (k === 'w') moveInput.w = true;
+        if (k === 'a') moveInput.a = true;
+        if (k === 's') moveInput.s = true;
+        if (k === 'd') moveInput.d = true;
+        if (k === 'w' || k === 'a' || k === 's' || k === 'd') {
+            isMoving = false;
+            if(activeActionName !== 'Punch') fadeToAction('Running');
+            return;
+        }
+
+        if (e.key === 'b' || e.key === 'B') {
+            isBuildMode = !isBuildMode;
+            updateUI();
+            return;
+        }
+        if (e.key === '1') selectedTowerType = 'ARROW';
+        if (e.key === '2') selectedTowerType = 'CANNON';
+        if (e.key === '3') selectedTowerType = 'FROST';
+        if (e.key === 'c' || e.key === 'C') {
+            gameState.heroClass = gameState.heroClass === 'GUARDIAN' ? 'RANGER' : 'GUARDIAN';
+            const cls = HERO_CLASSES[gameState.heroClass];
+            gameState.heroDmg = cls.dmg + Math.max(0, gameState.level - 1) * 0.4;
+        }
+        updateUI();
+    }
+
+    function onKeyUp(e) {
+        const k = e.key.toLowerCase();
+        if (k === 'w') moveInput.w = false;
+        if (k === 'a') moveInput.a = false;
+        if (k === 's') moveInput.s = false;
+        if (k === 'd') moveInput.d = false;
+        if (!moveInput.w && !moveInput.a && !moveInput.s && !moveInput.d && activeActionName === 'Running' && !isMoving) {
+            fadeToAction('Idle');
+        }
+    }
+
+    function tryBuildTower(pos) {
+        const cfg = TOWER_TYPES[selectedTowerType];
+        if (!cfg || gameState.gold < cfg.cost) return;
+        const distFromBase = pos.distanceTo(base.position);
+        if (distFromBase < TOWER_BUILD_RANGE_MIN || distFromBase > TOWER_BUILD_RANGE_MAX) return;
+        for (let i = 0; i < towers.length; i++) {
+            if (towers[i].position.distanceTo(pos) < 3) return;
+        }
+
+        const group = new THREE.Group();
+        const baseMesh = new THREE.Mesh(
+            new THREE.CylinderGeometry(cfg.size, cfg.size * 1.15, 1.2, 8),
+            new THREE.MeshStandardMaterial({ color: 0x202020, metalness: 0.5, roughness: 0.5 })
+        );
+        baseMesh.position.y = 0.6;
+        baseMesh.castShadow = true;
+        group.add(baseMesh);
+
+        const head = new THREE.Mesh(
+            new THREE.SphereGeometry(cfg.size * 0.45, 10, 10),
+            new THREE.MeshStandardMaterial({ color: cfg.color, emissive: cfg.color, emissiveIntensity: 0.35 })
+        );
+        head.position.y = 1.55;
+        head.name = 'head';
+        group.add(head);
+
+        group.position.copy(pos);
+        group.userData = {
+            type: selectedTowerType,
+            range: cfg.range,
+            dmg: cfg.dmg,
+            cooldown: cfg.cooldown,
+            lastShot: 0
+        };
+        towers.push(group);
+        scene.add(group);
+        gameState.gold -= cfg.cost;
+        updateUI();
+    }
+
+    function updateTowers() {
+        const now = clock.elapsedTime;
+        for (let i = 0; i < towers.length; i++) {
+            const t = towers[i];
+            let nearest = null;
+            let minDist = t.userData.range;
+            for (let j = 0; j < enemies.length; j++) {
+                const e = enemies[j];
+                const d = t.position.distanceTo(e.position);
+                if (d < minDist) {
+                    minDist = d;
+                    nearest = e;
+                }
+            }
+            if (!nearest) continue;
+
+            const head = t.getObjectByName('head');
+            if (head) head.lookAt(nearest.position.x, 1, nearest.position.z);
+            if (now - t.userData.lastShot < t.userData.cooldown) continue;
+            t.userData.lastShot = now;
+
+            if (t.userData.type === 'CANNON') {
+                for (let k = 0; k < enemies.length; k++) {
+                    const other = enemies[k];
+                    const splashDist = other.position.distanceTo(nearest.position);
+                    if (splashDist < 3.2) other.userData.hp -= t.userData.dmg * (1 - splashDist / 3.2);
+                }
+                createExplosion(nearest.position, 0xffaa33, 4);
+                continue;
+            }
+            nearest.userData.hp -= t.userData.dmg;
+            if (t.userData.type === 'FROST') {
+                nearest.userData.slowUntil = now + 1.2;
+                createExplosion(nearest.position, 0x66ffff, 2);
+            } else {
+                createExplosion(nearest.position, 0x66ccff, 2);
+            }
+        }
+    }
+
+    function cleanupDeadEnemies() {
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            const e = enemies[i];
+            if (e.userData.hp > 0) continue;
+            handleKill(e);
+            enemies.splice(i, 1);
+            scene.remove(e);
+            disposeGroupResources(e);
+        }
+    }
+
+    let activeActionName = 'Idle';
+    function fadeToAction(name) {
+        if (name === activeActionName || !heroAnimations[name]) return;
+        heroAnimations[name].reset().fadeIn(0.15).play();
+        if (heroAnimations[activeActionName]) heroAnimations[activeActionName].fadeOut(0.15);
+        activeActionName = name;
+    }
+
+    function updateLogic(delta) {
+        if(isGameOver) return;
+        const now = clock.elapsedTime;
+        // 英雄战斗
+        const heroProfile = HERO_CLASSES[gameState.heroClass];
+        let nearest = null;
+        let minDist = heroProfile ? heroProfile.range : HERO_ATTACK_RANGE;
+        enemies.forEach(e => {
+            const d = hero ? hero.position.distanceTo(e.position) : 999;
+            if (d < minDist) { minDist = d; nearest = e; }
+        });
+
+        if (nearest && hero) {
+            isMoving = false;
+            if(activeActionName !== 'Punch') {
+                fadeToAction('Punch');
+                createSlash(hero.position, hero.rotation.y);
+            }
+            hero.lookAt(nearest.position.x, 0, nearest.position.z);
+            
+            // 伤害计算
+            nearest.userData.hp -= (gameState.heroDmg * delta * 15);
+            const hpBar = nearest.getObjectByName("hpBar");
+            if (hpBar) hpBar.scale.x = Math.max(0, nearest.userData.hp / nearest.userData.maxHp);
+            
+        } else if (activeActionName === 'Punch') {
+            fadeToAction('Idle');
+        }
+
+        // 怪物 AI
+        enemies.forEach(e => {
+            const dHero = hero ? e.position.distanceTo(hero.position) : 999;
+            const dBase = e.position.distanceTo(base.position);
+
+            if(dHero < 8) {
+                if(dHero > 2.5) {
+                    tempVecA.subVectors(hero.position, e.position).normalize();
+                    const slowRate = (e.userData.slowUntil && e.userData.slowUntil > now) ? 0.45 : 1;
+                    e.position.addScaledVector(tempVecA, ENEMY_SPEED_TO_HERO * delta * slowRate);
+                    e.lookAt(hero.position.x, 0, hero.position.z);
+                } else {
+                    // 攻击英雄 (视觉表现)
+                    if(Math.random() < delta * 1.2) createExplosion(hero.position, 0xff0000, 2);
+                }
+            } else if (dBase > 4) {
+                tempVecB.subVectors(base.position, e.position).normalize();
+                const slowRate = (e.userData.slowUntil && e.userData.slowUntil > now) ? 0.45 : 1;
+                e.position.addScaledVector(tempVecB, ENEMY_SPEED_TO_BASE * delta * slowRate);
+                e.lookAt(0,0,0);
+            } else {
+                // 攻击基地
+                damageBase(BASE_DAMAGE_PER_SECOND * delta);
+                if(Math.random() < delta * 3) {
+                    tempVecA.set(0, 2, 0);
+                    createExplosion(tempVecA, 0x00ffff, 1);
+                }
+            }
+        });
+    }
+
+    function handleKill(enemy) {
+        gameState.kills++;
+        gameState.xp += 25;
+        gameState.gold += 10;
+        createExplosion(enemy.position, 0xffff00, 15);
+        cameraShake = 0.2;
+
+        // 升级逻辑
+        const xpNeeded = gameState.level * 100;
+        if(gameState.xp >= xpNeeded) {
+            gameState.level++;
+            gameState.xp = 0;
+            gameState.heroDmg += 2;
+            gameState.wave = Math.floor(gameState.kills / 10) + 1;
+            // 升级光效
+            createExplosion(hero.position, 0x00ff00, 40);
+        }
+        updateUI();
+    }
+
+    function damageBase(amt) {
+        base.userData.hp = Math.max(0, base.userData.hp - amt);
+        cameraShake = 0.1;
+        updateUI();
+        if(base.userData.hp <= 0 && !isGameOver) {
+            isGameOver = true;
+            if (spawnIntervalId) {
+                clearInterval(spawnIntervalId);
+                spawnIntervalId = null;
+            }
+            document.getElementById('game-over').style.display = 'flex';
+            document.getElementById('final-score').innerText = `最终等级: ${gameState.level} | 击杀总数: ${gameState.kills}`;
+        }
+    }
+
+    function updateUI() {
+        document.getElementById('lvl').innerText = gameState.level;
+        document.getElementById('gold').innerText = gameState.gold;
+        document.getElementById('xp-text').innerText = `${gameState.xp}/${gameState.level * 100} XP`;
+        document.getElementById('xp-bar').style.width = (gameState.xp / (gameState.level * 100) * 100) + '%';
+        
+        document.getElementById('base-hp-text').innerText = `${Math.ceil(base.userData.hp)}/1000`;
+        const hpPercent = Math.max(0, Math.min(100, (base.userData.hp / 1000) * 100));
+        document.getElementById('base-hp-bar').style.width = hpPercent + '%';
+        document.getElementById('wave-info').innerText = `波次: ${gameState.wave} (怪物生命 +${gameState.wave * 10})`;
+        document.getElementById('hero-class').innerText = HERO_CLASSES[gameState.heroClass].name;
+        document.getElementById('build-mode').innerText = isBuildMode ? '开启' : '关闭';
+        document.getElementById('tower-type').innerText = `${TOWER_TYPES[selectedTowerType].name}(${TOWER_TYPES[selectedTowerType].cost}G)`;
+    }
+
+    function disposeGroupResources(group) {
+        group.traverse((obj) => {
+            if (!obj.isMesh) return;
+            if (obj.geometry) obj.geometry.dispose();
+            if (Array.isArray(obj.material)) {
+                obj.material.forEach((m) => m && m.dispose && m.dispose());
+            } else if (obj.material && obj.material.dispose) {
+                obj.material.dispose();
+            }
+        });
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const delta = Math.min(clock.getDelta(), 0.05);
+        if(mixer) mixer.update(delta);
+
+        updateLogic(delta);
+        updateTowers();
+        cleanupDeadEnemies();
+
+        // 特效更新
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.mesh.position.add(p.vel);
+            p.vel.y -= 0.01;
+            p.life -= 0.02;
+            p.mesh.scale.setScalar(p.life);
+            if(p.life <= 0) { scene.remove(p.mesh); particles.splice(i, 1); }
+        }
+
+        for (let i = vfxObjects.length - 1; i >= 0; i--) {
+            const v = vfxObjects[i];
+            v.life -= delta * 3;
+            v.mesh.material.opacity = v.life;
+            v.mesh.scale.addScalar(0.05);
+            if(v.life <= 0) { scene.remove(v.mesh); vfxObjects.splice(i, 1); }
+        }
+
+        // 水晶动画
+        const cry = base.getObjectByName("crystal");
+        if(cry) {
+            cry.rotation.y += 0.03;
+            cry.position.y = 4.5 + Math.sin(clock.elapsedTime * 3) * 0.4;
+        }
+
+        // 相机处理
+        if(hero) {
+            tempVecB.set(hero.position.x, hero.position.y, hero.position.z);
+            tempVecB.add(tempVecA.set(0, zoomDistance * 0.8, zoomDistance));
+            camera.position.lerp(tempVecB, 0.1);
+            if(cameraShake > 0) {
+                camera.position.x += (Math.random()-0.5)*cameraShake;
+                camera.position.y += (Math.random()-0.5)*cameraShake;
+                cameraShake *= 0.9;
+            }
+            camera.lookAt(hero.position.x, 1, hero.position.z);
+        }
+
+        // 移动
+        if(hero && isMoving && activeActionName !== 'Punch') {
+            tempVecA.subVectors(targetPosition, hero.position);
+            const dir = tempVecA;
+            if(dir.length() > 0.3) {
+                dir.normalize();
+                hero.rotation.y = THREE.MathUtils.lerp(hero.rotation.y, Math.atan2(dir.x, dir.z), 0.15);
+                hero.position.addScaledVector(dir, HERO_MOVE_SPEED * delta);
+            } else {
+                isMoving = false;
+                fadeToAction('Idle');
+            }
+        }
+
+        // WASD 持续移动
+        if (hero && activeActionName !== 'Punch') {
+            let inputX = 0;
+            let inputZ = 0;
+            if (moveInput.w) inputZ += 1;
+            if (moveInput.s) inputZ -= 1;
+            if (moveInput.a) inputX -= 1;
+            if (moveInput.d) inputX += 1;
+
+            if (inputX !== 0 || inputZ !== 0) {
+                tempVecB.set(inputX, 0, inputZ).normalize();
+                hero.rotation.y = THREE.MathUtils.lerp(hero.rotation.y, Math.atan2(tempVecB.x, tempVecB.z), 0.2);
+                hero.position.addScaledVector(tempVecB, HERO_MOVE_SPEED * delta);
+                if (activeActionName !== 'Running') fadeToAction('Running');
+            } else if (!isMoving && activeActionName === 'Running') {
+                fadeToAction('Idle');
+            }
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    init();
+    updateUI();
+</script>
+</body>
+</html>
