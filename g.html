@@ -107,6 +107,7 @@
     let isBuildMode = false;
     let selectedTowerType = 'ARROW';
     let moveInput = { w: false, a: false, s: false, d: false };
+    let pinchState = { active: false, lastDistance: 0 };
 
     // 进度变量
     let gameState = {
@@ -182,6 +183,9 @@
         window.addEventListener('resize', onWindowResize);
         window.addEventListener('mousedown', onMouseDown);
         window.addEventListener('touchstart', onTouchStart, { passive: false });
+        window.addEventListener('touchmove', onTouchMove, { passive: false });
+        window.addEventListener('touchend', onTouchEnd);
+        window.addEventListener('touchcancel', onTouchEnd);
         window.addEventListener('keydown', onKeyDown);
         window.addEventListener('keyup', onKeyUp);
         window.addEventListener('wheel', (e) => {
@@ -329,6 +333,11 @@
 
     function onTouchStart(e) {
         if (!hero || e.touches.length === 0) return;
+        if (e.touches.length >= 2) {
+            pinchState.active = true;
+            pinchState.lastDistance = getTouchDistance(e.touches[0], e.touches[1]);
+            return;
+        }
         e.preventDefault();
         const t = e.touches[0];
         const mouse = new THREE.Vector2((t.clientX/window.innerWidth)*2-1, -(t.clientY/window.innerHeight)*2+1);
@@ -345,6 +354,33 @@
         targetPosition.copy(point);
         isMoving = true;
         if(activeActionName !== 'Punch') fadeToAction('Running');
+    }
+
+    function onTouchMove(e) {
+        if (e.touches.length < 2) return;
+        e.preventDefault();
+        const dist = getTouchDistance(e.touches[0], e.touches[1]);
+        if (!pinchState.active) {
+            pinchState.active = true;
+            pinchState.lastDistance = dist;
+            return;
+        }
+        const delta = dist - pinchState.lastDistance;
+        zoomDistance = THREE.MathUtils.clamp(zoomDistance - delta * 0.04, 10, 60);
+        pinchState.lastDistance = dist;
+    }
+
+    function onTouchEnd(e) {
+        if (e.touches.length < 2) {
+            pinchState.active = false;
+            pinchState.lastDistance = 0;
+        }
+    }
+
+    function getTouchDistance(t1, t2) {
+        const dx = t1.clientX - t2.clientX;
+        const dy = t1.clientY - t2.clientY;
+        return Math.sqrt(dx * dx + dy * dy);
     }
 
     function onKeyDown(e) {
