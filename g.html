@@ -76,7 +76,7 @@
         </div>
         
         <div class="glass-panel text-xs text-gray-400">
-            🖱️ 右键: 移动/建造 | B:建造模式 | 1/2/3:切塔 | C:切职业
+            🖱️ 右键: 移动/建造 | B:建造模式 | 1/2/3:切塔 | C:切换3角色
         </div>
     </div>
 
@@ -138,7 +138,8 @@
 
     const HERO_CLASSES = {
         GUARDIAN: { name: '守卫者', dmg: 5, range: 5 },
-        RANGER: { name: '游侠', dmg: 3.5, range: 9 }
+        RANGER: { name: '游侠', dmg: 3.5, range: 9 },
+        MECH: { name: '机甲', dmg: 4.2, range: 7 }
     };
 
     const TOWER_TYPES = {
@@ -149,7 +150,8 @@
 
     const HERO_MODEL_URLS = {
         GUARDIAN: './Warrior.gltf',
-        RANGER: './Cleric.gltf'
+        RANGER: './Cleric.gltf',
+        MECH: 'https://threejs.org/examples/models/gltf/RobotExpressive/RobotExpressive.glb'
     };
 
     function init() {
@@ -441,7 +443,9 @@
         if (e.key === '2') selectedTowerType = 'CANNON';
         if (e.key === '3') selectedTowerType = 'FROST';
         if (e.key === 'c' || e.key === 'C') {
-            gameState.heroClass = gameState.heroClass === 'GUARDIAN' ? 'RANGER' : 'GUARDIAN';
+            const heroOrder = ['GUARDIAN', 'RANGER', 'MECH'];
+            const idx = heroOrder.indexOf(gameState.heroClass);
+            gameState.heroClass = heroOrder[(idx + 1) % heroOrder.length];
             const cls = HERO_CLASSES[gameState.heroClass];
             gameState.heroDmg = cls.dmg + Math.max(0, gameState.level - 1) * 0.4;
             applyHeroClassModel(gameState.heroClass);
