@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>二维码生成</title>
+  <style>
+    :root {
+      --bg1: #f4f7ff;
+      --bg2: #e7fff8;
+      --card: #ffffff;
+      --text: #1f2937;
+      --sub: #4b5563;
+      --accent: #0f766e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 15% 20%, var(--bg2), transparent 45%),
+                  radial-gradient(circle at 85% 80%, #dbeafe, transparent 45%),
+                  var(--bg1);
+      color: var(--text);
+    }
+    .card {
+      width: min(92vw, 520px);
+      background: var(--card);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
+      text-align: center;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 1.3rem;
+    }
+    p {
+      margin: 0;
+      color: var(--sub);
+      word-break: break-all;
+    }
+    #qrcode {
+      margin: 20px auto 12px;
+      width: fit-content;
+      padding: 14px;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+    }
+    .tip {
+      font-size: 0.9rem;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>链接二维码</h1>
+    <p id="urlText">https://arkpy.com/game/g.html</p>
+    <div id="qrcode" aria-label="二维码"></div>
+    <p class="tip">使用手机扫码即可打开链接</p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs2@0.0.2/qrcode.min.js"></script>
+  <script>
+    const value = "https://arkpy.com/game/g.html";
+    new QRCode(document.getElementById("qrcode"), {
+      text: value,
+      width: 260,
+      height: 260,
+      colorDark: "#111827",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  </script>
+</body>
+</html>
