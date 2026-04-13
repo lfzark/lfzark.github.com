@@ -996,6 +996,14 @@
     let fpsValue = 0;
     let fpsAcc = 0;
     let fpsFrames = 0;
+    let lowSpecMode = false;
+    let perfProbeStarted = false;
+    let perfProbeElapsed = 0;
+    let perfProbeSamples = 0;
+    let perfProbeFpsSum = 0;
+    let perfProbeDone = false;
+    const PERF_LOW_FPS_THRESHOLD = 24;
+    const PERF_PROBE_SECONDS = 8;
     let miniMapCanvas = null;
     let miniMapCtx = null;
     let miniMapSize = 152;
@@ -1838,7 +1846,48 @@
         const el = document.getElementById('perf-status');
         if (!el) return;
         const pingText = netConnected ? `${Math.round(netPingMs)}ms` : '--ms';
-        el.innerText = `性能: FPS ${Math.round(fpsValue)} | 延迟 ${pingText}`;
+        const modeText = lowSpecMode ? '低配' : '标准';
+        el.innerText = `性能: FPS ${Math.round(fpsValue)} | 延迟 ${pingText} | 模式 ${modeText}`;
+    }
+
+    function getRenderPixelRatio() {
+        if (lowSpecMode) return Math.min(window.devicePixelRatio || 1, 0.85);
+        return Math.min(window.devicePixelRatio || 1, 1.5);
+    }
+
+    function applyLowSpecMode() {
+        if (lowSpecMode) return;
+        lowSpecMode = true;
+        lightsDisabled = true;
+        applyLightingMode();
+        if (renderer) {
+            renderer.setPixelRatio(getRenderPixelRatio());
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        if (scene && scene.fog) scene.fog.density = 0.0032;
+        if (natureDecorGroup) natureDecorGroup.visible = false;
+        updatePerfStatus();
+    }
+
+    function maybePromptLowSpecMode() {
+        if (perfProbeDone || lowSpecMode) return;
+        if (!gameStarted || isGameOver) return;
+        if (!perfProbeStarted) {
+            perfProbeStarted = true;
+            perfProbeElapsed = 0;
+            perfProbeSamples = 0;
+            perfProbeFpsSum = 0;
+        }
+        if (fpsValue <= 0) return;
+        perfProbeElapsed += 0.5;
+        perfProbeSamples += 1;
+        perfProbeFpsSum += fpsValue;
+        if (perfProbeElapsed < PERF_PROBE_SECONDS) return;
+        perfProbeDone = true;
+        const avgFps = perfProbeSamples > 0 ? (perfProbeFpsSum / perfProbeSamples) : fpsValue;
+        if (avgFps >= PERF_LOW_FPS_THRESHOLD) return;
+        const ok = window.confirm(`检测到平均 FPS 约 ${Math.round(avgFps)}，是否切换到低配模式以提高流畅度？`);
+        if (ok) applyLowSpecMode();
     }
 
     function updateLobbyUI(players = []) {
@@ -2917,7 +2966,7 @@
         camera.position.set(0, 20, 30);
 
         renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        renderer.setPixelRatio(getRenderPixelRatio());
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -4872,6 +4921,7 @@
             fpsAcc = 0;
             fpsFrames = 0;
             updatePerfStatus();
+            maybePromptLowSpecMode();
         }
         updateHeroRespawnCooldown();
         updateTopWaveHUD();
@@ -5157,7 +5207,7 @@
     function onWindowResize() {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        renderer.setPixelRatio(getRenderPixelRatio());
         renderer.setSize(window.innerWidth, window.innerHeight);
         syncMiniMapCanvasSize();
         updateOrientationTip();
