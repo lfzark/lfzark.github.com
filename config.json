@@ -1,75 +1,86 @@
 {
-  "version": "1.0.2",
-  "lastUpdated": "2026-03-10",
+  "version": "3.0.0",
+  "lastUpdated": "2026-04-14",
+  "fallbackPolicy": "Use backupUrl when url is unavailable",
   "audios": [
     {
-      "id": "rain",
-      "name": "雨声",
-      "description": "细雨绵绵，洗涂心灵",
+      "id": "rainsound_light_rain",
+      "name": "雨声 - Light Rain",
+      "description": "RainSound MP3",
       "url": "https://cdn.rainsound.online/sounds/rain/light-rain.mp3",
+      "backupUrl": "https://arkpy.com/tuna/audio/251_rainsound_light_rain.mp3",
       "enabled": true
     },
     {
-      "id": "ocean",
-      "name": "海浪",
-      "description": "潮起潮落，心随浪动",
+      "id": "rainsound_waves",
+      "name": "海浪 - Waves",
+      "description": "RainSound MP3",
       "url": "https://cdn.rainsound.online/sounds/nature/waves.mp3",
+      "backupUrl": "https://arkpy.com/tuna/audio/252_rainsound_waves.mp3",
       "enabled": true
     },
     {
-      "id": "wind_chime",
-      "name": "风铃",
-      "description": "清脆悦耳，随风摇曳",
+      "id": "rainsound_wind_chimes",
+      "name": "风铃 - Wind Chimes",
+      "description": "RainSound MP3",
       "url": "https://cdn.rainsound.online/sounds/things/wind-chimes.mp3",
+      "backupUrl": "https://arkpy.com/tuna/audio/253_rainsound_wind_chimes.mp3",
       "enabled": true
     },
     {
-      "id": "forest",
-      "name": "森林",
-      "description": "鸟鸣虫唱，回归自然",
-      "url": "https://cdn.rainsound.online/sounds/nature/birds-chirping.mp3",
-      "enabled": true
-    },
-    {
-      "id": "stream",
-      "name": "溪流",
-      "description": "潺潺流水，涤荡心灵",
-      "url": "https://cdn.rainsound.online/sounds/nature/stream.mp3",
-      "enabled": true
-    },
-    {
-      "id": "bamboo",
-      "name": "竹林",
-      "description": "竹影婆娑，清风徐来",
-      "url": "https://cdn.rainsound.online/sounds/nature/wind-through-trees.mp3",
-      "enabled": true
-    },
-    {
-      "id": "fireplace",
-      "name": "壁炉",
-      "description": "温暖舒适，静谧安详",
-      "url": "https://cdn.rainsound.online/sounds/things/fireplace.mp3",
-      "enabled": true
-    },
-    {
-      "id": "thunder",
-      "name": "雷雨",
-      "description": "雷声阵阵，释放压力",
-      "url": "https://cdn.rainsound.online/sounds/weather/thunder.mp3",
-      "enabled": true
-    },
-    {
-      "id": "night",
-      "name": "夜晚",
-      "description": "虫鸣蛙叫，宁静夜色",
-      "url": "https://cdn.rainsound.online/sounds/nature/crickets.mp3",
-      "enabled": true
-    },
-    {
-      "id": "paper",
-      "name": "纸张翻动",
-      "description": "纸页翻动，轻柔白噪音",
+      "id": "rainsound_paper",
+      "name": "纸张翻动 - Paper",
+      "description": "RainSound MP3",
       "url": "https://cdn.rainsound.online/sounds/things/paper.mp3",
+      "backupUrl": "https://arkpy.com/tuna/audio/254_rainsound_paper.mp3",
+      "enabled": true
+    },
+    {
+      "id": "waves_beach",
+      "name": "海浪 - 海浪 1",
+      "description": "PPBZY M4A",
+      "url": "https://www.ppbzy.com/audio/Background/Waves_fa-water/Beach_64.m4a",
+      "backupUrl": "https://arkpy.com/tuna/audio/001_waves_beach.m4a",
+      "enabled": true
+    },
+    {
+      "id": "waves_beach_2",
+      "name": "海浪 - 海浪 2",
+      "description": "PPBZY M4A",
+      "url": "https://www.ppbzy.com/audio/Background/Waves_fa-water/Beach%202_64.m4a",
+      "backupUrl": "https://arkpy.com/tuna/audio/002_waves_beach_2.m4a",
+      "enabled": true
+    },
+    {
+      "id": "birds_birdsong_1",
+      "name": "鸟鸣 - 鸟鸣 1",
+      "description": "PPBZY M4A",
+      "url": "https://www.ppbzy.com/audio/Background/Birdsong_fa-dove/Birdsong%201_64.m4a",
+      "backupUrl": "https://arkpy.com/tuna/audio/007_birds_birdsong_1.m4a",
+      "enabled": true
+    },
+    {
+      "id": "fire_bonfire_1",
+      "name": "篝火 - 篝火 1",
+      "description": "PPBZY M4A",
+      "url": "https://www.ppbzy.com/audio/Background/Bonfire_fa-fire/Bonfire%201_64.m4a",
+      "backupUrl": "https://arkpy.com/tuna/audio/011_fire_bonfire_1.m4a",
+      "enabled": true
+    },
+    {
+      "id": "rain_rain",
+      "name": "雨声 - 雨声 1",
+      "description": "PPBZY M4A",
+      "url": "https://www.ppbzy.com/audio/Background/Rain_fa-cloud-showers-heavy/Rain_64.m4a",
+      "backupUrl": "https://arkpy.com/tuna/audio/018_rain_rain.m4a",
+      "enabled": true
+    },
+    {
+      "id": "stream_stream",
+      "name": "溪流 - 溪流",
+      "description": "PPBZY M4A",
+      "url": "https://www.ppbzy.com/audio/Background/Stream_fa-bars-staggered/Stream_64.m4a",
+      "backupUrl": "https://arkpy.com/tuna/audio/025_stream_stream.m4a",
       "enabled": true
     }
   ]
