@@ -1,86 +1,106 @@
 {
-  "version": "3.0.0",
+  "version": "3.1.0",
   "lastUpdated": "2026-04-14",
   "fallbackPolicy": "Use backupUrl when url is unavailable",
   "audios": [
     {
       "id": "rainsound_light_rain",
-      "name": "雨声 - Light Rain",
-      "description": "RainSound MP3",
+      "name": "雨声",
+      "description": "轻柔雨声",
       "url": "https://cdn.rainsound.online/sounds/rain/light-rain.mp3",
       "backupUrl": "https://arkpy.com/tuna/audio/251_rainsound_light_rain.mp3",
+      "icon": "water_drop",
+      "iconColor": "#4A90E2",
       "enabled": true
     },
     {
       "id": "rainsound_waves",
-      "name": "海浪 - Waves",
-      "description": "RainSound MP3",
+      "name": "海浪",
+      "description": "海边浪声",
       "url": "https://cdn.rainsound.online/sounds/nature/waves.mp3",
       "backupUrl": "https://arkpy.com/tuna/audio/252_rainsound_waves.mp3",
+      "icon": "waves",
+      "iconColor": "#2E86AB",
       "enabled": true
     },
     {
       "id": "rainsound_wind_chimes",
-      "name": "风铃 - Wind Chimes",
-      "description": "RainSound MP3",
+      "name": "风铃",
+      "description": "清脆风铃声",
       "url": "https://cdn.rainsound.online/sounds/things/wind-chimes.mp3",
       "backupUrl": "https://arkpy.com/tuna/audio/253_rainsound_wind_chimes.mp3",
+      "icon": "music_note",
+      "iconColor": "#9B59B6",
       "enabled": true
     },
     {
       "id": "rainsound_paper",
-      "name": "纸张翻动 - Paper",
-      "description": "RainSound MP3",
+      "name": "纸张翻动",
+      "description": "轻微纸页翻动",
       "url": "https://cdn.rainsound.online/sounds/things/paper.mp3",
       "backupUrl": "https://arkpy.com/tuna/audio/254_rainsound_paper.mp3",
-      "enabled": true
-    },
-    {
-      "id": "waves_beach",
-      "name": "海浪 - 海浪 1",
-      "description": "PPBZY M4A",
-      "url": "https://www.ppbzy.com/audio/Background/Waves_fa-water/Beach_64.m4a",
-      "backupUrl": "https://arkpy.com/tuna/audio/001_waves_beach.m4a",
-      "enabled": true
-    },
-    {
-      "id": "waves_beach_2",
-      "name": "海浪 - 海浪 2",
-      "description": "PPBZY M4A",
-      "url": "https://www.ppbzy.com/audio/Background/Waves_fa-water/Beach%202_64.m4a",
-      "backupUrl": "https://arkpy.com/tuna/audio/002_waves_beach_2.m4a",
+      "icon": "description",
+      "iconColor": "#8D6E63",
       "enabled": true
     },
     {
       "id": "birds_birdsong_1",
-      "name": "鸟鸣 - 鸟鸣 1",
-      "description": "PPBZY M4A",
+      "name": "鸟鸣",
+      "description": "清晨鸟鸣",
       "url": "https://www.ppbzy.com/audio/Background/Birdsong_fa-dove/Birdsong%201_64.m4a",
       "backupUrl": "https://arkpy.com/tuna/audio/007_birds_birdsong_1.m4a",
+      "icon": "pets",
+      "iconColor": "#27AE60",
       "enabled": true
     },
     {
       "id": "fire_bonfire_1",
-      "name": "篝火 - 篝火 1",
-      "description": "PPBZY M4A",
+      "name": "篝火",
+      "description": "温暖火焰声",
       "url": "https://www.ppbzy.com/audio/Background/Bonfire_fa-fire/Bonfire%201_64.m4a",
       "backupUrl": "https://arkpy.com/tuna/audio/011_fire_bonfire_1.m4a",
-      "enabled": true
-    },
-    {
-      "id": "rain_rain",
-      "name": "雨声 - 雨声 1",
-      "description": "PPBZY M4A",
-      "url": "https://www.ppbzy.com/audio/Background/Rain_fa-cloud-showers-heavy/Rain_64.m4a",
-      "backupUrl": "https://arkpy.com/tuna/audio/018_rain_rain.m4a",
+      "icon": "local_fire_department",
+      "iconColor": "#E67E22",
       "enabled": true
     },
     {
       "id": "stream_stream",
-      "name": "溪流 - 溪流",
-      "description": "PPBZY M4A",
+      "name": "溪流",
+      "description": "潺潺溪流声",
       "url": "https://www.ppbzy.com/audio/Background/Stream_fa-bars-staggered/Stream_64.m4a",
       "backupUrl": "https://arkpy.com/tuna/audio/025_stream_stream.m4a",
+      "icon": "water",
+      "iconColor": "#3498DB",
+      "enabled": true
+    },
+    {
+      "id": "thunder_thunderstorm_with_rain",
+      "name": "雷雨",
+      "description": "远处雷雨声",
+      "url": "https://www.ppbzy.com/audio/Background/Thunder_fa-bolt/Thunderstorm%20with%20rain_64.m4a",
+      "backupUrl": "https://arkpy.com/tuna/audio/059_thunder_thunderstorm_with_rain.m4a",
+      "icon": "thunderstorm",
+      "iconColor": "#34495E",
+      "enabled": true
+    },
+    {
+      "id": "night_night",
+      "name": "夜晚",
+      "description": "静谧夜晚氛围",
+      "url": "https://www.ppbzy.com/audio/Background/Night_fa-moon/Night_64.m4a",
+      "backupUrl": "https://arkpy.com/tuna/audio/053_night_night.m4a",
+      "icon": "nightlight",
+      "iconColor": "#2C3E50",
+      "enabled": true
+    },
+    {
+      "id": "forest_forest_1",
+      "name": "森林",
+      "description": "森林自然环境声",
+      "url": "https://www.ppbzy.com/audio/Background/Forest_fa-tree/Forest%201_64.m4a",
+      "backupUrl": "https://arkpy.com/tuna/audio/042_forest_forest_1.m4a",
+      "icon": "park",
+      "iconColor": "#1E8449",
       "enabled": true
     }
   ]
