@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>城门外全是怪 | 官方主页</title>
+  <meta name="description" content="城门外全是怪官方主页：玩法攻略、进阶技巧、版本信息、联系方式与下载入口。" />
+  <style>
+    :root {
+      --bg: #0a111b;
+      --bg2: #121f2f;
+      --ink: #ecf2ff;
+      --muted: #a5b4d0;
+      --brand: #ffb84a;
+      --brand2: #ff7f50;
+      --line: rgba(255, 255, 255, 0.16);
+      --card: rgba(16, 26, 40, 0.78);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 700px at -10% -20%, #2a3d57 0%, transparent 55%),
+        radial-gradient(1000px 600px at 110% 120%, #4e2a1d 0%, transparent 52%),
+        linear-gradient(140deg, var(--bg), var(--bg2));
+      font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.6;
+    }
+    a { color: inherit; text-decoration: none; }
+    .wrap { width: min(1160px, 94vw); margin: 0 auto; }
+    .hero {
+      position: relative;
+      min-height: 70vh;
+      display: grid;
+      place-items: center;
+      padding: 72px 0 42px;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 12% -25% auto;
+      height: 420px;
+      background: conic-gradient(from 210deg, rgba(255,184,74,0.26), rgba(255,127,80,0.06), rgba(120,164,255,0.18), rgba(255,184,74,0.26));
+      filter: blur(40px);
+      pointer-events: none;
+      animation: drift 14s linear infinite;
+    }
+    @keyframes drift {
+      0% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(180deg) scale(1.06); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(8, 12, 20, 0.62);
+      padding: 8px 14px;
+      font-size: 13px;
+      color: #ffe2b9;
+    }
+    .badge::before {
+      content: "●";
+      color: #4fe08e;
+      font-size: 11px;
+    }
+    h1 {
+      font-size: clamp(36px, 6.8vw, 78px);
+      line-height: 1.08;
+      margin: 18px 0 14px;
+      letter-spacing: 1px;
+      text-shadow: 0 0 24px rgba(255, 184, 74, 0.34);
+    }
+    .lead {
+      margin: 0 auto;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: clamp(15px, 2.2vw, 20px);
+      text-wrap: balance;
+    }
+    .cta {
+      margin-top: 28px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 156px;
+      height: 46px;
+      padding: 0 18px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary {
+      color: #2d1b00;
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+      box-shadow: 0 8px 26px rgba(255, 145, 74, 0.35);
+    }
+    .btn-ghost { background: rgba(8, 12, 20, 0.52); }
+
+    section { padding: 24px 0 12px; }
+    .title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .title h2 {
+      margin: 0;
+      font-size: clamp(24px, 4vw, 36px);
+      letter-spacing: 0.6px;
+    }
+    .title p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+    }
+    .card {
+      grid-column: span 6;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--card);
+      padding: 16px;
+      backdrop-filter: blur(6px);
+    }
+    .card h3 { margin: 0 0 8px; font-size: 19px; }
+    .card p { margin: 0; color: #c6d3ea; }
+    .list { margin: 8px 0 0; padding-left: 18px; color: #d6e2f8; }
+    .list li { margin: 7px 0; }
+
+    .role { grid-column: span 3; }
+    .role b { color: #ffe1ac; }
+
+    .steps .card { grid-column: span 4; }
+    .steps .n {
+      width: 30px; height: 30px; border-radius: 9px;
+      display: inline-grid; place-items: center;
+      margin-bottom: 6px;
+      color: #111; font-weight: 900;
+      background: linear-gradient(135deg, #ffcf75, #ffa46b);
+    }
+
+    .contact {
+      margin: 18px 0 40px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(160deg, rgba(19, 33, 51, 0.9), rgba(16, 25, 36, 0.9));
+      padding: 18px;
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 16px;
+    }
+    .contact h3 { margin: 0 0 8px; }
+    .meta { color: var(--muted); font-size: 14px; }
+    .contact ul { margin: 8px 0 0; padding-left: 18px; }
+    .wechat-box {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(9, 14, 23, 0.72);
+      padding: 10px;
+      display: inline-block;
+    }
+    .wechat-box img {
+      width: 180px;
+      max-width: 72vw;
+      border-radius: 8px;
+      background: #fff;
+      display: block;
+    }
+    .download-box {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: rgba(10, 16, 25, 0.72);
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      color: #95a7c9;
+      padding: 16px 0 26px;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    @media (max-width: 920px) {
+      .card, .role, .steps .card { grid-column: span 12; }
+      .contact { grid-template-columns: 1fr; }
+      .title { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap" style="text-align:center;position:relative;z-index:2;">
+      <div class="badge">官方站点 / Tower Defense ARPG</div>
+      <h1>城门外全是怪</h1>
+      <p class="lead">硬核守城 + 角色成长 + 走位操作。你不是旁观者，而是战场核心。挡住十波怪潮，守住最后的城门。</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#download">下载 Android 版</a>
+        <a class="btn btn-ghost" href="#guide">查看玩法攻略</a>
+        <a class="btn btn-ghost" href="#contact">联系我们</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="guide">
+      <div class="title">
+        <h2>玩法攻略</h2>
+        <p>新手 5 分钟上手，老手 20 分钟稳定冲高波</p>
+      </div>
+      <div class="grid steps">
+        <article class="card">
+          <div class="n">1</div>
+          <h3>开局优先级</h3>
+          <p>先保证存活，再谈输出。前 2 波优先保持走位和仇恨控制，避免无效硬拼。</p>
+          <ul class="list">
+            <li>近战职业：拉扯怪群，别被夹击。</li>
+            <li>远程职业：保持安全距离，卡怪聚堆再清。</li>
+          </ul>
+        </article>
+        <article class="card">
+          <div class="n">2</div>
+          <h3>塔防布置思路</h3>
+          <p>塔是节奏器，不是摆设。核心思路是“减速/聚怪 + 爆发/收割”组合。</p>
+          <ul class="list">
+            <li>路口优先建减速/覆盖型塔。</li>
+            <li>中后段补高伤塔，形成击杀区。</li>
+          </ul>
+        </article>
+        <article class="card">
+          <div class="n">3</div>
+          <h3>技能使用时机</h3>
+          <p>不要“CD 一好就放”。把技能留给怪潮拐点和 BOSS 入场窗口，收益最高。</p>
+          <ul class="list">
+            <li>AOE 技能：怪群重叠时释放。</li>
+            <li>生存技能：血线危险前提前开。</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <div class="title">
+        <h2>职业与定位</h2>
+        <p>根据你习惯的操作风格选择</p>
+      </div>
+      <div class="grid">
+        <article class="card role"><h3><b>近战战士</b></h3><p>前排抗压，切入能力强，适合喜欢节奏推进与近身操作的玩家。</p></article>
+        <article class="card role"><h3><b>远程法师</b></h3><p>远程高压输出，清怪效率高，适合喜欢站位和爆发窗口的玩家。</p></article>
+        <article class="card role"><h3><b>医疗者</b></h3><p>持续回复与团队续航核心，适合稳健打法和容错提升型玩家。</p></article>
+        <article class="card role"><h3><b>疾影剑士</b></h3><p>机动刺杀，转火迅速，适合手速快、喜欢高风险高回报的玩家。</p></article>
+      </div>
+    </section>
+
+    <section>
+      <div class="title">
+        <h2>进阶技巧</h2>
+        <p>想提高通关率，优先掌握这三条</p>
+      </div>
+      <div class="grid">
+        <article class="card">
+          <h3>1. 先处理威胁源</h3>
+          <p>不是离你近的就一定先打。优先处理高攻速、高穿透或冲线怪，避免基地被瞬间压垮。</p>
+        </article>
+        <article class="card">
+          <h3>2. 站位永远比面板重要</h3>
+          <p>用地形和塔位制造输出时间。你多活 5 秒，往往比多 10% 伤害更关键。</p>
+        </article>
+        <article class="card">
+          <h3>3. BOSS 波次节奏管理</h3>
+          <p>进入 BOSS 波前保留关键技能与资源，不要把恢复与爆发浪费在过渡小怪上。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="contact">
+      <div class="contact">
+        <div>
+          <h3>联系我们</h3>
+          <p class="meta">欢迎反馈 BUG、平衡性建议、机型兼容问题，也支持商务联动与渠道合作。</p>
+          <ul>
+            <li>联系邮箱：<a href="mailto:onlyarter@gmail.com">onlyarter@gmail.com</a></li>
+            <li>官网：<a href="https://arkpy.com/td">https://arkpy.com/td</a></li>
+            <li>工作时间：周一至周五 10:00 - 18:30（UTC+8）</li>
+          </ul>
+          <div class="wechat-box">
+            <div class="meta" style="margin-bottom:8px;">微信联系（扫码添加）</div>
+            <a href="https://arkpy.com/td" target="_blank" rel="noopener noreferrer">
+              <img src="/td/assets/qr/full-version-qr.png" alt="微信二维码" />
+            </a>
+          </div>
+        </div>
+        <aside id="download" class="download-box">
+          <h3 style="margin:0 0 6px;">下载与更新</h3>
+          <p class="meta">Android 最新版本可通过以下方式获取：</p>
+          <ul>
+            <li>直接下载：<a href="/td/download/app-debug.apk">/td/download/app-debug.apk</a></li>
+            <li>内部测试包：由运营/客服提供</li>
+            <li>更新公告：官网与社群同步发布</li>
+          </ul>
+          <a class="btn btn-primary" style="margin-top:10px;width:100%;" href="/td/download/app-debug.apk">下载 Android APK</a>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    © 2026 ARKPY Studio · 城门外全是怪 · All rights reserved.
+  </footer>
+</body>
+</html>
