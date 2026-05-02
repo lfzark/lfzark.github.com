@@ -296,6 +296,8 @@
     const voiceAlertCooldownSec = 18;
     let sessionStartTime = 0;
     let cycleSoundEnabled = true;
+    let selectedDeviceLabel = "";
+    let lowSignalStreak = 0;
 
     function setStatus(text, level = "ok") {
       statusEl.textContent = "状态：" + text;
@@ -365,14 +367,8 @@
     async function start() {
       stop();
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            deviceId: deviceSelect.value ? { exact: deviceSelect.value } : undefined,
-            noiseSuppression: false,
-            echoCancellation: false,
-            autoGainControl: false
-          }
-        });
+        selectedDeviceLabel = deviceSelect.options[deviceSelect.selectedIndex]?.textContent || "";
+        stream = await openBestEffortStream(deviceSelect.value);
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         source = audioCtx.createMediaStreamSource(stream);
         analyser = audioCtx.createAnalyser();
@@ -396,6 +392,7 @@
         logTs = 0;
         peakAmpHistory = [];
         sessionStartTime = performance.now() / 1000;
+        lowSignalStreak = 0;
         lastVoiceAlertAt = 0;
         logBoxEl.value = "";
         micTestMode = false;
@@ -411,6 +408,28 @@
       } catch (err) {
         setStatus("启动失败: " + err.message, "bad");
       }
+    }
+
+    async function openBestEffortStream(deviceId) {
+      const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+      const mobileAudioPrefs = isMobile
+        ? { noiseSuppression: true, echoCancellation: true, autoGainControl: true, channelCount: 1 }
+        : { noiseSuppression: false, echoCancellation: false, autoGainControl: false, channelCount: 1 };
+      const tries = [];
+      if (deviceId) tries.push({ audio: { ...mobileAudioPrefs, deviceId: { exact: deviceId } } });
+      if (deviceId) tries.push({ audio: { ...mobileAudioPrefs, deviceId: { ideal: deviceId } } });
+      tries.push({ audio: { ...mobileAudioPrefs } });
+      tries.push({ audio: true });
+
+      let lastErr;
+      for (const c of tries) {
+        try {
+          return await navigator.mediaDevices.getUserMedia(c);
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      throw lastErr || new Error("无法获取音频输入");
     }
 
     function stop() {
@@ -635,6 +654,13 @@
         return;
       }
       testResultEl.textContent = "--";
+
+      // 移动端蓝牙常见问题：设备可选但实际采集静音，连续低信号时给出明确指引
+      if (amp < 0.003) lowSignalStreak += 1;
+      else lowSignalStreak = Math.max(0, lowSignalStreak - 2);
+      if (lowSignalStreak > 80 && /bluetooth|蓝牙/i.test(selectedDeviceLabel)) {
+        setStatus("蓝牙麦克风疑似无输入：请改选“默认/Headset earpiece”再试", "warn");
+      }
 
       const durWindow = breathDurations.slice(-8).map(x => x.d);
       const durAvg = durWindow.length ? durWindow.reduce((s, d) => s + d, 0) / durWindow.length : 0;
