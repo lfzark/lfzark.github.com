@@ -1,0 +1,928 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>呼吸短浅检测</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --ok: #10b981;
+      --warn: #f59e0b;
+      --bad: #ef4444;
+    }
+    body {
+      margin: 0;
+      font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: radial-gradient(circle at top, #1f2937, var(--bg));
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .card {
+      width: min(760px, 100%);
+      background: rgba(17, 24, 39, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      padding: 20px;
+      box-sizing: border-box;
+      backdrop-filter: blur(5px);
+    }
+    h1 { margin: 0 0 10px; font-size: 22px; }
+    p { margin: 8px 0; color: var(--muted); line-height: 1.5; }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 14px 0;
+      align-items: center;
+    }
+    button, select {
+      background: #1f2937;
+      color: var(--text);
+      border: 1px solid #374151;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+    button { cursor: pointer; }
+    button:hover { border-color: #6b7280; }
+    #status {
+      font-weight: 700;
+      margin-top: 10px;
+      color: var(--ok);
+    }
+    #status.warn { color: var(--warn); }
+    #status.bad { color: var(--bad); }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .metric {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .label { color: var(--muted); font-size: 12px; }
+    .value { font-size: 18px; margin-top: 4px; }
+    canvas {
+      width: 100%;
+      height: 160px;
+      background: #0b1220;
+      border: 1px solid #263244;
+      border-radius: 10px;
+      margin-top: 12px;
+    }
+    #durationChart {
+      height: 180px;
+    }
+    .note {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+    .recent-list {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: #d1d5db;
+      font-size: 14px;
+    }
+    .recent-list li { margin: 4px 0; }
+    .meter {
+      width: 100%;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .meter-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
+      transition: width 0.12s linear;
+    }
+    #logBox {
+      margin-top: 10px;
+      width: 100%;
+      min-height: 140px;
+      max-height: 240px;
+      resize: vertical;
+      background: #0b1220;
+      color: #d1d5db;
+      border: 1px solid #263244;
+      border-radius: 10px;
+      padding: 8px;
+      box-sizing: border-box;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    @media (max-width: 720px) {
+      body {
+        padding: 10px;
+      }
+      .card {
+        border-radius: 12px;
+        padding: 14px;
+      }
+      h1 {
+        font-size: 20px;
+      }
+      p {
+        font-size: 13px;
+      }
+      .row {
+        gap: 8px;
+      }
+      .row button,
+      .row select {
+        flex: 1 1 calc(50% - 8px);
+        min-width: 0;
+        padding: 10px;
+        font-size: 13px;
+      }
+      .metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .metric {
+        padding: 8px;
+      }
+      .label {
+        font-size: 11px;
+      }
+      .value {
+        font-size: 16px;
+      }
+      canvas {
+        height: 140px;
+      }
+      #durationChart {
+        height: 150px;
+      }
+      #logBox {
+        min-height: 110px;
+        max-height: 180px;
+        font-size: 11px;
+      }
+      .recent-list {
+        font-size: 13px;
+      }
+    }
+    @media (max-width: 420px) {
+      .row button,
+      .row select {
+        flex: 1 1 100%;
+      }
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+      .value {
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>麦克风呼吸短浅检测</h1>
+    <p>先允许麦克风权限，再选择蓝牙耳机麦克风。检测基于音量包络，结果仅供参考，不作为医疗诊断。</p>
+
+    <div class="row">
+      <button id="btnInit">1) 授权并加载设备</button>
+      <select id="deviceSelect" disabled></select>
+      <button id="btnStart" disabled>2) 开始检测</button>
+      <button id="btnMicTest" disabled>麦克风测试</button>
+      <button id="btnStop" disabled>停止</button>
+      <button id="btnExportLog" disabled>导出日志</button>
+      <button id="btnSoundToggle">提示音：开</button>
+    </div>
+
+    <div id="status">状态：未开始</div>
+    <div class="metrics">
+      <div class="metric"><div class="label">估计呼吸频率</div><div class="value" id="rate">-- 次/分</div></div>
+      <div class="metric"><div class="label">呼吸幅度(相对)</div><div class="value" id="amp">--</div></div>
+      <div class="metric"><div class="label">短浅评分(0-100)</div><div class="value" id="score">--</div></div>
+      <div class="metric"><div class="label">当前模式</div><div class="value" id="mode">已停止</div></div>
+      <div class="metric"><div class="label">当前呼吸状态</div><div class="value" id="phase">--</div></div>
+      <div class="metric">
+        <div class="label">麦克风电平测试</div>
+        <div class="value" id="micLevel">--</div>
+        <div class="meter"><div id="micFill" class="meter-fill"></div></div>
+      </div>
+      <div class="metric"><div class="label">测试结论</div><div class="value" id="testResult">--</div></div>
+      <div class="metric"><div class="label">呼吸等级</div><div class="value" id="breathGrade">--</div></div>
+      <div class="metric"><div class="label">频率评分</div><div class="value" id="freqScore">--</div></div>
+      <div class="metric"><div class="label">稳定性评分</div><div class="value" id="stabilityScore">--</div></div>
+      <div class="metric"><div class="label">深度评分</div><div class="value" id="depthScore">--</div></div>
+      <div class="metric"><div class="label">呼吸总次数</div><div class="value" id="totalBreaths">0</div></div>
+      <div class="metric"><div class="label">计数总时间</div><div class="value" id="totalTime">0.0 秒</div></div>
+      <div class="metric"><div class="label">平均每分呼吸率</div><div class="value" id="avgRate">-- 次/分</div></div>
+      <div class="metric"><div class="label">平均呼吸时长</div><div class="value" id="avgDuration">-- 秒</div></div>
+    </div>
+    <div class="metric" style="margin-top: 10px;">
+      <div class="label">最近几次呼吸时长（秒）</div>
+      <ol id="recentDurations" class="recent-list"></ol>
+    </div>
+    <canvas id="chart" width="700" height="160"></canvas>
+    <canvas id="durationChart" width="700" height="180"></canvas>
+    <textarea id="logBox" readonly placeholder="检测日志会显示在这里"></textarea>
+    <div class="note">建议在安静环境、嘴鼻靠近麦克风 5-15cm 进行；持续 20 秒后结果更稳定。</div>
+  </div>
+
+  <script>
+    const btnInit = document.getElementById("btnInit");
+    const btnStart = document.getElementById("btnStart");
+    const btnStop = document.getElementById("btnStop");
+    const btnMicTest = document.getElementById("btnMicTest");
+    const btnExportLog = document.getElementById("btnExportLog");
+    const btnSoundToggle = document.getElementById("btnSoundToggle");
+    const deviceSelect = document.getElementById("deviceSelect");
+    const statusEl = document.getElementById("status");
+    const rateEl = document.getElementById("rate");
+    const ampEl = document.getElementById("amp");
+    const scoreEl = document.getElementById("score");
+    const modeEl = document.getElementById("mode");
+    const phaseEl = document.getElementById("phase");
+    const micLevelEl = document.getElementById("micLevel");
+    const micFillEl = document.getElementById("micFill");
+    const testResultEl = document.getElementById("testResult");
+    const breathGradeEl = document.getElementById("breathGrade");
+    const freqScoreEl = document.getElementById("freqScore");
+    const stabilityScoreEl = document.getElementById("stabilityScore");
+    const depthScoreEl = document.getElementById("depthScore");
+    const totalBreathsEl = document.getElementById("totalBreaths");
+    const totalTimeEl = document.getElementById("totalTime");
+    const avgRateEl = document.getElementById("avgRate");
+    const avgDurationEl = document.getElementById("avgDuration");
+    const recentDurationsEl = document.getElementById("recentDurations");
+    const canvas = document.getElementById("chart");
+    const ctx2d = canvas.getContext("2d");
+    const durationCanvas = document.getElementById("durationChart");
+    const durationCtx = durationCanvas.getContext("2d");
+    const logBoxEl = document.getElementById("logBox");
+
+    let audioCtx;
+    let analyser;
+    let source;
+    let stream;
+    let rafId;
+    let env = [];
+    let peaks = [];
+    let smooth = 0;
+    let lastPeakAt = 0;
+    let hp = 0;
+    let breathDurations = [];
+    let phase = "未检测";
+    let micTestMode = false;
+    let mode = "stopped";
+    let scoreEma = 0;
+    let decisionStreak = { bad: 0, warn: 0, ok: 0 };
+    let sessionLogs = [];
+    let logTs = 0;
+    let peakAmpHistory = [];
+    let lastVoiceAlertAt = 0;
+    const voiceAlertCooldownSec = 18;
+    let sessionStartTime = 0;
+    let cycleSoundEnabled = true;
+
+    function setStatus(text, level = "ok") {
+      statusEl.textContent = "状态：" + text;
+      statusEl.className = level === "bad" ? "bad" : level === "warn" ? "warn" : "";
+    }
+    function speakAlert(text) {
+      if (!("speechSynthesis" in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = "zh-CN";
+        u.rate = 1.0;
+        u.pitch = 1.0;
+        window.speechSynthesis.speak(u);
+      } catch (_) {}
+    }
+    function playCycleBeep() {
+      if (!cycleSoundEnabled || !audioCtx || micTestMode) return;
+      try {
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.08, audioCtx.currentTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.12);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.13);
+      } catch (_) {}
+    }
+
+    async function initDevices() {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setStatus("浏览器不支持麦克风 API", "bad");
+        return;
+      }
+      try {
+        const temp = await navigator.mediaDevices.getUserMedia({ audio: true });
+        temp.getTracks().forEach(t => t.stop());
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const inputs = devices.filter(d => d.kind === "audioinput");
+        deviceSelect.innerHTML = "";
+        if (!inputs.length) {
+          setStatus("未找到音频输入设备", "bad");
+          return;
+        }
+        inputs.forEach((d, i) => {
+          const opt = document.createElement("option");
+          opt.value = d.deviceId;
+          opt.textContent = d.label || `麦克风 ${i + 1}`;
+          deviceSelect.appendChild(opt);
+        });
+        const btIdx = inputs.findIndex(d => /bluetooth|蓝牙|buds|airpods|headset/i.test(d.label));
+        if (btIdx >= 0) deviceSelect.selectedIndex = btIdx;
+        deviceSelect.disabled = false;
+        btnStart.disabled = false;
+        btnMicTest.disabled = false;
+        setStatus("设备已加载，可开始检测");
+      } catch (err) {
+        setStatus("权限被拒绝或设备不可用: " + err.message, "bad");
+      }
+    }
+
+    async function start() {
+      stop();
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            deviceId: deviceSelect.value ? { exact: deviceSelect.value } : undefined,
+            noiseSuppression: false,
+            echoCancellation: false,
+            autoGainControl: false
+          }
+        });
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        source = audioCtx.createMediaStreamSource(stream);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 1024;
+        source.connect(analyser);
+        env = [];
+        peaks = [];
+        breathDurations = [];
+        phase = "基线建立中";
+        phaseEl.textContent = phase;
+        mode = "detect";
+        modeEl.textContent = "呼吸检测";
+        recentDurationsEl.innerHTML = "";
+        renderDurations();
+        smooth = 0;
+        lastPeakAt = 0;
+        hp = 0;
+        scoreEma = 0;
+        decisionStreak = { bad: 0, warn: 0, ok: 0 };
+        sessionLogs = [];
+        logTs = 0;
+        peakAmpHistory = [];
+        sessionStartTime = performance.now() / 1000;
+        lastVoiceAlertAt = 0;
+        logBoxEl.value = "";
+        micTestMode = false;
+        testResultEl.textContent = "--";
+        micFillEl.style.width = "0%";
+        btnStop.disabled = false;
+        btnStart.disabled = true;
+        btnMicTest.disabled = true;
+        btnExportLog.disabled = true;
+        setStatus("检测中...");
+        logEvent("session_start", { mode: "detect", deviceId: deviceSelect.value || "default" });
+        loop();
+      } catch (err) {
+        setStatus("启动失败: " + err.message, "bad");
+      }
+    }
+
+    function stop() {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = null;
+      if (source) source.disconnect();
+      if (analyser) analyser.disconnect();
+      if (audioCtx) audioCtx.close();
+      source = null;
+      analyser = null;
+      audioCtx = null;
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+      }
+      btnStop.disabled = true;
+      btnStart.disabled = !deviceSelect.value;
+      btnMicTest.disabled = !deviceSelect.value;
+      btnExportLog.disabled = sessionLogs.length === 0;
+      micTestMode = false;
+      mode = "stopped";
+      modeEl.textContent = "已停止";
+      phaseEl.textContent = "未检测";
+      micLevelEl.textContent = "--";
+      micFillEl.style.width = "0%";
+      testResultEl.textContent = "--";
+      breathGradeEl.textContent = "--";
+      freqScoreEl.textContent = "--";
+      stabilityScoreEl.textContent = "--";
+      depthScoreEl.textContent = "--";
+      totalBreathsEl.textContent = "0";
+      totalTimeEl.textContent = "0.0 秒";
+      avgRateEl.textContent = "-- 次/分";
+      avgDurationEl.textContent = "-- 秒";
+      rateEl.textContent = "-- 次/分";
+      ampEl.textContent = "--";
+      scoreEl.textContent = "--";
+      breathDurations = [];
+      renderDurations();
+      if (sessionLogs.length) logEvent("session_stop", { totalLogs: sessionLogs.length });
+    }
+
+    function loop() {
+      const buf = new Float32Array(analyser.fftSize);
+      analyser.getFloatTimeDomainData(buf);
+      let rms = 0;
+      for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i];
+      rms = Math.sqrt(rms / buf.length);
+
+      // 简单高通去掉慢变背景，再做低通平滑，获得呼吸包络
+      hp = 0.98 * hp + 0.02 * rms;
+      const x = Math.max(0, rms - hp * 0.85);
+      smooth = 0.92 * smooth + 0.08 * x;
+
+      const t = performance.now() / 1000;
+      env.push({ t, v: smooth });
+      while (env.length && t - env[0].t > 30) env.shift();
+
+      detectBreathPeaks(t);
+      detectPhaseAndDurations();
+      drawChart();
+      drawDurationChart();
+      updateMetrics();
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function detectBreathPeaks(now) {
+      if (env.length < 12) return;
+      const n = env.length;
+      const p = env[n - 4];
+      const a = env[n - 5].v;
+      const b = env[n - 4].v;
+      const c = env[n - 3].v;
+      const d = env[n - 2].v;
+      const recent8 = env.filter(x => now - x.t <= 8).map(x => x.v);
+      const mean = recent8.reduce((s, v) => s + v, 0) / Math.max(1, recent8.length);
+      const variance = recent8.reduce((s, v) => s + (v - mean) * (v - mean), 0) / Math.max(1, recent8.length);
+      const std = Math.sqrt(variance);
+      const threshold = mean + std * 0.9 + 0.0018;
+      const minGap = 1.05;
+      const isPeak = b > a && b > c && c > d && b > threshold;
+      if (isPeak && now - lastPeakAt > minGap) {
+        const ampGate = getAdaptiveAmpGate();
+        if (b < ampGate) {
+          logEvent("peak_reject_low_amp", { t: round2(p.t), amp: round5(b), gate: round5(ampGate) });
+          return;
+        }
+        peaks.push({ t: p.t, v: b });
+        peakAmpHistory.push(b);
+        if (peakAmpHistory.length > 80) peakAmpHistory.shift();
+        lastPeakAt = p.t;
+        logEvent("peak", { t: round2(p.t), amp: round5(b), threshold: round5(threshold), gate: round5(ampGate) });
+        const len = peaks.length;
+        if (len >= 2) {
+          const dur = peaks[len - 1].t - peaks[len - 2].t;
+          const [minDur, maxDur] = getAdaptiveDurRange();
+          if (dur > minDur && dur < maxDur) {
+            const lastDur = breathDurations[breathDurations.length - 1];
+            if (!lastDur || Math.abs(lastDur.t - peaks[len - 1].t) > 0.5) {
+              const split = splitInhaleExhale(peaks[len - 2].t, peaks[len - 1].t);
+              breathDurations.push({
+                t: peaks[len - 1].t,
+                d: dur,
+                inhale: split.inhale,
+                exhale: split.exhale
+              });
+              logEvent("breath_cycle", {
+                dur: round2(dur),
+                inhale: round2(split.inhale),
+                exhale: round2(split.exhale),
+                totalCycles: breathDurations.length
+              });
+              playCycleBeep();
+              renderDurations();
+            }
+          } else {
+            logEvent("cycle_reject_outlier", { dur: round2(dur), minDur: round2(minDur), maxDur: round2(maxDur) });
+          }
+        }
+      }
+      while (peaks.length && now - peaks[0].t > 30) peaks.shift();
+    }
+
+    function splitInhaleExhale(tPrevPeak, tCurrPeak) {
+      const seg = env.filter(p => p.t >= tPrevPeak && p.t <= tCurrPeak);
+      if (seg.length < 3) {
+        const half = (tCurrPeak - tPrevPeak) / 2;
+        return { inhale: half, exhale: half };
+      }
+      let minIdx = 0;
+      for (let i = 1; i < seg.length; i++) {
+        if (seg[i].v < seg[minIdx].v) minIdx = i;
+      }
+      const tMin = seg[minIdx].t;
+      let exhale = tMin - tPrevPeak;
+      let inhale = tCurrPeak - tMin;
+      if (exhale < 0.35 || inhale < 0.35) {
+        const half = (tCurrPeak - tPrevPeak) / 2;
+        exhale = half;
+        inhale = half;
+      }
+      return { inhale, exhale };
+    }
+
+    function detectPhaseAndDurations() {
+      if (env.length < 6) return;
+      const n = env.length;
+      const p0 = env[n - 4];
+      const p1 = env[n - 3];
+      const p2 = env[n - 2];
+      const p3 = env[n - 1];
+      const slope = p3.v - p2.v;
+      if (Math.abs(slope) < 0.00005) phase = "平稳";
+      else if (slope > 0) phase = "吸气中";
+      else phase = "呼气中";
+      phaseEl.textContent = phase;
+    }
+
+    function renderDurations() {
+      recentDurationsEl.innerHTML = "";
+      if (!breathDurations.length) {
+        const li = document.createElement("li");
+        li.textContent = "等待呼吸周期...";
+        recentDurationsEl.appendChild(li);
+        return;
+      }
+      const arr = breathDurations.slice(-60).reverse();
+      arr.forEach((x, i) => {
+        const li = document.createElement("li");
+        const start = breathDurations.length - arr.length + 1;
+        const idx = start + (arr.length - 1 - i);
+        const inh = typeof x.inhale === "number" ? x.inhale.toFixed(2) : "--";
+        const exh = typeof x.exhale === "number" ? x.exhale.toFixed(2) : "--";
+        li.textContent = `${idx}. 总${x.d.toFixed(2)}s 吸${inh}s 呼${exh}s`;
+        recentDurationsEl.appendChild(li);
+      });
+    }
+
+    function updateMetrics() {
+      const now = performance.now() / 1000;
+      const recent = env.filter(p => now - p.t <= 20);
+      if (recent.length < 10) return;
+
+      const vals = recent.map(p => p.v);
+      const max = Math.max(...vals);
+      const min = Math.min(...vals);
+      const amp = Math.max(0, max - min);
+
+      const p20 = peaks.filter(p => now - p.t <= 20);
+      let rate = 0;
+      if (p20.length >= 2) {
+        const dur = p20[p20.length - 1].t - p20[0].t;
+        if (dur > 2) rate = ((p20.length - 1) / dur) * 60;
+      }
+
+      // 经验规则：幅度小 + 频率偏快 => 更可能短浅
+      const ampNorm = Math.min(1, amp / 0.025);
+      const rateNorm = Math.min(1.4, rate / 18);
+      const shallow = (1 - ampNorm) * 65 + Math.max(0, rateNorm - 1) * 35;
+      const rawScore = Math.max(0, Math.min(100, shallow));
+      scoreEma = scoreEma === 0 ? rawScore : scoreEma * 0.82 + rawScore * 0.18;
+      const score = scoreEma;
+      const micLevel = Math.min(100, Math.round((amp / 0.03) * 100));
+
+      rateEl.textContent = rate ? rate.toFixed(1) + " 次/分" : "-- 次/分";
+      ampEl.textContent = amp.toFixed(4);
+      scoreEl.textContent = score.toFixed(0);
+      micLevelEl.textContent = micLevel + " / 100";
+      micFillEl.style.width = micLevel + "%";
+
+      if (micTestMode) {
+        if (micLevel < 8) {
+          testResultEl.textContent = "无信号/极弱";
+          setStatus("麦克风信号很弱，请靠近并说话或呼气测试", "warn");
+        } else if (micLevel < 20) {
+          testResultEl.textContent = "可用（偏弱）";
+          setStatus("麦克风可用（信号偏弱）", "warn");
+        } else {
+          testResultEl.textContent = "工作正常";
+          setStatus("麦克风工作正常（信号充足）");
+        }
+        return;
+      }
+      testResultEl.textContent = "--";
+
+      const durWindow = breathDurations.slice(-8).map(x => x.d);
+      const durAvg = durWindow.length ? durWindow.reduce((s, d) => s + d, 0) / durWindow.length : 0;
+      const cv = durWindow.length >= 4 ? coeffVar(durWindow) : 1;
+      const rhythmStable = durWindow.length >= 4 ? cv < 0.35 : false;
+      const highRateFlag = rate > 21;
+      const lowAmpFlag = amp < 0.0105;
+      const shallowLikely = (highRateFlag && lowAmpFlag) || (score > 66 && !rhythmStable);
+      updateBreathLevel(rate, amp, cv, recent.length >= 120);
+      updateBreathSummary(now);
+
+      if (shallowLikely) {
+        decisionStreak.bad += 1;
+        decisionStreak.warn = 0;
+        decisionStreak.ok = 0;
+      } else if (score > 46 || (durAvg > 0 && durAvg < 2.5)) {
+        decisionStreak.warn += 1;
+        decisionStreak.bad = 0;
+        decisionStreak.ok = 0;
+      } else {
+        decisionStreak.ok += 1;
+        decisionStreak.bad = 0;
+        decisionStreak.warn = 0;
+      }
+
+      const nowSec = Math.floor(now);
+      if (nowSec !== logTs) {
+        logTs = nowSec;
+        logEvent("metrics", {
+          rate: round2(rate),
+          amp: round5(amp),
+          score: round1(score),
+          durAvg: round2(durAvg),
+          stable: rhythmStable
+        });
+      }
+
+      if (recent.length < 120) {
+        setStatus("检测中，正在建立基线...", "warn");
+      } else if (decisionStreak.bad >= 3) {
+        setStatus("疑似呼吸短浅（建议放慢呼吸）", "bad");
+        if (now - lastVoiceAlertAt > voiceAlertCooldownSec) {
+          speakAlert("检测到呼吸偏浅，请放慢呼吸，深吸慢呼。");
+          lastVoiceAlertAt = now;
+          logEvent("voice_alert", { reason: "shallow_suspected" });
+        }
+      } else if (decisionStreak.warn >= 2) {
+        setStatus("轻度短浅倾向", "warn");
+      } else {
+        setStatus("呼吸较平稳");
+      }
+    }
+
+    function drawChart() {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx2d.clearRect(0, 0, w, h);
+      ctx2d.strokeStyle = "#223048";
+      ctx2d.lineWidth = 1;
+      ctx2d.beginPath();
+      ctx2d.moveTo(0, h * 0.75);
+      ctx2d.lineTo(w, h * 0.75);
+      ctx2d.stroke();
+
+      if (env.length < 2) return;
+      const t0 = env[0].t;
+      const t1 = env[env.length - 1].t;
+      const span = Math.max(1, t1 - t0);
+      const vmax = Math.max(0.01, ...env.map(p => p.v));
+
+      ctx2d.beginPath();
+      ctx2d.strokeStyle = "#34d399";
+      ctx2d.lineWidth = 2;
+      env.forEach((p, i) => {
+        const x = ((p.t - t0) / span) * w;
+        const y = h - (p.v / vmax) * (h * 0.9) - h * 0.05;
+        if (i === 0) ctx2d.moveTo(x, y);
+        else ctx2d.lineTo(x, y);
+      });
+      ctx2d.stroke();
+    }
+
+    function drawDurationChart() {
+      const w = durationCanvas.width;
+      const h = durationCanvas.height;
+      durationCtx.clearRect(0, 0, w, h);
+
+      durationCtx.fillStyle = "#9ca3af";
+      durationCtx.font = "12px sans-serif";
+      durationCtx.fillText("呼吸时长趋势图（秒/次）", 10, 16);
+
+      durationCtx.strokeStyle = "#223048";
+      durationCtx.lineWidth = 1;
+      durationCtx.beginPath();
+      durationCtx.moveTo(40, h - 28);
+      durationCtx.lineTo(w - 10, h - 28);
+      durationCtx.moveTo(40, 24);
+      durationCtx.lineTo(40, h - 28);
+      durationCtx.stroke();
+
+      const pts = breathDurations;
+      if (!pts.length) {
+        durationCtx.fillStyle = "#64748b";
+        durationCtx.fillText("等待呼吸周期数据...", 50, h / 2);
+        return;
+      }
+
+      const vals = pts.map(p => p.d);
+      const minV = Math.min(...vals, 1.5);
+      const maxV = Math.max(...vals, 6);
+      const pad = Math.max(0.25, (maxV - minV) * 0.2);
+      const lo = Math.max(1, minV - pad);
+      const hi = maxV + pad;
+      const span = Math.max(0.8, hi - lo);
+
+      durationCtx.fillStyle = "#64748b";
+      durationCtx.fillText(hi.toFixed(1) + "s", 6, 30);
+      durationCtx.fillText(lo.toFixed(1) + "s", 6, h - 30);
+
+      const x0 = 48;
+      const x1 = w - 14;
+      const y0 = 30;
+      const y1 = h - 34;
+      const xStep = pts.length === 1 ? 0 : (x1 - x0) / (pts.length - 1);
+
+      durationCtx.beginPath();
+      durationCtx.strokeStyle = "#60a5fa";
+      durationCtx.lineWidth = 2;
+      pts.forEach((p, i) => {
+        const x = x0 + i * xStep;
+        const y = y1 - ((p.d - lo) / span) * (y1 - y0);
+        if (i === 0) durationCtx.moveTo(x, y);
+        else durationCtx.lineTo(x, y);
+      });
+      durationCtx.stroke();
+
+      pts.forEach((p, i) => {
+        const x = x0 + i * xStep;
+        const y = y1 - ((p.d - lo) / span) * (y1 - y0);
+        durationCtx.beginPath();
+        durationCtx.arc(x, y, 2.8, 0, Math.PI * 2);
+        durationCtx.fillStyle = "#22d3ee";
+        durationCtx.fill();
+      });
+
+      const last = pts[pts.length - 1];
+      durationCtx.fillStyle = "#d1d5db";
+      durationCtx.fillText("最新: " + last.d.toFixed(2) + "s", w - 110, 16);
+    }
+
+    async function startMicTest() {
+      await start();
+      micTestMode = true;
+      mode = "mic_test";
+      modeEl.textContent = "麦克风测试";
+      phaseEl.textContent = "麦克风测试中";
+      setStatus("麦克风测试中：请说话或对着麦克轻吹 3-5 秒", "warn");
+      logEvent("session_mode_switch", { mode: "mic_test" });
+    }
+
+    function round1(x) { return Number(x.toFixed(1)); }
+    function round2(x) { return Number(x.toFixed(2)); }
+    function round5(x) { return Number(x.toFixed(5)); }
+    function stdDev(arr) {
+      if (!arr.length) return 0;
+      const m = arr.reduce((s, v) => s + v, 0) / arr.length;
+      const vr = arr.reduce((s, v) => s + (v - m) * (v - m), 0) / arr.length;
+      return Math.sqrt(vr);
+    }
+    function coeffVar(arr) {
+      if (!arr.length) return 1;
+      const m = arr.reduce((s, v) => s + v, 0) / arr.length;
+      if (m <= 0.000001) return 1;
+      return stdDev(arr) / m;
+    }
+    function median(arr) {
+      if (!arr.length) return 0;
+      const a = [...arr].sort((x, y) => x - y);
+      const m = Math.floor(a.length / 2);
+      return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+    }
+    function getAdaptiveAmpGate() {
+      if (peakAmpHistory.length < 8) return 0.012;
+      const med = median(peakAmpHistory.slice(-24));
+      return Math.max(0.01, med * 0.22);
+    }
+    function getAdaptiveDurRange() {
+      if (breathDurations.length < 6) return [1.8, 11.5];
+      const med = median(breathDurations.slice(-18).map(x => x.d));
+      const minDur = Math.max(1.8, med * 0.48);
+      const maxDur = Math.min(12, med * 2.1);
+      return [minDur, maxDur];
+    }
+    function clamp(v, lo, hi) {
+      return Math.max(lo, Math.min(hi, v));
+    }
+    function updateBreathLevel(rate, amp, cv, ready) {
+      if (!ready || micTestMode) {
+        breathGradeEl.textContent = "--";
+        freqScoreEl.textContent = "--";
+        stabilityScoreEl.textContent = "--";
+        depthScoreEl.textContent = "--";
+        return;
+      }
+      const freqScore = clamp(100 - Math.abs(rate - 14) * 9, 0, 100);
+      const stabilityScore = clamp(100 - cv * 180, 0, 100);
+      const depthScore = clamp((amp / 0.08) * 100, 0, 100);
+      const total = freqScore * 0.4 + stabilityScore * 0.35 + depthScore * 0.25;
+      let grade = "C";
+      if (total >= 80) grade = "A";
+      else if (total >= 60) grade = "B";
+      breathGradeEl.textContent = `${grade} (${total.toFixed(0)})`;
+      freqScoreEl.textContent = freqScore.toFixed(0);
+      stabilityScoreEl.textContent = stabilityScore.toFixed(0);
+      depthScoreEl.textContent = depthScore.toFixed(0);
+    }
+    function updateBreathSummary(nowSec) {
+      const cycles = breathDurations.length;
+      const breaths = cycles + (peaks.length > 0 ? 1 : 0);
+      totalBreathsEl.textContent = String(breaths);
+
+      const totalTime = sessionStartTime > 0 ? Math.max(0, nowSec - sessionStartTime) : 0;
+      totalTimeEl.textContent = totalTime.toFixed(1) + " 秒";
+
+      if (breaths >= 2 && totalTime >= 5) {
+        const avgRate = (breaths / totalTime) * 60;
+        avgRateEl.textContent = avgRate.toFixed(2) + " 次/分";
+      } else {
+        avgRateEl.textContent = "-- 次/分";
+      }
+
+      if (cycles > 0) {
+        const sumDur = breathDurations.reduce((s, x) => s + x.d, 0);
+        const avgDur = sumDur / cycles;
+        avgDurationEl.textContent = avgDur.toFixed(2) + " 秒";
+      } else {
+        avgDurationEl.textContent = "-- 秒";
+      }
+    }
+
+    function logEvent(type, payload) {
+      const row = {
+        ts: new Date().toISOString(),
+        type,
+        ...payload
+      };
+      sessionLogs.push(row);
+      if (sessionLogs.length > 5000) sessionLogs.shift();
+      btnExportLog.disabled = sessionLogs.length === 0;
+      const text = JSON.stringify(row);
+      logBoxEl.value += (logBoxEl.value ? "\n" : "") + text;
+      logBoxEl.scrollTop = logBoxEl.scrollHeight;
+    }
+
+    function exportLogs() {
+      if (!sessionLogs.length) return;
+      const data = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        mode,
+        records: sessionLogs
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      a.href = url;
+      a.download = `breath-log-${stamp}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    btnInit.addEventListener("click", initDevices);
+    btnStart.addEventListener("click", start);
+    btnMicTest.addEventListener("click", startMicTest);
+    btnExportLog.addEventListener("click", exportLogs);
+    btnSoundToggle.addEventListener("click", () => {
+      cycleSoundEnabled = !cycleSoundEnabled;
+      btnSoundToggle.textContent = cycleSoundEnabled ? "提示音：开" : "提示音：关";
+      logEvent("cycle_sound_toggle", { enabled: cycleSoundEnabled });
+    });
+    btnStop.addEventListener("click", () => {
+      stop();
+      setStatus("已停止");
+      drawDurationChart();
+    });
+
+    drawDurationChart();
+  </script>
+</body>
+</html>
