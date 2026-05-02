@@ -207,6 +207,7 @@
       <button id="btnStop" disabled>停止</button>
       <button id="btnExportLog" disabled>导出日志</button>
       <button id="btnSoundToggle">提示音：开</button>
+      <button id="btnWakeLock">保持亮屏：关</button>
     </div>
 
     <div id="status">状态：未开始</div>
@@ -248,6 +249,7 @@
     const btnMicTest = document.getElementById("btnMicTest");
     const btnExportLog = document.getElementById("btnExportLog");
     const btnSoundToggle = document.getElementById("btnSoundToggle");
+    const btnWakeLock = document.getElementById("btnWakeLock");
     const deviceSelect = document.getElementById("deviceSelect");
     const statusEl = document.getElementById("status");
     const rateEl = document.getElementById("rate");
@@ -298,6 +300,8 @@
     let cycleSoundEnabled = true;
     let selectedDeviceLabel = "";
     let lowSignalStreak = 0;
+    let wakeLockEnabled = false;
+    let wakeLockSentinel = null;
 
     function setStatus(text, level = "ok") {
       statusEl.textContent = "状态：" + text;
@@ -330,6 +334,25 @@
         osc.start();
         osc.stop(audioCtx.currentTime + 0.13);
       } catch (_) {}
+      // 支持设备上同步短振动（部分机型/浏览器可能忽略）
+      try {
+        if ("vibrate" in navigator) navigator.vibrate(35);
+      } catch (_) {}
+    }
+    async function requestWakeLock() {
+      if (!wakeLockEnabled || !("wakeLock" in navigator)) return;
+      try {
+        wakeLockSentinel = await navigator.wakeLock.request("screen");
+        wakeLockSentinel.addEventListener("release", () => {
+          wakeLockSentinel = null;
+        });
+      } catch (_) {}
+    }
+    async function releaseWakeLock() {
+      try {
+        if (wakeLockSentinel) await wakeLockSentinel.release();
+      } catch (_) {}
+      wakeLockSentinel = null;
     }
 
     async function initDevices() {
@@ -404,6 +427,7 @@
         btnExportLog.disabled = true;
         setStatus("检测中...");
         logEvent("session_start", { mode: "detect", deviceId: deviceSelect.value || "default" });
+        await requestWakeLock();
         loop();
       } catch (err) {
         setStatus("启动失败: " + err.message, "bad");
@@ -469,6 +493,7 @@
       scoreEl.textContent = "--";
       breathDurations = [];
       renderDurations();
+      releaseWakeLock();
       if (sessionLogs.length) logEvent("session_stop", { totalLogs: sessionLogs.length });
     }
 
@@ -942,10 +967,28 @@
       btnSoundToggle.textContent = cycleSoundEnabled ? "提示音：开" : "提示音：关";
       logEvent("cycle_sound_toggle", { enabled: cycleSoundEnabled });
     });
+    btnWakeLock.addEventListener("click", async () => {
+      wakeLockEnabled = !wakeLockEnabled;
+      btnWakeLock.textContent = wakeLockEnabled ? "保持亮屏：开" : "保持亮屏：关";
+      if (wakeLockEnabled && (mode === "detect" || mode === "mic_test")) await requestWakeLock();
+      if (!wakeLockEnabled) await releaseWakeLock();
+      logEvent("wake_lock_toggle", { enabled: wakeLockEnabled });
+    });
     btnStop.addEventListener("click", () => {
       stop();
       setStatus("已停止");
       drawDurationChart();
+    });
+
+    document.addEventListener("visibilitychange", async () => {
+      if (document.visibilityState === "visible") {
+        if (wakeLockEnabled && (mode === "detect" || mode === "mic_test")) await requestWakeLock();
+        if (audioCtx && audioCtx.state === "suspended" && (mode === "detect" || mode === "mic_test")) {
+          try { await audioCtx.resume(); } catch (_) {}
+        }
+      } else if (mode === "detect" || mode === "mic_test") {
+        setStatus("页面进入后台，部分手机会暂停麦克风采集", "warn");
+      }
     });
 
     drawDurationChart();
