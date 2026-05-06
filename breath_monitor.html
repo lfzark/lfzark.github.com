@@ -548,7 +548,7 @@
         lastPeakAt = p.t;
         logEvent("peak", { t: round2(p.t), amp: round5(b), threshold: round5(threshold), gate: round5(ampGate) });
         const len = peaks.length;
-        if (len >= 2) {
+      if (len >= 2) {
           const dur = peaks[len - 1].t - peaks[len - 2].t;
           const [minDur, maxDur] = getAdaptiveDurRange();
           if (dur > minDur && dur < maxDur) {
@@ -557,6 +557,7 @@
               const split = splitInhaleExhale(peaks[len - 2].t, peaks[len - 1].t);
               breathDurations.push({
                 t: peaks[len - 1].t,
+                endAtMs: Date.now(),
                 d: dur,
                 inhale: split.inhale,
                 exhale: split.exhale
@@ -628,7 +629,8 @@
         const idx = start + (arr.length - 1 - i);
         const inh = typeof x.inhale === "number" ? x.inhale.toFixed(2) : "--";
         const exh = typeof x.exhale === "number" ? x.exhale.toFixed(2) : "--";
-        li.textContent = `${idx}. 总${x.d.toFixed(2)}s 吸${inh}s 呼${exh}s`;
+        const endTime = x.endAtMs ? formatClockTime(x.endAtMs) : "--:--:--";
+        li.textContent = `${idx}. 总${x.d.toFixed(2)}s 吸${inh}s 呼${exh}s 结束 ${endTime}`;
         recentDurationsEl.appendChild(li);
       });
     }
@@ -873,11 +875,19 @@
       return Math.max(0.01, med * 0.22);
     }
     function getAdaptiveDurRange() {
-      if (breathDurations.length < 6) return [1.8, 11.5];
+      // 放宽上限，避免慢呼吸（尤其长吸/长呼）被误判为异常而漏记
+      if (breathDurations.length < 6) return [1.8, 24];
       const med = median(breathDurations.slice(-18).map(x => x.d));
       const minDur = Math.max(1.8, med * 0.48);
-      const maxDur = Math.min(12, med * 2.1);
+      const maxDur = Math.min(30, Math.max(14, med * 2.8));
       return [minDur, maxDur];
+    }
+    function formatClockTime(ms) {
+      const d = new Date(ms);
+      const hh = String(d.getHours()).padStart(2, "0");
+      const mm = String(d.getMinutes()).padStart(2, "0");
+      const ss = String(d.getSeconds()).padStart(2, "0");
+      return `${hh}:${mm}:${ss}`;
     }
     function clamp(v, lo, hi) {
       return Math.max(lo, Math.min(hi, v));
