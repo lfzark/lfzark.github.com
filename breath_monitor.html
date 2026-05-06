@@ -97,6 +97,13 @@
       font-size: 14px;
     }
     .recent-list li { margin: 4px 0; }
+    .small-list {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: #d1d5db;
+      font-size: 12px;
+    }
+    .small-list li { margin: 3px 0; }
     .meter {
       width: 100%;
       height: 10px;
@@ -236,6 +243,11 @@
       <div class="label">最近几次呼吸时长（秒）</div>
       <ol id="recentDurations" class="recent-list"></ol>
     </div>
+    <div class="metric" style="margin-top: 10px;">
+      <div class="label">异常汇总（不连续/补齐）</div>
+      <div class="value" id="anomalySummary">不连续 0 次 | 补齐 0 次 | 估计缺失 0 次 | 补齐率 0.0%</div>
+      <ol id="anomalyList" class="small-list"></ol>
+    </div>
     <canvas id="chart" width="700" height="160"></canvas>
     <canvas id="durationChart" width="700" height="180"></canvas>
     <textarea id="logBox" readonly placeholder="检测日志会显示在这里"></textarea>
@@ -269,6 +281,8 @@
     const avgRateEl = document.getElementById("avgRate");
     const avgDurationEl = document.getElementById("avgDuration");
     const recentDurationsEl = document.getElementById("recentDurations");
+    const anomalySummaryEl = document.getElementById("anomalySummary");
+    const anomalyListEl = document.getElementById("anomalyList");
     const canvas = document.getElementById("chart");
     const ctx2d = canvas.getContext("2d");
     const durationCanvas = document.getElementById("durationChart");
@@ -405,6 +419,8 @@
         mode = "detect";
         modeEl.textContent = "呼吸检测";
         recentDurationsEl.innerHTML = "";
+        anomalyListEl.innerHTML = "";
+        anomalySummaryEl.textContent = "不连续 0 次 | 补齐 0 次 | 估计缺失 0 次 | 补齐率 0.0%";
         renderDurations();
         smooth = 0;
         lastPeakAt = 0;
@@ -418,6 +434,7 @@
         lowSignalStreak = 0;
         lastVoiceAlertAt = 0;
         logBoxEl.value = "";
+        updateAnomalySummary();
         micTestMode = false;
         testResultEl.textContent = "--";
         micFillEl.style.width = "0%";
@@ -548,7 +565,7 @@
         lastPeakAt = p.t;
         logEvent("peak", { t: round2(p.t), amp: round5(b), threshold: round5(threshold), gate: round5(ampGate) });
         const len = peaks.length;
-      if (len >= 2) {
+        if (len >= 2) {
           const dur = peaks[len - 1].t - peaks[len - 2].t;
           const [minDur, maxDur] = getAdaptiveDurRange();
           if (dur > minDur && dur < maxDur) {
@@ -572,11 +589,75 @@
               renderDurations();
             }
           } else {
+            if (dur >= maxDur) {
+              fillMissingCycles(peaks[len - 2].t, peaks[len - 1].t, dur, minDur, maxDur);
+            }
             logEvent("cycle_reject_outlier", { dur: round2(dur), minDur: round2(minDur), maxDur: round2(maxDur) });
           }
         }
       }
       while (peaks.length && now - peaks[0].t > 30) peaks.shift();
+    }
+
+    function fillMissingCycles(tPrevPeak, tCurrPeak, dur, minDur, maxDur) {
+      if (breathDurations.length < 4) return;
+      const win = breathDurations.slice(-16).map(x => x.d).filter(v => Number.isFinite(v) && v > 0);
+      if (win.length < 4) return;
+      const med = median(win);
+      const base = clamp(med, minDur, maxDur);
+      if (dur < base * 1.45) return;
+      const missing = Math.min(6, Math.floor(dur / base) - 1);
+      if (missing <= 0) return;
+
+      const segDur = dur / (missing + 1);
+      if (segDur < minDur * 0.85 || segDur > maxDur * 1.2) {
+        logEvent("discontinuity_detected", {
+          tPrevPeak: round2(tPrevPeak),
+          tCurrPeak: round2(tCurrPeak),
+          dur: round2(dur),
+          minDur: round2(minDur),
+          maxDur: round2(maxDur),
+          medianDur: round2(med),
+          estimatedMissing: missing,
+          inserted: 0,
+          reason: "segment_out_of_range"
+        });
+        return;
+      }
+
+      logEvent("discontinuity_detected", {
+        tPrevPeak: round2(tPrevPeak),
+        tCurrPeak: round2(tCurrPeak),
+        dur: round2(dur),
+        minDur: round2(minDur),
+        maxDur: round2(maxDur),
+        medianDur: round2(med),
+        estimatedMissing: missing,
+        inserted: missing,
+        reason: "long_gap_fill"
+      });
+
+      for (let i = 1; i <= missing; i++) {
+        const tEnd = tPrevPeak + segDur * i;
+        const endAtMs = Date.now() - Math.max(0, Math.round((tCurrPeak - tEnd) * 1000));
+        const half = segDur / 2;
+        breathDurations.push({
+          t: tEnd,
+          endAtMs,
+          d: segDur,
+          inhale: half,
+          exhale: half,
+          synthetic: true
+        });
+        logEvent("synthetic_cycle_inserted", {
+          t: round2(tEnd),
+          dur: round2(segDur),
+          basedOnGap: round2(dur),
+          seq: i,
+          total: missing
+        });
+      }
+      renderDurations();
     }
 
     function splitInhaleExhale(tPrevPeak, tCurrPeak) {
@@ -630,7 +711,8 @@
         const inh = typeof x.inhale === "number" ? x.inhale.toFixed(2) : "--";
         const exh = typeof x.exhale === "number" ? x.exhale.toFixed(2) : "--";
         const endTime = x.endAtMs ? formatClockTime(x.endAtMs) : "--:--:--";
-        li.textContent = `${idx}. 总${x.d.toFixed(2)}s 吸${inh}s 呼${exh}s 结束 ${endTime}`;
+        const tag = x.synthetic ? " [补]" : "";
+        li.textContent = `${idx}. 总${x.d.toFixed(2)}s 吸${inh}s 呼${exh}s 结束 ${endTime}${tag}`;
         recentDurationsEl.appendChild(li);
       });
     }
@@ -948,6 +1030,41 @@
       const text = JSON.stringify(row);
       logBoxEl.value += (logBoxEl.value ? "\n" : "") + text;
       logBoxEl.scrollTop = logBoxEl.scrollHeight;
+      if (type === "discontinuity_detected" || type === "synthetic_cycle_inserted" || type === "breath_cycle") {
+        updateAnomalySummary();
+      }
+    }
+
+    function updateAnomalySummary() {
+      const dis = sessionLogs.filter(x => x.type === "discontinuity_detected");
+      const syn = sessionLogs.filter(x => x.type === "synthetic_cycle_inserted");
+      const estMissing = dis.reduce((s, x) => s + (Number(x.estimatedMissing) || 0), 0);
+      const inserted = syn.length;
+      const denom = inserted + breathDurations.filter(x => !x.synthetic).length;
+      const fillRate = denom > 0 ? (inserted / denom) * 100 : 0;
+      anomalySummaryEl.textContent =
+        `不连续 ${dis.length} 次 | 补齐 ${inserted} 次 | 估计缺失 ${estMissing} 次 | 补齐率 ${fillRate.toFixed(1)}%`;
+
+      anomalyListEl.innerHTML = "";
+      if (!dis.length && !syn.length) {
+        const li = document.createElement("li");
+        li.textContent = "暂无异常记录";
+        anomalyListEl.appendChild(li);
+        return;
+      }
+      const merged = [...dis, ...syn]
+        .sort((a, b) => (a.ts < b.ts ? 1 : -1))
+        .slice(0, 10);
+      merged.forEach((x, i) => {
+        const li = document.createElement("li");
+        const t = x.ts ? x.ts.slice(11, 19) : "--:--:--";
+        if (x.type === "discontinuity_detected") {
+          li.textContent = `${i + 1}. ${t} 不连续 间隔${Number(x.dur || 0).toFixed(2)}s 估缺${Number(x.estimatedMissing || 0)} 插${Number(x.inserted || 0)}`;
+        } else {
+          li.textContent = `${i + 1}. ${t} 补齐 dur=${Number(x.dur || 0).toFixed(2)}s (${Number(x.seq || 0)}/${Number(x.total || 0)})`;
+        }
+        anomalyListEl.appendChild(li);
+      });
     }
 
     function exportLogs() {
