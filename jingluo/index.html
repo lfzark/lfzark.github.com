@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D 穴位经络标注原型</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.164.1/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="app">
+      <aside class="sidebar left">
+        <h1>经络与穴位</h1>
+        <div class="section">
+          <h2>经络图层</h2>
+          <div id="meridian-filters"></div>
+        </div>
+        <div class="section">
+          <h2>穴位检索</h2>
+          <input id="search-input" type="text" placeholder="输入穴位名..." />
+          <ul id="acupoint-list"></ul>
+        </div>
+      </aside>
+
+      <main class="viewer-wrap">
+        <canvas id="scene"></canvas>
+        <div id="loading-overlay" class="loading-overlay">
+          <div class="loading-card">
+            <div class="loading-title">正在加载人体模型</div>
+            <div id="loading-stage" class="loading-stage">准备中...</div>
+            <div class="loading-track">
+              <div id="loading-bar" class="loading-bar"></div>
+            </div>
+            <div id="loading-percent" class="loading-percent">0%</div>
+          </div>
+        </div>
+        <div class="hint">左键旋转，滚轮缩放，点击人体添加疼痛点</div>
+        <div id="perf-panel" class="perf-panel">加载中...</div>
+      </main>
+
+      <aside class="sidebar right">
+        <h2>疼痛点记录</h2>
+        <div id="selected-point-panel" class="section muted">
+          点击模型表面创建疼痛点
+        </div>
+        <ul id="pain-list"></ul>
+      </aside>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
