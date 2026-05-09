@@ -19,12 +19,39 @@ const meridianSpecs = [
   { id: 'du', code: 'DU', name: '督脉', count: 28, bilateral: false, color: 0xc2c2ff, axis: 'z', dir: 1, path: [[0, 0.04, -0.2], [0, 0.24, -0.3], [0, 0.46, -0.44], [0, 0.7, -0.38], [0, 0.94, -0.12]] },
 ];
 const FAST_INIT_MODE = false;
+const INITIAL_LIGHT_MODE = true;
 const SURFACE_CACHE_VERSION = 'v2';
 const SURFACE_CACHE_KEY = `jingluo.surfacePoints.${SURFACE_CACHE_VERSION}`;
 const PAIN_CACHE_KEY = 'jingluo.painMarks.v1';
 const COMMON_ACUPOINT_IDS = new Set([
-  'LI4', 'ST36', 'SP6', 'PC6', 'HT7', 'LR3', 'GB20', 'DU20', 'RN4', 'RN6',
-  'RN12', 'BL23', 'BL40', 'KI3', 'SJ5', 'LU7', 'LI11', 'ST25', 'GB34', 'DU14',
+  // 肺经 LU
+  'LU1', 'LU5', 'LU6', 'LU7', 'LU9', 'LU10',
+  // 大肠经 LI
+  'LI4', 'LI10', 'LI11', 'LI14', 'LI15',
+  // 胃经 ST
+  'ST25', 'ST31', 'ST34', 'ST36', 'ST40', 'ST41', 'ST44',
+  // 脾经 SP
+  'SP3', 'SP4', 'SP6', 'SP9', 'SP10',
+  // 心经 HT
+  'HT3', 'HT5', 'HT6', 'HT7',
+  // 小肠经 SI
+  'SI3', 'SI9', 'SI10', 'SI11',
+  // 膀胱经 BL
+  'BL13', 'BL15', 'BL18', 'BL20', 'BL23', 'BL25', 'BL40', 'BL57', 'BL60',
+  // 肾经 KI
+  'KI3', 'KI6', 'KI7', 'KI10',
+  // 心包经 PC
+  'PC3', 'PC4', 'PC5', 'PC6', 'PC7',
+  // 三焦经 SJ
+  'SJ5', 'SJ6', 'SJ10', 'SJ14', 'SJ17',
+  // 胆经 GB
+  'GB20', 'GB21', 'GB30', 'GB34', 'GB37', 'GB39', 'GB41',
+  // 肝经 LR
+  'LR2', 'LR3', 'LR8', 'LR13', 'LR14',
+  // 任脉 RN
+  'RN4', 'RN6', 'RN8', 'RN12', 'RN17',
+  // 督脉 DU
+  'DU4', 'DU14', 'DU16', 'DU20', 'DU24',
 ]);
 
 function lerp(a, b, t) {
@@ -98,6 +125,22 @@ function normalizeWhoId(nameWho) {
   return `${code}${idx}`;
 }
 
+const T2S_MAP = {
+  '會':'会','陰':'阴','陽':'阳','關':'关','門':'门','風':'风','氣':'气','靈':'灵','臺':'台','腦':'脑','後':'后','頂':'顶','前':'前','囟':'囟',
+  '長':'长','強':'强','腰':'腰','兪':'俞','懸':'悬','脊':'脊','樞':'枢','縮':'缩','椎':'椎','瘂':'哑','戶':'户','間':'间','百':'百','實':'实',
+  '齦':'龈','兌':'兑','魚':'鱼','際':'际','內':'内','關':'关','沖':'冲','處':'处','竅':'窍','闕':'阙','帶':'带','絡':'络','經':'经','脈':'脉',
+  '腎':'肾','膽':'胆','膀':'膀','胱':'胱','臟':'脏','腑':'腑','衛':'卫','營':'营','灸':'灸','針':'针','灘':'滩','雲':'云','俠':'侠','澤':'泽',
+  '溝':'沟','穀':'谷','嶺':'岭','濱':'滨','濕':'湿','髎':'髎','髖':'髋','臍':'脐','闌':'阑','谿':'溪','谿':'溪','厥':'厥','藥':'药','圍':'围',
+  '懷':'怀','釐':'厘','濟':'济','瀉':'泻','從':'从','來':'来','對':'对','應':'应','邊':'边','側':'侧','點':'点'
+};
+
+function toSimplified(text) {
+  if (!text) return text;
+  let out = '';
+  for (const ch of String(text)) out += (T2S_MAP[ch] || ch);
+  return out;
+}
+
 async function loadAcupointTranslations() {
   try {
     markPerf('csvStart');
@@ -119,7 +162,7 @@ async function loadAcupointTranslations() {
       const id = normalizeWhoId(cols[whoIdx]);
       if (!id) continue;
       map.set(id, {
-        name: (cols[zhIdx] || '').trim() || id,
+        name: toSimplified((cols[zhIdx] || '').trim() || id),
         effect: (cols[enIdx] || '').trim(),
       });
     }
@@ -144,8 +187,11 @@ const state = {
   selectedMarkId: null,
   selectedAcupointId: null,
   meridianVisible: Object.fromEntries(meridians.map((m) => [m.id, true])),
+  showAcupoints: true,
+  showPains: true,
+  showAllAcupoints: false,
 };
-const perf = { t0: performance.now(), marks: {} };
+const perf = { t0: performance.now(), marks: {}, rebuild: null };
 
 const canvas = document.getElementById('scene');
 const perfPanel = document.getElementById('perf-panel');
@@ -196,6 +242,7 @@ const acupointMeshes = new Map();
 const acupointWorldPos = new Map();
 const meridianMeshes = new Map();
 const bodyMeshes = [];
+let highlightedAcupointId = null;
 
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
@@ -205,6 +252,10 @@ let cameraTween = null;
 let loadingTarget = 0;
 let loadingVisual = 0;
 let loadingDone = false;
+let rebuildingInProgress = false;
+let adaptivePixelRatio = Math.min(window.devicePixelRatio, 2);
+let fpsFrameCount = 0;
+let fpsWindowStart = performance.now();
 
 function stageProgress(stage) {
   const map = {
@@ -266,6 +317,17 @@ function renderPerfPanel() {
   push('穴位/经络重建', 'rebuildStart', 'rebuildDone');
   push('CSV解析', 'csvStart', 'csvDone');
   if (m.appReady != null) lines.push(`总耗时: ${formatMs(m.appReady - perf.t0)}`);
+  if (perf.rebuild) {
+    const r = perf.rebuild;
+    lines.push('');
+    lines.push('重建细节');
+    lines.push(`- 穴位生成(计算): ${formatMs(r.acupointsComputeMs)} (${r.acupointsCount}个, 平均${r.acupointComputeAvgMs.toFixed(2)}ms/个)`);
+    lines.push(`- 穴位生成(墙钟): ${formatMs(r.acupointsWallMs)} (${r.acupointsCount}个, 平均${r.acupointWallAvgMs.toFixed(2)}ms/个)`);
+    lines.push(`- 经络生成(计算): ${formatMs(r.meridiansComputeMs)} (${r.meridiansCount}条, 平均${r.meridianComputeAvgMs.toFixed(2)}ms/条)`);
+    lines.push(`- 经络生成(墙钟): ${formatMs(r.meridiansWallMs)} (${r.meridiansCount}条, 平均${r.meridianWallAvgMs.toFixed(2)}ms/条)`);
+    lines.push(`- 可见性刷新(计算): ${formatMs(r.visibilityComputeMs)}`);
+    lines.push(`- 可见性刷新(墙钟): ${formatMs(r.visibilityWallMs)}`);
+  }
   perfPanel.textContent = lines.join('\n');
 }
 
@@ -568,6 +630,7 @@ function loadPainMarksFromCache() {
       const note = String(m.note || '');
       const createdAt = m.createdAt || new Date().toISOString();
       const pos = new THREE.Vector3(Number(m.pos[0]), Number(m.pos[1]), Number(m.pos[2]));
+      const region = m.region ? String(m.region) : classifyBodyRegion(pos);
 
       const marker = new THREE.Mesh(
         new THREE.SphereGeometry(0.01, 12, 12),
@@ -593,7 +656,7 @@ function loadPainMarksFromCache() {
       marker.userData = { type: 'pain', id, core: marker.material, halo: halo.material };
       painGroup.add(marker);
 
-      state.painMarks.push({ id, level, note, pos: pos.toArray(), createdAt });
+      state.painMarks.push({ id, level, note, region, pos: pos.toArray(), createdAt });
     });
   } catch {
     // ignore malformed cache
@@ -608,27 +671,76 @@ function savePainMarksToCache() {
   }
 }
 
+function clearAllPainMarks() {
+  state.painMarks.splice(0, state.painMarks.length);
+  state.selectedMarkId = null;
+  while (painGroup.children.length) {
+    painGroup.remove(painGroup.children[0]);
+  }
+  savePainMarksToCache();
+  updatePainMarkHighlight();
+  renderPainList();
+  renderSelectedPainPanel();
+}
+
+function exportPainMarks() {
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    count: state.painMarks.length,
+    painMarks: state.painMarks,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const ts = new Date().toISOString().replace(/[:.]/g, '-');
+  a.href = url;
+  a.download = `jingluo-pain-marks-${ts}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 function nextFrame() {
   return new Promise((resolve) => requestAnimationFrame(resolve));
 }
 
-async function rebuildAcupointsAndMeridians() {
-  markPerf('rebuildStart');
-  setLoadingProgress(58, '重建穴位中... 0%');
-  clearAcupointsAndMeridians();
-  const cachedPoints = readSurfaceCache();
-  const newCachePoints = {};
-  const useCache = !!cachedPoints;
+async function yieldByFrameBudget(frameStart, budgetMs = 6) {
+  if (performance.now() - frameStart > budgetMs) {
+    await nextFrame();
+    return performance.now();
+  }
+  return frameStart;
+}
 
-  const totalAcupoints = acupoints.length;
-  for (let idx = 0; idx < totalAcupoints; idx += 1) {
-    const point = acupoints[idx];
-    const leftKey = `${point.id}-L`;
-    const rightKey = `${point.id}-R`;
-    const leftPos = useCache && cachedPoints[leftKey]
-      ? new THREE.Vector3(...cachedPoints[leftKey])
-      : sampleSurfacePoint(point.anchor, 'L');
-    const pair = [];
+async function rebuildAcupointsAndMeridians(opts = {}) {
+  rebuildingInProgress = true;
+  try {
+    const lightMode = !!opts.lightMode;
+    markPerf('rebuildStart');
+    setLoadingProgress(58, '重建穴位中... 0%');
+    clearAcupointsAndMeridians();
+    const tRebuildStart = performance.now();
+    const cachedPoints = readSurfaceCache();
+    const newCachePoints = {};
+    const useCache = !!cachedPoints;
+    const pointsToBuild = lightMode
+      ? acupoints.filter((p) => COMMON_ACUPOINT_IDS.has(p.id))
+      : acupoints;
+
+    const totalAcupoints = pointsToBuild.length;
+    const tAcupointWallStart = performance.now();
+    let acupointComputeMs = 0;
+    let frameStart = performance.now();
+    for (let idx = 0; idx < totalAcupoints; idx += 1) {
+      const tOneStart = performance.now();
+      const point = pointsToBuild[idx];
+      const leftKey = `${point.id}-L`;
+      const rightKey = `${point.id}-R`;
+      const leftPos = useCache && cachedPoints[leftKey]
+        ? new THREE.Vector3(...cachedPoints[leftKey])
+        : sampleSurfacePoint(point.anchor, 'L');
+      const pair = [];
 
     if (leftPos) {
       const leftMesh = createAcupointMesh(leftPos, point, 'L');
@@ -651,20 +763,26 @@ async function rebuildAcupointsAndMeridians() {
       }
     }
 
-    acupointMeshes.set(point.id, pair);
+      acupointMeshes.set(point.id, pair);
 
     // 58% -> 78%
-    if (idx % 8 === 0 || idx === totalAcupoints - 1) {
-      const p = Math.round(((idx + 1) / totalAcupoints) * 100);
-      const prefix = useCache ? '重建穴位中(缓存)... ' : '重建穴位中... ';
-      setLoadingProgress(58 + ((idx + 1) / totalAcupoints) * 20, `${prefix}${p}%`);
-      await nextFrame();
+      if (idx % 8 === 0 || idx === totalAcupoints - 1) {
+        const p = Math.round(((idx + 1) / totalAcupoints) * 100);
+        const prefix = useCache ? '重建穴位中(缓存)... ' : '重建穴位中... ';
+        setLoadingProgress(58 + ((idx + 1) / totalAcupoints) * 20, `${prefix}${p}%`);
+      }
+      acupointComputeMs += performance.now() - tOneStart;
+      frameStart = await yieldByFrameBudget(frameStart, 6);
     }
-  }
-  if (!useCache) writeSurfaceCache(newCachePoints);
+    if (!useCache) writeSurfaceCache(newCachePoints);
+    const tAcupointWallDone = performance.now();
 
-  const totalMeridians = meridians.length;
-  for (let idx = 0; idx < totalMeridians; idx += 1) {
+    const totalMeridians = meridians.length;
+    const tMeridianWallStart = performance.now();
+    let meridianComputeMs = 0;
+    frameStart = performance.now();
+    for (let idx = 0; idx < totalMeridians; idx += 1) {
+    const tOneStart = performance.now();
     const m = meridians[idx];
     const sides = ['L', 'R'];
     const meshes = [];
@@ -674,14 +792,17 @@ async function rebuildAcupointsAndMeridians() {
       if (pts.length < 2) return;
 
       const curve = new THREE.CatmullRomCurve3(pts);
-      const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(120));
-      const material = new THREE.LineBasicMaterial({
+      const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(60));
+      const material = new THREE.LineDashedMaterial({
         color: m.color,
         transparent: true,
-        opacity: 0.5,
+        opacity: 0.42,
+        dashSize: 0.04,
+        gapSize: 0.028,
         depthWrite: false,
       });
       const line = new THREE.Line(geometry, material);
+      line.computeLineDistances();
       line.visible = state.meridianVisible[m.id];
       meridianGroup.add(line);
       meshes.push(line);
@@ -690,24 +811,58 @@ async function rebuildAcupointsAndMeridians() {
     meridianMeshes.set(m.id, meshes);
 
     // 78% -> 86%
-    if (idx % 2 === 0 || idx === totalMeridians - 1) {
+      if (idx % 2 === 0 || idx === totalMeridians - 1) {
       const p = Math.round(((idx + 1) / totalMeridians) * 100);
       setLoadingProgress(78 + ((idx + 1) / totalMeridians) * 8, `重建经络中... ${p}%`);
-      await nextFrame();
+      }
+      meridianComputeMs += performance.now() - tOneStart;
+      frameStart = await yieldByFrameBudget(frameStart, 6);
     }
-  }
+    const tMeridianWallDone = performance.now();
 
-  for (let idx = 0; idx < totalAcupoints; idx += 1) {
-    const p = acupoints[idx];
+    const tVisibilityWallStart = performance.now();
+    let visibilityComputeMs = 0;
+    frameStart = performance.now();
+    for (let idx = 0; idx < totalAcupoints; idx += 1) {
+    const tOneStart = performance.now();
+    const p = pointsToBuild[idx];
     const visible = state.meridianVisible[p.meridianId];
     (acupointMeshes.get(p.id) || []).forEach((mesh) => {
-      mesh.visible = visible && COMMON_ACUPOINT_IDS.has(p.id);
+      mesh.visible = state.showAcupoints && visible && (state.showAllAcupoints || COMMON_ACUPOINT_IDS.has(p.id));
     });
-    if (idx % 24 === 0 || idx === totalAcupoints - 1) await nextFrame();
+      visibilityComputeMs += performance.now() - tOneStart;
+      frameStart = await yieldByFrameBudget(frameStart, 6);
+    }
+    const tVisibilityWallDone = performance.now();
+    const tRebuildDone = tVisibilityWallDone;
+    const acupointsWallMs = tAcupointWallDone - tAcupointWallStart;
+    const meridiansWallMs = tMeridianWallDone - tMeridianWallStart;
+    const visibilityWallMs = tVisibilityWallDone - tVisibilityWallStart;
+    perf.rebuild = {
+      totalMs: tRebuildDone - tRebuildStart,
+      acupointsComputeMs: acupointComputeMs,
+      meridiansComputeMs: meridianComputeMs,
+      visibilityComputeMs,
+      acupointsWallMs,
+      meridiansWallMs,
+      visibilityWallMs,
+      acupointsCount: totalAcupoints,
+      meridiansCount: totalMeridians,
+      acupointComputeAvgMs: totalAcupoints ? acupointComputeMs / totalAcupoints : 0,
+      acupointWallAvgMs: totalAcupoints ? acupointsWallMs / totalAcupoints : 0,
+      meridianComputeAvgMs: totalMeridians ? meridianComputeMs / totalMeridians : 0,
+      meridianWallAvgMs: totalMeridians ? meridiansWallMs / totalMeridians : 0,
+      cached: useCache,
+      lightMode,
+    };
+    setLoadingProgress(86, '穴位/经络重建完成');
+    markPerf('rebuildDone');
+    finalizePerfIfReady();
+    renderPerfPanel();
+    applyVisibilityStates();
+  } finally {
+    rebuildingInProgress = false;
   }
-  setLoadingProgress(86, '穴位/经络重建完成');
-  markPerf('rebuildDone');
-  finalizePerfIfReady();
 }
 
 function loadHumanModel() {
@@ -725,7 +880,7 @@ function loadHumanModel() {
       fitModelToScene(model);
       markPerf('modelFitted');
       collectBodyMeshes(bodyRoot);
-      rebuildAcupointsAndMeridians();
+      rebuildAcupointsAndMeridians({ lightMode: INITIAL_LIGHT_MODE });
     },
     undefined,
     () => {
@@ -762,6 +917,7 @@ function createPainMark(pos) {
   const id = `P-${Date.now()}`;
   const level = 5;
   const note = '';
+  const region = classifyBodyRegion(pos);
   const marker = new THREE.Mesh(
     new THREE.SphereGeometry(0.01, 12, 12),
     new THREE.MeshBasicMaterial({
@@ -785,15 +941,50 @@ function createPainMark(pos) {
 
   marker.position.copy(pos);
   marker.userData = { type: 'pain', id, core: marker.material, halo: halo.material };
+  marker.visible = state.showPains;
   painGroup.add(marker);
 
-  state.painMarks.push({ id, level, note, pos: pos.toArray(), createdAt: new Date().toISOString() });
+  state.painMarks.push({ id, level, note, region, pos: pos.toArray(), createdAt: new Date().toISOString() });
   savePainMarksToCache();
   focusPainMark(id);
 }
 
+function classifyBodyRegion(pos) {
+  tempBox.setFromObject(bodyRoot);
+  const center = tempBox.getCenter(new THREE.Vector3());
+  const size = tempBox.getSize(new THREE.Vector3());
+  const nx = size.x > 1e-6 ? (pos.x - center.x) / (size.x * 0.5) : 0;
+  const ny = size.y > 1e-6 ? (pos.y - tempBox.min.y) / size.y : 0;
+  const nz = size.z > 1e-6 ? (pos.z - center.z) / (size.z * 0.5) : 0;
+  const side = nx >= 0 ? '左' : '右';
+
+  if (ny >= 0.88) return '头颈';
+  if (Math.abs(nx) <= 0.2 && ny >= 0.7) return nz > 0 ? '前颈/胸上' : '后颈/上背';
+  if (Math.abs(nx) <= 0.28 && ny >= 0.5) return nz > 0 ? '胸腹' : '背腰';
+  if (Math.abs(nx) <= 0.2 && ny >= 0.28) return nz > 0 ? '下腹/骨盆' : '腰骶';
+  if (Math.abs(nx) <= 0.24 && ny < 0.28) return '会阴/下肢根部';
+
+  if (Math.abs(nx) >= 0.62) {
+    if (ny >= 0.68) return `${side}上臂`;
+    if (ny >= 0.52) return `${side}前臂`;
+    return `${side}手`;
+  }
+
+  if (Math.abs(nx) >= 0.3) {
+    if (ny >= 0.58) return `${side}肩部`;
+    if (ny >= 0.35) return `${side}胸胁`;
+    if (ny >= 0.18) return `${side}髋部`;
+    return `${side}大腿根`;
+  }
+
+  if (ny >= 0.2) return `${side}大腿`;
+  if (ny >= 0.08) return `${side}小腿`;
+  return `${side}足部`;
+}
+
 function updatePainMarkHighlight() {
   painGroup.children.forEach((mesh) => {
+    mesh.visible = state.showPains;
     const selected = mesh.userData.id === state.selectedMarkId;
     mesh.scale.setScalar(selected ? 1.45 : 1);
     if (mesh.userData.core) {
@@ -805,6 +996,36 @@ function updatePainMarkHighlight() {
       mesh.userData.halo.color.set(selected ? 0xffb347 : 0xff6f61);
     }
   });
+}
+
+function updateToolButtons() {
+  const apBtn = document.getElementById('toggle-acupoints-btn');
+  const painBtn = document.getElementById('toggle-pains-btn');
+  const showAllBtn = document.getElementById('show-all-btn');
+  if (apBtn) apBtn.classList.toggle('active', state.showAcupoints);
+  if (painBtn) painBtn.classList.toggle('active', state.showPains);
+  if (showAllBtn) {
+    showAllBtn.textContent = state.showAllAcupoints
+      ? '切回常用穴位和经络（更流畅）'
+      : '显示全部穴位和经络（可能较卡）';
+  }
+}
+
+function applyVisibilityStates() {
+  acupoints.forEach((p) => {
+    const visibleByFilter = !!state.meridianVisible[p.meridianId];
+    const visibleByInit = state.showAllAcupoints || COMMON_ACUPOINT_IDS.has(p.id) || p.id === state.selectedAcupointId;
+    (acupointMeshes.get(p.id) || []).forEach((mesh) => {
+      mesh.visible = state.showAcupoints && visibleByFilter && visibleByInit;
+    });
+  });
+  meridians.forEach((m) => {
+    (meridianMeshes.get(m.id) || []).forEach((mesh) => {
+      mesh.visible = state.showAcupoints && !!state.meridianVisible[m.id];
+    });
+  });
+  updatePainMarkHighlight();
+  updateToolButtons();
 }
 
 function tweenCameraTo(targetPos, distance = 0.85) {
@@ -839,25 +1060,64 @@ function focusAcupoint(id) {
   state.selectedAcupointId = id;
   state.selectedMarkId = null;
   updatePainMarkHighlight();
-
-  acupointMeshes.forEach((pair, key) => {
-    const isTarget = key === id;
-    pair.forEach((mesh) => {
-      if (isTarget) mesh.visible = true;
-      mesh.scale.setScalar(isTarget ? 0.05 : 0.03);
-      if (mesh.userData.mat) {
-        mesh.userData.mat.opacity = isTarget ? 0.95 : 0.65;
-        mesh.userData.mat.color.set(isTarget ? 0xffcf6c : 0xffefb6);
-      }
-    });
-  });
-
-  const targetPos = acupointWorldPos.get(`${id}-L`) || acupointWorldPos.get(`${id}-R`);
-  if (!targetPos) return;
-
   renderAcupointList(document.getElementById('search-input').value);
   renderPainList();
+
+  if (highlightedAcupointId && highlightedAcupointId !== id) {
+    (acupointMeshes.get(highlightedAcupointId) || []).forEach((mesh) => {
+      mesh.scale.setScalar(0.03);
+      if (mesh.userData.mat) {
+        mesh.userData.mat.opacity = 0.65;
+        mesh.userData.mat.color.set(0xffefb6);
+      }
+      const meta = mesh.userData?.meta;
+      if (meta) {
+        mesh.visible = state.showAcupoints
+          && state.meridianVisible[meta.meridianId]
+          && (state.showAllAcupoints || COMMON_ACUPOINT_IDS.has(meta.id));
+      }
+    });
+  }
+
+  (acupointMeshes.get(id) || []).forEach((mesh) => {
+    mesh.visible = state.showAcupoints;
+    mesh.scale.setScalar(0.05);
+    if (mesh.userData.mat) {
+      mesh.userData.mat.opacity = 0.95;
+      mesh.userData.mat.color.set(0xffcf6c);
+    }
+  });
+  highlightedAcupointId = id;
+
+  let targetPos = acupointWorldPos.get(`${id}-L`) || acupointWorldPos.get(`${id}-R`);
+  if (!targetPos) {
+    const point = acupoints.find((p) => p.id === id);
+    if (point) {
+      setLoadingProgress(93, `补点中... ${id}`);
+      if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+      const pair = acupointMeshes.get(id) || [];
+      const leftPos = sampleSurfacePoint(point.anchor, 'L');
+      if (leftPos) {
+        const leftMesh = createAcupointMesh(leftPos, point, 'L');
+        leftMesh.visible = state.showAcupoints;
+        leftMesh.scale.setScalar(0.05);
+        if (leftMesh.userData.mat) {
+          leftMesh.userData.mat.opacity = 0.95;
+          leftMesh.userData.mat.color.set(0xffcf6c);
+        }
+        acupointGroup.add(leftMesh);
+        pair.push(leftMesh);
+        acupointWorldPos.set(`${id}-L`, leftPos.clone());
+        targetPos = leftPos.clone();
+      }
+      acupointMeshes.set(id, pair);
+      setLoadingProgress(96, `补点完成 ${id}`);
+      if (loadingOverlay) setTimeout(() => loadingOverlay.classList.add('hidden'), 160);
+    }
+  }
+  if (!targetPos) return;
   tweenCameraTo(targetPos, 0.78);
+  applyVisibilityStates();
 }
 
 function renderMeridianFilters() {
@@ -873,15 +1133,7 @@ function renderMeridianFilters() {
     input.checked = state.meridianVisible[m.id];
     input.addEventListener('change', () => {
       state.meridianVisible[m.id] = input.checked;
-      (meridianMeshes.get(m.id) || []).forEach((mesh) => {
-        mesh.visible = input.checked;
-      });
-      acupoints.forEach((p) => {
-        if (p.meridianId !== m.id) return;
-        (acupointMeshes.get(p.id) || []).forEach((mesh) => {
-          mesh.visible = input.checked && (COMMON_ACUPOINT_IDS.has(p.id) || p.id === state.selectedAcupointId);
-        });
-      });
+      applyVisibilityStates();
     });
 
     const text = document.createElement('span');
@@ -919,7 +1171,8 @@ function renderPainList() {
       const li = document.createElement('li');
       if (mark.id === state.selectedMarkId) li.classList.add('selected');
       const when = new Date(mark.createdAt).toLocaleString('zh-CN');
-      li.innerHTML = `<strong>${mark.id}</strong><br/>疼痛等级: ${mark.level}<br/><small>${when}</small>`;
+      const regionLine = mark.region ? `部位: ${mark.region}<br/>` : '';
+      li.innerHTML = `<strong>${mark.id}</strong><br/>${regionLine}疼痛等级: ${mark.level}<br/><small>${when}</small>`;
       li.addEventListener('click', () => {
         focusPainMark(mark.id);
       });
@@ -940,7 +1193,7 @@ function renderSelectedPainPanel() {
   panel.innerHTML = '';
 
   const levelLabel = document.createElement('label');
-  levelLabel.textContent = '疼痛等级 (1-10)';
+  levelLabel.textContent = `疼痛等级 (1-10)${selected.region ? ` · ${selected.region}` : ''}`;
   const levelInput = document.createElement('input');
   levelInput.type = 'range';
   levelInput.min = '1';
@@ -996,12 +1249,166 @@ document.getElementById('search-input').addEventListener('input', (ev) => {
   renderAcupointList(ev.target.value);
 });
 
+const exportPainBtn = document.getElementById('export-pain-btn');
+if (exportPainBtn) {
+  exportPainBtn.addEventListener('click', () => exportPainMarks());
+}
+
+const clearPainBtn = document.getElementById('clear-pain-btn');
+if (clearPainBtn) {
+  clearPainBtn.addEventListener('click', () => {
+    if (!state.painMarks.length) return;
+    const ok = window.confirm(`确认清空 ${state.painMarks.length} 条疼痛点记录？`);
+    if (!ok) return;
+    clearAllPainMarks();
+  });
+}
+
+const perfToggleBtn = document.getElementById('toggle-perf-btn');
+if (perfToggleBtn && perfPanel) {
+  perfPanel.classList.add('hidden');
+  perfToggleBtn.addEventListener('click', () => {
+    perfPanel.classList.toggle('hidden');
+  });
+}
+
+const toggleAcupointsBtn = document.getElementById('toggle-acupoints-btn');
+if (toggleAcupointsBtn) {
+  toggleAcupointsBtn.addEventListener('click', () => {
+    state.showAcupoints = !state.showAcupoints;
+    applyVisibilityStates();
+  });
+}
+
+const togglePainsBtn = document.getElementById('toggle-pains-btn');
+if (togglePainsBtn) {
+  togglePainsBtn.addEventListener('click', () => {
+    state.showPains = !state.showPains;
+    applyVisibilityStates();
+  });
+}
+
+const resetViewBtn = document.getElementById('reset-view-btn');
+if (resetViewBtn) {
+  resetViewBtn.addEventListener('click', () => {
+    cameraTween = null;
+    controls.target.set(0, 1.0, 0);
+    camera.position.set(1.8, 1.35, 2.3);
+    controls.update();
+  });
+}
+
+const showAllBtn = document.getElementById('show-all-btn');
+if (showAllBtn) {
+  showAllBtn.addEventListener('click', async () => {
+    if (rebuildingInProgress) return;
+    state.showAllAcupoints = !state.showAllAcupoints;
+    setLoadingProgress(
+      60,
+      state.showAllAcupoints
+        ? '正在切换到全部穴位/经络，可能较卡顿，请稍候...'
+        : '正在切换到常用穴位/经络...'
+    );
+    if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+    showAllBtn.disabled = true;
+    showAllBtn.classList.add('is-loading');
+    try {
+      await rebuildAcupointsAndMeridians({ lightMode: !state.showAllAcupoints });
+      if (state.selectedAcupointId) focusAcupoint(state.selectedAcupointId);
+      else applyVisibilityStates();
+    } finally {
+      showAllBtn.disabled = false;
+      showAllBtn.classList.remove('is-loading');
+      if (loadingOverlay) setTimeout(() => loadingOverlay.classList.add('hidden'), 160);
+    }
+  });
+}
+
+const leftSidebar = document.querySelector('.sidebar.left');
+const rightSidebar = document.querySelector('.sidebar.right');
+const toggleLeftBtn = document.getElementById('toggle-left-btn');
+const toggleRightBtn = document.getElementById('toggle-right-btn');
+const mobileBackdrop = document.getElementById('mobile-backdrop');
+
+function closeMobilePanels() {
+  if (leftSidebar) leftSidebar.classList.remove('show');
+  if (rightSidebar) rightSidebar.classList.remove('show');
+  document.body.classList.remove('panel-open');
+}
+
+function syncPanelOpenFlag() {
+  const open = (leftSidebar && leftSidebar.classList.contains('show')) ||
+    (rightSidebar && rightSidebar.classList.contains('show'));
+  document.body.classList.toggle('panel-open', !!open);
+}
+
+function applyMobileMode() {
+  const isMobile = window.innerWidth <= 1280 || window.matchMedia('(pointer: coarse)').matches;
+  document.body.classList.toggle('mobile-mode', isMobile);
+  if (!isMobile) closeMobilePanels();
+}
+applyMobileMode();
+
+if (toggleLeftBtn && leftSidebar && rightSidebar) {
+  toggleLeftBtn.addEventListener('click', () => {
+    const next = !leftSidebar.classList.contains('show');
+    rightSidebar.classList.remove('show');
+    leftSidebar.classList.toggle('show', next);
+    syncPanelOpenFlag();
+  });
+}
+
+if (toggleRightBtn && leftSidebar && rightSidebar) {
+  toggleRightBtn.addEventListener('click', () => {
+    const next = !rightSidebar.classList.contains('show');
+    leftSidebar.classList.remove('show');
+    rightSidebar.classList.toggle('show', next);
+    syncPanelOpenFlag();
+  });
+}
+
+if (mobileBackdrop) {
+  mobileBackdrop.addEventListener('click', () => closeMobilePanels());
+}
+
+function bindSwipeClose(panel, side) {
+  if (!panel) return;
+  let startX = 0;
+  let startY = 0;
+  let active = false;
+  panel.addEventListener('touchstart', (e) => {
+    if (!panel.classList.contains('show')) return;
+    const t = e.changedTouches[0];
+    startX = t.clientX;
+    startY = t.clientY;
+    active = true;
+  }, { passive: true });
+  panel.addEventListener('touchend', (e) => {
+    if (!active) return;
+    active = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX;
+    const dy = Math.abs(t.clientY - startY);
+    if (dy > 40) return;
+    if (side === 'left' && dx < -48) closeMobilePanels();
+    if (side === 'right' && dx > 48) closeMobilePanels();
+  }, { passive: true });
+}
+
+bindSwipeClose(leftSidebar, 'left');
+bindSwipeClose(rightSidebar, 'right');
+
+window.addEventListener('resize', () => {
+  applyMobileMode();
+});
+
 renderMeridianFilters();
 renderAcupointList('');
 loadPainMarksFromCache();
 renderPainList();
 renderSelectedPainPanel();
 loadAcupointTranslations();
+applyVisibilityStates();
 
 window.addEventListener('resize', () => {
   const w = canvas.clientWidth;
@@ -1012,6 +1419,18 @@ window.addEventListener('resize', () => {
 });
 
 function animate() {
+  fpsFrameCount += 1;
+  const now = performance.now();
+  const winMs = now - fpsWindowStart;
+  if (winMs >= 1000) {
+    const fps = (fpsFrameCount * 1000) / winMs;
+    const maxDpr = Math.min(window.devicePixelRatio, 2);
+    if (fps < 28) adaptivePixelRatio = Math.max(1, adaptivePixelRatio - 0.1);
+    else if (fps > 52) adaptivePixelRatio = Math.min(maxDpr, adaptivePixelRatio + 0.05);
+    renderer.setPixelRatio(adaptivePixelRatio);
+    fpsFrameCount = 0;
+    fpsWindowStart = now;
+  }
   if (cameraTween) {
     cameraTween.t += 1 / 60 / cameraTween.duration;
     const t = Math.min(1, cameraTween.t);

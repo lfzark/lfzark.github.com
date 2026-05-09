@@ -60,12 +60,63 @@ h2 {
   margin-bottom: 14px;
 }
 
+.advanced-panel summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.advanced-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.advanced-panel[open] summary {
+  margin-bottom: 10px;
+  color: var(--text);
+}
+
 .muted {
   color: var(--muted);
 }
 
 .viewer-wrap {
   position: relative;
+}
+
+.viewer-tools {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 36;
+  display: flex;
+  gap: 8px;
+}
+
+.viewer-tools button {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  border-radius: 10px;
+  padding: 0;
+  font-size: 18px;
+  line-height: 1;
+  background: rgba(8, 24, 36, 0.88);
+  color: #d5ebf8;
+  border: 1px solid var(--line);
+}
+
+.viewer-tools button.active {
+  background: rgba(44, 92, 124, 0.95);
+}
+
+.mobile-fab-bar {
+  display: none;
+}
+
+.mobile-backdrop {
+  display: none;
 }
 
 .loading-overlay {
@@ -165,6 +216,10 @@ h2 {
   white-space: pre-line;
 }
 
+.perf-panel.hidden {
+  display: none;
+}
+
 input,
 textarea,
 button,
@@ -190,6 +245,49 @@ button {
   border: none;
   color: #062338;
   font-weight: 700;
+}
+
+button.danger {
+  background: var(--danger);
+  color: #2b0b07;
+}
+
+button.ghost {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+button.ghost.is-loading {
+  position: relative;
+  padding-left: 30px;
+  opacity: 0.9;
+}
+
+button.ghost.is-loading::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin-top: -6px;
+  border: 2px solid rgba(123, 200, 255, 0.28);
+  border-top-color: #7bc8ff;
+  border-radius: 50%;
+  animation: btnSpin 0.8s linear infinite;
+}
+
+@keyframes btnSpin {
+  to { transform: rotate(360deg); }
+}
+
+.pain-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 ul {
@@ -230,19 +328,262 @@ li small {
 
 @media (max-width: 1100px) {
   #app {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 50vh auto;
-    height: auto;
-    min-height: 100vh;
+    display: block;
+    height: 100dvh;
+    min-height: 100dvh;
+    padding: 0;
   }
 
-  .sidebar.right,
-  .sidebar.left {
+  .sidebar {
+    position: fixed;
+    z-index: 40;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: min(86vw, 360px);
     border: none;
-    border-bottom: 1px solid var(--line);
+    border-radius: 0;
+    padding: 12px;
+    background: linear-gradient(180deg, rgba(19, 38, 54, 0.98), rgba(24, 49, 70, 0.98));
+    transform: translateX(-104%);
+    transition: transform 0.25s ease;
+  }
+
+  .sidebar.right {
+    left: auto;
+    right: 0;
+    transform: translateX(104%);
+    border-left: 1px solid var(--line);
+  }
+
+  .sidebar.show {
+    transform: translateX(0);
   }
 
   .viewer-wrap {
-    min-height: 420px;
+    height: 100dvh;
+    overflow: hidden;
+    background: #07131d;
+  }
+
+  h1 {
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+
+  h2 {
+    font-size: 17px;
+    margin-bottom: 10px;
+  }
+
+  .section {
+    margin-bottom: 10px;
+    border-radius: 12px;
+    padding: 10px;
+  }
+
+  .sidebar.left .section:first-of-type {
+    max-height: none;
+    overflow: visible;
+  }
+
+  #acupoint-list {
+    max-height: 200px;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #pain-list {
+    max-height: 220px;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .hint {
+    left: 8px;
+    bottom: 64px;
+    max-width: 50%;
+    font-size: 11px;
+    padding: 6px 8px;
+    opacity: 0.86;
+  }
+
+  .perf-panel {
+    right: 8px;
+    bottom: 64px;
+    min-width: 0;
+    width: min(56vw, 280px);
+    max-width: 56vw;
+    font-size: 11px;
+    line-height: 1.35;
+    padding: 6px 8px;
+    max-height: 38vh;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .advanced-panel {
+    padding: 10px;
+  }
+
+  .pain-actions {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .pain-actions button {
+    min-height: 42px;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+
+  input,
+  textarea,
+  button,
+  select {
+    font-size: 16px;
+  }
+
+  .mobile-fab-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    z-index: 35;
+  }
+
+  .mobile-fab-bar button {
+    min-height: 42px;
+    background: rgba(9, 27, 41, 0.92);
+    color: #cbe3f3;
+    border: 1px solid var(--line);
+    margin: 0;
+  }
+
+  .viewer-tools {
+    top: 8px;
+    right: 8px;
+    gap: 6px;
+  }
+
+  .viewer-tools button {
+    width: 34px;
+    height: 34px;
+    min-height: 34px;
+    font-size: 16px;
+    border-radius: 9px;
+  }
+}
+
+body.mobile-mode #app {
+  display: block;
+  height: 100dvh;
+  min-height: 100dvh;
+  padding: 0;
+}
+
+body.mobile-mode .sidebar {
+  position: fixed;
+  z-index: 40;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: min(86vw, 360px);
+  border: none;
+  border-radius: 0;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(19, 38, 54, 0.98), rgba(24, 49, 70, 0.98));
+  transform: translateX(-104%);
+  transition: transform 0.25s ease;
+}
+
+body.mobile-mode .sidebar.right {
+  left: auto;
+  right: 0;
+  transform: translateX(104%);
+  border-left: 1px solid var(--line);
+}
+
+body.mobile-mode .sidebar.show {
+  transform: translateX(0);
+}
+
+body.mobile-mode .viewer-wrap {
+  height: 100dvh;
+  overflow: hidden;
+  background: #07131d;
+}
+
+body.mobile-mode .mobile-fab-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 35;
+}
+
+body.mobile-mode .mobile-backdrop {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 34;
+  background: rgba(3, 10, 16, 0.48);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+body.mobile-mode.panel-open .mobile-backdrop {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (max-width: 720px) {
+  #app {
+    padding: 0;
+  }
+
+  .sidebar {
+    padding: 10px;
+    width: 88vw;
+  }
+
+  h1 {
+    font-size: 22px;
+  }
+
+  .viewer-wrap {
+    height: 100dvh;
+  }
+
+  .loading-card {
+    width: calc(100vw - 28px);
+    padding: 14px 14px 12px;
+  }
+
+  .loading-title {
+    font-size: 15px;
+  }
+
+  .hint {
+    max-width: 44%;
+    font-size: 10px;
+    padding: 5px 7px;
+  }
+
+  .perf-panel {
+    width: min(58vw, 240px);
+    max-width: 58vw;
+  }
+
+  .pain-actions {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 }
