@@ -290,6 +290,16 @@ button.ghost.is-loading::before {
   margin-bottom: 12px;
 }
 
+#daily-report-output {
+  white-space: pre-line;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+  margin-bottom: 8px;
+  background: rgba(15, 34, 49, 0.55);
+  font-size: 12px;
+}
+
 ul {
   list-style: none;
   padding: 0;

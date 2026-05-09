@@ -23,6 +23,8 @@ const INITIAL_LIGHT_MODE = true;
 const SURFACE_CACHE_VERSION = 'v2';
 const SURFACE_CACHE_KEY = `jingluo.surfacePoints.${SURFACE_CACHE_VERSION}`;
 const PAIN_CACHE_KEY = 'jingluo.painMarks.v1';
+const UNBLOCK_CACHE_KEY = 'jingluo.unblockRecords.v1';
+const ACU_LISTS_CACHE_KEY = 'jingluo.acupointLists.v1';
 const COMMON_ACUPOINT_IDS = new Set([
   // 肺经 LU
   'LU1', 'LU5', 'LU6', 'LU7', 'LU9', 'LU10',
@@ -184,6 +186,10 @@ async function loadAcupointTranslations() {
 
 const state = {
   painMarks: [],
+  unblockRecords: [],
+  pickedAcupointIds: [],
+  acupointLists: [],
+  activeAcupointListName: '',
   selectedMarkId: null,
   selectedAcupointId: null,
   meridianVisible: Object.fromEntries(meridians.map((m) => [m.id, true])),
@@ -671,6 +677,110 @@ function savePainMarksToCache() {
   }
 }
 
+function loadUnblockRecordsFromCache() {
+  try {
+    const raw = localStorage.getItem(UNBLOCK_CACHE_KEY);
+    if (!raw) return;
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list)) return;
+    state.unblockRecords = list
+      .filter((x) => x && x.painId && x.at)
+      .map((x) => ({
+        id: String(x.id || `U-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`),
+        painId: String(x.painId),
+        region: String(x.region || ''),
+        level: Number(x.level) || 0,
+        note: String(x.note || ''),
+        at: String(x.at),
+      }));
+  } catch {
+    state.unblockRecords = [];
+  }
+}
+
+function saveUnblockRecordsToCache() {
+  try {
+    localStorage.setItem(UNBLOCK_CACHE_KEY, JSON.stringify(state.unblockRecords));
+  } catch {
+    // ignore storage failure
+  }
+}
+
+function markPainUnblocked(painId) {
+  const mark = state.painMarks.find((m) => m.id === painId);
+  if (!mark) return;
+  state.unblockRecords.unshift({
+    id: `U-${Date.now()}`,
+    painId: mark.id,
+    region: mark.region || '',
+    level: Number(mark.level) || 0,
+    note: mark.note || '',
+    at: new Date().toISOString(),
+  });
+  saveUnblockRecordsToCache();
+  renderUnblockList();
+}
+
+function generateDailyReportText(date = new Date()) {
+  const d = new Date(date);
+  const y = d.getFullYear();
+  const m = `${d.getMonth() + 1}`.padStart(2, '0');
+  const day = `${d.getDate()}`.padStart(2, '0');
+  const key = `${y}-${m}-${day}`;
+  const today = state.unblockRecords.filter((r) => String(r.at).startsWith(key));
+  const header = `疏通日报 ${key}`;
+  if (!today.length) return `${header}\n- 今日暂无疏通记录`;
+
+  const regionCount = new Map();
+  today.forEach((r) => {
+    const region = r.region || '未标注部位';
+    regionCount.set(region, (regionCount.get(region) || 0) + 1);
+  });
+  const topRegions = [...regionCount.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([region, c]) => `${region}(${c})`)
+    .join('，');
+  const avgLevel = (today.reduce((s, r) => s + (Number(r.level) || 0), 0) / today.length).toFixed(1);
+  return [
+    header,
+    `- 疏通次数: ${today.length}`,
+    `- 平均疼痛等级: ${avgLevel}`,
+    `- 高频部位: ${topRegions || '无'}`,
+  ].join('\n');
+}
+
+function exportDailyReport() {
+  const content = generateDailyReportText(new Date());
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = `${d.getMonth() + 1}`.padStart(2, '0');
+  const day = `${d.getDate()}`.padStart(2, '0');
+  a.href = url;
+  a.download = `jingluo-unblock-report-${y}${m}${day}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function renderUnblockList() {
+  const report = document.getElementById('daily-report-output');
+  const list = document.getElementById('unblock-list');
+  if (report) report.textContent = generateDailyReportText(new Date());
+  if (!list) return;
+  list.innerHTML = '';
+  state.unblockRecords.slice(0, 30).forEach((r) => {
+    const li = document.createElement('li');
+    const when = new Date(r.at).toLocaleString('zh-CN');
+    li.innerHTML = `<strong>${r.painId}</strong><br/>部位: ${r.region || '未标注'} · 等级: ${r.level}<br/><small>${when}</small>`;
+    list.appendChild(li);
+  });
+}
+
 function clearAllPainMarks() {
   state.painMarks.splice(0, state.painMarks.length);
   state.selectedMarkId = null;
@@ -681,6 +791,7 @@ function clearAllPainMarks() {
   updatePainMarkHighlight();
   renderPainList();
   renderSelectedPainPanel();
+  renderUnblockList();
 }
 
 function exportPainMarks() {
@@ -1154,10 +1265,111 @@ function renderAcupointList(filter = '') {
     .forEach((p) => {
       const li = document.createElement('li');
       if (p.id === state.selectedAcupointId) li.classList.add('selected');
-      li.innerHTML = `<strong>${p.id} ${p.name}</strong><br/><small>${p.effect}</small>`;
-      li.addEventListener('click', () => focusAcupoint(p.id));
+      const checked = state.pickedAcupointIds.includes(p.id) ? 'checked' : '';
+      li.innerHTML = `<label class="checkbox-row"><input type="checkbox" data-pick-id="${p.id}" ${checked}/><span><strong>${p.id} ${p.name}</strong><br/><small>${p.effect}</small></span></label>`;
+      li.addEventListener('click', (ev) => {
+        const t = ev.target;
+        if (t && t.matches && t.matches('input[data-pick-id]')) return;
+        focusAcupoint(p.id);
+      });
       list.appendChild(li);
     });
+  list.querySelectorAll('input[data-pick-id]').forEach((input) => {
+    input.addEventListener('change', (ev) => {
+      const id = ev.target.getAttribute('data-pick-id');
+      if (!id) return;
+      if (ev.target.checked) {
+        if (!state.pickedAcupointIds.includes(id)) state.pickedAcupointIds.push(id);
+      } else {
+        state.pickedAcupointIds = state.pickedAcupointIds.filter((x) => x !== id);
+      }
+      renderPickedAcupointList();
+    });
+  });
+}
+
+function renderPickedAcupointList() {
+  const list = document.getElementById('acupoint-picked-list');
+  if (!list) return;
+  list.innerHTML = '';
+  state.pickedAcupointIds.forEach((id) => {
+    const p = acupoints.find((x) => x.id === id);
+    if (!p) return;
+    const li = document.createElement('li');
+    li.innerHTML = `<strong>${p.id} ${p.name}</strong>`;
+    li.addEventListener('click', () => focusAcupoint(p.id));
+    list.appendChild(li);
+  });
+  const nameInput = document.getElementById('acupoint-list-name');
+  if (nameInput && state.activeAcupointListName) nameInput.value = state.activeAcupointListName;
+}
+
+function buildAcupointShareLink() {
+  const ids = state.pickedAcupointIds.join(',');
+  const url = new URL(window.location.href);
+  if (ids) url.searchParams.set('aplist', ids);
+  else url.searchParams.delete('aplist');
+  if (state.activeAcupointListName) url.searchParams.set('apname', state.activeAcupointListName);
+  else url.searchParams.delete('apname');
+  return url.toString();
+}
+
+function hydratePickedListFromUrl() {
+  try {
+    const url = new URL(window.location.href);
+    const raw = (url.searchParams.get('aplist') || '').trim();
+    if (!raw) return;
+    state.activeAcupointListName = (url.searchParams.get('apname') || '').trim();
+    const set = new Set(raw.split(',').map((x) => x.trim()).filter(Boolean));
+    state.pickedAcupointIds = acupoints.filter((p) => set.has(p.id)).map((p) => p.id);
+  } catch {
+    // ignore parse failure
+  }
+}
+
+function loadAcupointListsFromCache() {
+  try {
+    const raw = localStorage.getItem(ACU_LISTS_CACHE_KEY);
+    if (!raw) return;
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list)) return;
+    state.acupointLists = list
+      .filter((x) => x && x.name && Array.isArray(x.ids))
+      .map((x) => ({
+        name: String(x.name),
+        ids: x.ids.map((id) => String(id)),
+        updatedAt: String(x.updatedAt || new Date().toISOString()),
+      }));
+  } catch {
+    state.acupointLists = [];
+  }
+}
+
+function saveAcupointListsToCache() {
+  try {
+    localStorage.setItem(ACU_LISTS_CACHE_KEY, JSON.stringify(state.acupointLists));
+  } catch {
+    // ignore storage failure
+  }
+}
+
+function renderAcupointListSelector() {
+  const sel = document.getElementById('acupoint-list-select');
+  const nameInput = document.getElementById('acupoint-list-name');
+  if (!sel) return;
+  sel.innerHTML = '';
+  const empty = document.createElement('option');
+  empty.value = '';
+  empty.textContent = '选择已保存清单';
+  sel.appendChild(empty);
+  state.acupointLists.forEach((row) => {
+    const op = document.createElement('option');
+    op.value = row.name;
+    op.textContent = `${row.name} (${row.ids.length})`;
+    sel.appendChild(op);
+  });
+  sel.value = state.activeAcupointListName || '';
+  if (nameInput) nameInput.value = state.activeAcupointListName || '';
 }
 
 function renderPainList() {
@@ -1172,7 +1384,17 @@ function renderPainList() {
       if (mark.id === state.selectedMarkId) li.classList.add('selected');
       const when = new Date(mark.createdAt).toLocaleString('zh-CN');
       const regionLine = mark.region ? `部位: ${mark.region}<br/>` : '';
-      li.innerHTML = `<strong>${mark.id}</strong><br/>${regionLine}疼痛等级: ${mark.level}<br/><small>${when}</small>`;
+      li.innerHTML = `<strong>${mark.id}</strong><br/>${regionLine}疼痛等级: ${mark.level}<br/><small>${when}</small><br/>`;
+      const unblockBtn = document.createElement('button');
+      unblockBtn.type = 'button';
+      unblockBtn.className = 'ghost';
+      unblockBtn.textContent = '疏通';
+      unblockBtn.style.marginTop = '6px';
+      unblockBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        markPainUnblocked(mark.id);
+      });
+      li.appendChild(unblockBtn);
       li.addEventListener('click', () => {
         focusPainMark(mark.id);
       });
@@ -1242,7 +1464,15 @@ function renderSelectedPainPanel() {
     levelText.textContent = `当前等级: ${levelInput.value}`;
   });
 
-  panel.append(levelLabel, levelInput, levelText, noteLabel, noteInput, saveBtn, removeBtn);
+  const unblockBtn = document.createElement('button');
+  unblockBtn.textContent = '标记已疏通';
+  unblockBtn.className = 'ghost';
+  unblockBtn.style.marginTop = '8px';
+  unblockBtn.addEventListener('click', () => {
+    markPainUnblocked(selected.id);
+  });
+
+  panel.append(levelLabel, levelInput, levelText, noteLabel, noteInput, saveBtn, unblockBtn, removeBtn);
 }
 
 document.getElementById('search-input').addEventListener('input', (ev) => {
@@ -1261,6 +1491,120 @@ if (clearPainBtn) {
     const ok = window.confirm(`确认清空 ${state.painMarks.length} 条疼痛点记录？`);
     if (!ok) return;
     clearAllPainMarks();
+  });
+}
+
+const dailyReportBtn = document.getElementById('daily-report-btn');
+if (dailyReportBtn) {
+  dailyReportBtn.addEventListener('click', () => {
+    renderUnblockList();
+    exportDailyReport();
+  });
+}
+
+const clearUnblockBtn = document.getElementById('clear-unblock-btn');
+if (clearUnblockBtn) {
+  clearUnblockBtn.addEventListener('click', () => {
+    if (!state.unblockRecords.length) return;
+    const ok = window.confirm(`确认清空 ${state.unblockRecords.length} 条疏通记录？`);
+    if (!ok) return;
+    state.unblockRecords = [];
+    saveUnblockRecordsToCache();
+    renderUnblockList();
+  });
+}
+
+const shareAcupointListBtn = document.getElementById('share-acupoint-list-btn');
+if (shareAcupointListBtn) {
+  shareAcupointListBtn.addEventListener('click', async () => {
+    const url = buildAcupointShareLink();
+    try {
+      await navigator.clipboard.writeText(url);
+      shareAcupointListBtn.textContent = '已复制链接';
+      setTimeout(() => {
+        shareAcupointListBtn.textContent = '分享清单';
+      }, 1000);
+    } catch {
+      window.prompt('复制此链接分享给他人：', url);
+    }
+  });
+}
+
+const saveAcupointListBtn = document.getElementById('save-acupoint-list-btn');
+if (saveAcupointListBtn) {
+  saveAcupointListBtn.addEventListener('click', () => {
+    const nameInput = document.getElementById('acupoint-list-name');
+    const name = String(nameInput?.value || '').trim();
+    if (!name) {
+      window.alert('请先输入清单名称');
+      return;
+    }
+    const ids = [...state.pickedAcupointIds];
+    const idx = state.acupointLists.findIndex((x) => x.name === name);
+    const row = { name, ids, updatedAt: new Date().toISOString() };
+    if (idx >= 0) state.acupointLists[idx] = row;
+    else state.acupointLists.unshift(row);
+    state.activeAcupointListName = name;
+    saveAcupointListsToCache();
+    renderAcupointListSelector();
+  });
+}
+
+const renameAcupointListBtn = document.getElementById('rename-acupoint-list-btn');
+if (renameAcupointListBtn) {
+  renameAcupointListBtn.addEventListener('click', () => {
+    if (!state.activeAcupointListName) return;
+    const next = window.prompt('输入新的清单名称：', state.activeAcupointListName);
+    if (!next) return;
+    const newName = next.trim();
+    if (!newName) return;
+    const idx = state.acupointLists.findIndex((x) => x.name === state.activeAcupointListName);
+    if (idx < 0) return;
+    state.acupointLists[idx].name = newName;
+    state.activeAcupointListName = newName;
+    saveAcupointListsToCache();
+    renderAcupointListSelector();
+  });
+}
+
+const acupointListSelect = document.getElementById('acupoint-list-select');
+if (acupointListSelect) {
+  acupointListSelect.addEventListener('change', () => {
+    const name = String(acupointListSelect.value || '');
+    state.activeAcupointListName = name;
+    const row = state.acupointLists.find((x) => x.name === name);
+    if (!row) {
+      renderAcupointListSelector();
+      return;
+    }
+    state.pickedAcupointIds = row.ids.filter((id) => acupoints.some((p) => p.id === id));
+    renderAcupointList(document.getElementById('search-input').value);
+    renderPickedAcupointList();
+    renderAcupointListSelector();
+  });
+}
+
+const deleteAcupointListBtn = document.getElementById('delete-acupoint-list-btn');
+if (deleteAcupointListBtn) {
+  deleteAcupointListBtn.addEventListener('click', () => {
+    if (!state.activeAcupointListName) return;
+    const ok = window.confirm(`确认删除清单「${state.activeAcupointListName}」？`);
+    if (!ok) return;
+    state.acupointLists = state.acupointLists.filter((x) => x.name !== state.activeAcupointListName);
+    state.activeAcupointListName = '';
+    saveAcupointListsToCache();
+    renderAcupointListSelector();
+  });
+}
+
+const clearAcupointListBtn = document.getElementById('clear-acupoint-list-btn');
+if (clearAcupointListBtn) {
+  clearAcupointListBtn.addEventListener('click', () => {
+    state.pickedAcupointIds = [];
+    state.activeAcupointListName = '';
+    renderAcupointList(document.getElementById('search-input').value);
+    renderPickedAcupointList();
+    renderAcupointListSelector();
   });
 }
 
@@ -1403,10 +1747,16 @@ window.addEventListener('resize', () => {
 });
 
 renderMeridianFilters();
+hydratePickedListFromUrl();
+loadAcupointListsFromCache();
 renderAcupointList('');
+renderPickedAcupointList();
+renderAcupointListSelector();
 loadPainMarksFromCache();
+loadUnblockRecordsFromCache();
 renderPainList();
 renderSelectedPainPanel();
+renderUnblockList();
 loadAcupointTranslations();
 applyVisibilityStates();
 

@@ -28,6 +28,23 @@
           <button id="show-all-btn" type="button" class="ghost">显示全部穴位和经络（可能较卡）</button>
           <input id="search-input" type="text" placeholder="输入穴位名..." />
           <ul id="acupoint-list"></ul>
+          <div class="section">
+            <h2>穴位清单</h2>
+            <input id="acupoint-list-name" type="text" placeholder="清单名称，如：肩颈疏通" />
+            <div class="pain-actions">
+              <button id="save-acupoint-list-btn" type="button">保存/覆盖</button>
+              <button id="rename-acupoint-list-btn" type="button" class="ghost">重命名</button>
+            </div>
+            <div class="pain-actions">
+              <select id="acupoint-list-select"></select>
+              <button id="delete-acupoint-list-btn" type="button" class="danger">删除</button>
+            </div>
+            <div class="pain-actions">
+              <button id="share-acupoint-list-btn" type="button">分享清单</button>
+              <button id="clear-acupoint-list-btn" type="button" class="danger">清空清单</button>
+            </div>
+            <ul id="acupoint-picked-list"></ul>
+          </div>
         </div>
       </aside>
 
@@ -65,6 +82,15 @@
         <button id="toggle-perf-btn" type="button" class="ghost">显示/隐藏性能面板</button>
         <div id="selected-point-panel" class="section muted">
           点击模型表面创建疼痛点
+        </div>
+        <div class="section">
+          <h2>疏通记录管理</h2>
+          <div class="pain-actions">
+            <button id="daily-report-btn" type="button">生成今日日报</button>
+            <button id="clear-unblock-btn" type="button" class="danger">清空疏通记录</button>
+          </div>
+          <div id="daily-report-output" class="muted"></div>
+          <ul id="unblock-list"></ul>
         </div>
         <ul id="pain-list"></ul>
       </aside>
