@@ -176,6 +176,10 @@
         (this.labelLayer = null),
         (this.lastNavEndAt = 0),
         (this.storageKey = "tcm_pain_points_source_v1"),
+        (this.dailyTraverseActive = !1),
+        (this.dailyQueue = []),
+        (this.dailyIndex = -1),
+        (this.dailyModal = null),
         (this.tagConfigKey = "tcm_pain_tags_source_v1"),
         (this.ui = null));
     }
@@ -187,6 +191,9 @@
         this.points = [];
       }
       Array.isArray(this.points) || (this.points = []);
+      this.points.forEach((e) => {
+        e && "object" == typeof e && (e.dailyLevels && "object" == typeof e.dailyLevels || (e.dailyLevels = {}));
+      });
       try {
         const e = localStorage.getItem(this.tagConfigKey),
           t = e ? JSON.parse(e) : null;
@@ -202,6 +209,13 @@
     }),
       (x.prototype.save = function () {
         localStorage.setItem(this.storageKey, JSON.stringify(this.points));
+      }),
+      (x.prototype.todayKey = function () {
+        const e = new Date(),
+          t = e.getFullYear(),
+          n = String(e.getMonth() + 1).padStart(2, "0"),
+          r = String(e.getDate()).padStart(2, "0");
+        return `${t}-${n}-${r}`;
       }),
       (x.prototype.saveTagDefs = function () {
         localStorage.setItem(this.tagConfigKey, JSON.stringify(this.tagDefs || []));
@@ -599,6 +613,71 @@
           (t.position.copy(o), n && n.target && n.target.copy(e), n && n.update && n.update(), this.app.render());
         }
       }),
+      (x.prototype.ensureDailyModal = function () {
+        if (this.dailyModal) return;
+        const e = document.createElement("div");
+        ((e.id = "pain-daily-modal"),
+          (e.style.cssText =
+            "position:fixed;right:16px;bottom:16px;z-index:1000003;background:#16161c;border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:10px;color:#fff;font:12px PingFang SC,Microsoft YaHei,Arial,sans-serif;display:none;"),
+          (e.innerHTML =
+            '<div class="daily-title" style="margin-bottom:8px;font-weight:700;">今日疼痛等级</div><div class="daily-sub" style="margin-bottom:8px;color:#9ca3af;"></div><div style="display:flex;gap:6px;"><button class="daily-lv" data-lv="不痛" style="height:28px;padding:0 10px;border-radius:8px;border:1px solid #6b7280;background:#1f2937;color:#fff;cursor:pointer;">不痛</button><button class="daily-lv" data-lv="有点痛" style="height:28px;padding:0 10px;border-radius:8px;border:1px solid #f59e0b;background:#3f2a13;color:#fff;cursor:pointer;">有点痛</button><button class="daily-lv" data-lv="很痛" style="height:28px;padding:0 10px;border-radius:8px;border:1px solid #ef4444;background:#4b1d1d;color:#fff;cursor:pointer;">很痛</button></div>'));
+        const t = e.querySelectorAll(".daily-lv[data-lv]");
+        t.forEach((e) => {
+          e.addEventListener("click", () => {
+            const t = e.getAttribute("data-lv");
+            t && this.pickDailyLevel(t);
+          });
+        });
+        (document.body.appendChild(e), (this.dailyModal = e));
+      }),
+      (x.prototype.showDailyModalFor = function (e) {
+        (this.ensureDailyModal(), this.dailyModal) &&
+          ((this.dailyModal.style.display = "block"),
+          (this.dailyModal.querySelector(".daily-sub").textContent =
+            `${e.code || ""} ${e.acupointName ? `(${e.acupointName})` : ""}`));
+      }),
+      (x.prototype.hideDailyModal = function () {
+        this.dailyModal && (this.dailyModal.style.display = "none");
+      }),
+      (x.prototype.startDailyTraverse = function () {
+        this.points.length &&
+          ((this.dailyTraverseActive = !0),
+          (this.dailyQueue = this.points.slice()),
+          (this.dailyIndex = -1),
+          this.nextDailyPoint());
+      }),
+      (x.prototype.stopDailyTraverse = function () {
+        ((this.dailyTraverseActive = !1),
+          (this.dailyQueue = []),
+          (this.dailyIndex = -1),
+          this.hideDailyModal());
+      }),
+      (x.prototype.nextDailyPoint = function () {
+        if (!this.dailyTraverseActive) return;
+        if (!this.dailyQueue.length) return void this.stopDailyTraverse();
+        ((this.dailyIndex += 1), this.dailyIndex >= this.dailyQueue.length) && (this.dailyIndex = 0);
+        const e = this.dailyQueue[this.dailyIndex];
+        if (!e) return this.stopDailyTraverse();
+        ((this.activeId = e.id),
+          this.applyMarkerState(),
+          this.focusPoint(new THREE.Vector3(e.x, e.y, e.z)),
+          this.ui &&
+            this.ui.querySelector(".pain-note-input") &&
+            (this.ui.querySelector(".pain-note-input").value = e.note || e.acupointName || ""),
+          this.renderList(),
+          this.showDailyModalFor(e),
+          this.app.render());
+      }),
+      (x.prototype.pickDailyLevel = function (e) {
+        if (!this.dailyTraverseActive) return;
+        const t = this.dailyQueue[this.dailyIndex];
+        if (!t) return this.stopDailyTraverse();
+        (t.dailyLevels && "object" == typeof t.dailyLevels || (t.dailyLevels = {}),
+          (t.dailyLevels[this.todayKey()] = e),
+          this.save(),
+          this.renderList(),
+          this.nextDailyPoint());
+      }),
       (x.prototype.redraw = function () {
         if (!this.group) return;
         for (; this.group.children.length; ) {
@@ -624,8 +703,9 @@
                 const n = e.id === this.activeId ? " active" : "",
                   r = e.note ? ` · ${e.note}` : "",
                   o = Array.isArray(e.tags) && e.tags.length ? ` [${e.tags.join("、")}]` : "",
-                  i = e.acupointName ? `（${e.acupointName}）` : "";
-                return `<li class="pain-item${n}" data-id="${e.id}"><span class="pain-dot"></span><span class="pain-text">${e.code || `#${t + 1}`} ${e.ts || ""}${i}${o}${r}</span></li>`;
+                  i = e.acupointName ? `（${e.acupointName}）` : "",
+                  a = e.dailyLevels && e.dailyLevels[this.todayKey()] ? ` <${e.dailyLevels[this.todayKey()]}>` : "";
+                return `<li class="pain-item${n}" data-id="${e.id}"><span class="pain-dot"></span><span class="pain-text">${e.code || `#${t + 1}`} ${e.ts || ""}${i}${o}${r}${a}</span></li>`;
               })
               .join("")
           : '<li class="pain-empty">暂无记录</li>');
@@ -966,7 +1046,7 @@
           (e.style.cssText =
             "position:fixed;left:16px;bottom:16px;z-index:999999;background:linear-gradient(180deg,rgba(22,22,26,.92),rgba(12,12,15,.92));border:1px solid rgba(255,255,255,.14);border-radius:12px;color:#fff;padding:10px 10px 8px;width:276px;font:12px 'PingFang SC','Microsoft YaHei',Arial,sans-serif;box-shadow:0 8px 26px rgba(0,0,0,.35);backdrop-filter:blur(6px);"),
           (e.innerHTML =
-            '<style>#pain-recorder-source .pain-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}#pain-recorder-source .pain-title{font-size:14px;font-weight:700;letter-spacing:.2px}#pain-recorder-source .pain-sub{font-size:11px;color:#9ca3af;margin-top:2px}#pain-recorder-source .pain-actions{display:flex;gap:8px;margin:8px 0 6px;flex-wrap:wrap}#pain-recorder-source button{height:28px;padding:0 10px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:#27272f;color:#fff;cursor:pointer}#pain-recorder-source .pain-toggle{background:#7f1d1d;border-color:#ef4444}#pain-recorder-source .pain-hide{background:#1f2937;border-color:#6b7280}#pain-recorder-source .pain-clear{background:#23232a}#pain-recorder-source .pain-del{background:#3a1f1f;border-color:#f87171}#pain-recorder-source .pain-exp{background:#1f2937;border-color:#60a5fa}#pain-recorder-source .pain-imp{background:#1f2937;border-color:#34d399}#pain-recorder-source .pain-snap{background:#1f2937;border-color:#fbbf24}#pain-recorder-source .pain-tagcfg{background:#1f2937;border-color:#a78bfa}#pain-recorder-source .pain-note-wrap{display:flex;gap:8px;margin-bottom:8px}#pain-recorder-source .pain-note-input{flex:1;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:#17171d;color:#fff;padding:0 8px;outline:none}#pain-recorder-source .pain-tag-wrap{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}#pain-recorder-source .pain-tag-btn{height:24px;padding:0 8px;border-radius:999px;background:#1f2937;border:1px solid #4b5563;font-size:11px}#pain-recorder-source .pain-tag-btn.active{background:#7c2d12;border-color:#fb923c}#pain-recorder-source .pain-recorder-list{max-height:126px;overflow:auto;padding:0;margin:0;list-style:none}#pain-recorder-source .pain-item{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;color:#e5e7eb;font-size:12px;cursor:pointer}#pain-recorder-source .pain-item:hover{background:rgba(255,255,255,.08)}#pain-recorder-source .pain-item.active{background:rgba(248,113,113,.18);outline:1px solid rgba(248,113,113,.45)}#pain-recorder-source .pain-dot{width:7px;height:7px;border-radius:50%;background:#ff6e83;}#pain-recorder-source .pain-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#pain-recorder-source .pain-empty{color:#9ca3af;padding:6px}</style><div class=\"pain-head\"><div><div class=\"pain-title\">痛点记录(源码)</div><div class=\"pain-sub\">长按模型/穴位记录痛点</div></div><div><button class=\"pain-toggle\">开始</button><button class=\"pain-hide\">隐藏</button></div></div><div class=\"pain-actions\"><button class=\"pain-clear\">清空</button><button class=\"pain-del\">删除选中</button><button class=\"pain-exp\">导出</button><button class=\"pain-imp\">导入</button><button class=\"pain-snap\">贴肤校正</button><button class=\"pain-tagcfg\">标签配置</button></div><div class=\"pain-tag-wrap\"></div><div class=\"pain-note-wrap\"><input class=\"pain-note-input\" placeholder=\"选中痛点后填写备注\" /><button class=\"pain-note-save\">保存</button></div><ul class=\"pain-recorder-list\"></ul>'));
+            '<style>#pain-recorder-source .pain-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}#pain-recorder-source .pain-title{font-size:14px;font-weight:700;letter-spacing:.2px}#pain-recorder-source .pain-sub{font-size:11px;color:#9ca3af;margin-top:2px}#pain-recorder-source .pain-actions{display:flex;gap:8px;margin:8px 0 6px;flex-wrap:wrap}#pain-recorder-source button{height:28px;padding:0 10px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:#27272f;color:#fff;cursor:pointer}#pain-recorder-source .pain-toggle{background:#7f1d1d;border-color:#ef4444}#pain-recorder-source .pain-hide{background:#1f2937;border-color:#6b7280}#pain-recorder-source .pain-clear{background:#23232a}#pain-recorder-source .pain-del{background:#3a1f1f;border-color:#f87171}#pain-recorder-source .pain-exp{background:#1f2937;border-color:#60a5fa}#pain-recorder-source .pain-imp{background:#1f2937;border-color:#34d399}#pain-recorder-source .pain-snap{background:#1f2937;border-color:#fbbf24}#pain-recorder-source .pain-tagcfg{background:#1f2937;border-color:#a78bfa}#pain-recorder-source .pain-daystart{background:#1f3f2a;border-color:#86efac}#pain-recorder-source .pain-daystop{background:#3f1f1f;border-color:#fca5a5}#pain-recorder-source .pain-note-wrap{display:flex;gap:8px;margin-bottom:8px}#pain-recorder-source .pain-note-input{flex:1;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:#17171d;color:#fff;padding:0 8px;outline:none}#pain-recorder-source .pain-tag-wrap{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}#pain-recorder-source .pain-tag-btn{height:24px;padding:0 8px;border-radius:999px;background:#1f2937;border:1px solid #4b5563;font-size:11px}#pain-recorder-source .pain-tag-btn.active{background:#7c2d12;border-color:#fb923c}#pain-recorder-source .pain-recorder-list{max-height:126px;overflow:auto;padding:0;margin:0;list-style:none}#pain-recorder-source .pain-item{display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:8px;color:#e5e7eb;font-size:12px;cursor:pointer}#pain-recorder-source .pain-item:hover{background:rgba(255,255,255,.08)}#pain-recorder-source .pain-item.active{background:rgba(248,113,113,.18);outline:1px solid rgba(248,113,113,.45)}#pain-recorder-source .pain-dot{width:7px;height:7px;border-radius:50%;background:#ff6e83;}#pain-recorder-source .pain-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#pain-recorder-source .pain-empty{color:#9ca3af;padding:6px}</style><div class=\"pain-head\"><div><div class=\"pain-title\">痛点记录(源码)</div><div class=\"pain-sub\">长按模型/穴位记录痛点</div></div><div><button class=\"pain-toggle\">开始</button><button class=\"pain-hide\">隐藏</button></div></div><div class=\"pain-actions\"><button class=\"pain-clear\">清空</button><button class=\"pain-del\">删除选中</button><button class=\"pain-exp\">导出</button><button class=\"pain-imp\">导入</button><button class=\"pain-snap\">贴肤校正</button><button class=\"pain-tagcfg\">标签配置</button><button class=\"pain-daystart\">今日巡检</button><button class=\"pain-daystop\">停止巡检</button></div><div class=\"pain-tag-wrap\"></div><div class=\"pain-note-wrap\"><input class=\"pain-note-input\" placeholder=\"选中痛点后填写备注\" /><button class=\"pain-note-save\">保存</button></div><ul class=\"pain-recorder-list\"></ul>'));
         const t = e.querySelector(".pain-toggle"),
           h = e.querySelector(".pain-hide"),
           n = e.querySelector(".pain-clear"),
@@ -975,7 +1055,9 @@
           a = e.querySelector(".pain-exp"),
           s = e.querySelector(".pain-imp"),
           l = e.querySelector(".pain-snap"),
-          c = e.querySelector(".pain-tagcfg");
+          c = e.querySelector(".pain-tagcfg"),
+          u = e.querySelector(".pain-daystart"),
+          d = e.querySelector(".pain-daystop");
         (t &&
           t.addEventListener("click", () => {
             ((this.enabled = !this.enabled),
@@ -1014,6 +1096,14 @@
           c &&
             c.addEventListener("click", () => {
               this.openTagConfigModal();
+            }),
+          u &&
+            u.addEventListener("click", () => {
+              this.startDailyTraverse();
+            }),
+          d &&
+            d.addEventListener("click", () => {
+              this.stopDailyTraverse();
             }),
           document.body.appendChild(e),
           (this.ui = e),
