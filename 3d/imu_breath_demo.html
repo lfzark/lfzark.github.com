@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>手机腹部 IMU 呼吸计数 Demo</title>
+  <style>
+    :root {
+      --bg: #f5f1e8;
+      --ink: #18211d;
+      --muted: #687069;
+      --panel: #fffaf0;
+      --line: #d7cdbb;
+      --accent: #0f8b8d;
+      --accent-2: #d95d39;
+      --good: #26734d;
+      --warn: #b56b00;
+      --bad: #ba2d0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(135deg, rgba(15, 139, 141, 0.08), transparent 36%),
+        linear-gradient(315deg, rgba(217, 93, 57, 0.10), transparent 34%),
+        var(--bg);
+      color: var(--ink);
+      font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+      padding: 14px;
+    }
+    main {
+      width: min(920px, 100%);
+      margin: 0 auto;
+    }
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(22px, 6vw, 38px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      max-width: 420px;
+      margin: 0;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin: 14px 0;
+    }
+    button {
+      min-height: 44px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .status {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 250, 240, 0.72);
+      padding: 10px 12px;
+      font-weight: 700;
+      color: var(--good);
+    }
+    .status.warn { color: var(--warn); }
+    .status.bad { color: var(--bad); }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin: 10px 0;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      background: rgba(255, 250, 240, 0.78);
+      border-radius: 8px;
+      padding: 10px;
+      min-height: 76px;
+    }
+    .label {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .value {
+      margin-top: 6px;
+      font-size: 22px;
+      font-weight: 800;
+      word-break: break-word;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 260px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #101916;
+      margin-top: 10px;
+    }
+    .log {
+      margin-top: 10px;
+      border: 1px solid var(--line);
+      background: rgba(255, 250, 240, 0.70);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    @media (max-width: 720px) {
+      header {
+        display: block;
+      }
+      .hint {
+        margin-top: 8px;
+      }
+      .controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      canvas {
+        height: 220px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>腹部 IMU 呼吸计数</h1>
+      <p class="hint">手机平放在腹部，屏幕朝上，保持静坐或平躺。iPhone 需要先点授权。</p>
+    </header>
+
+    <div class="controls">
+      <button id="btnStart" class="primary">开始</button>
+      <button id="btnCalibrate" disabled>校准 5 秒</button>
+      <button id="btnReset" disabled>清零</button>
+      <button id="btnStop" disabled>停止</button>
+    </div>
+
+    <div id="status" class="status warn">状态：未开始</div>
+
+    <section class="metrics">
+      <div class="metric"><div class="label">呼吸次数</div><div id="breathCount" class="value">0</div></div>
+      <div class="metric"><div class="label">当前周期</div><div id="lastDuration" class="value">-- 秒</div></div>
+      <div class="metric"><div class="label">平均频率</div><div id="avgRate" class="value">-- 次/分</div></div>
+      <div class="metric"><div class="label">信号质量</div><div id="quality" class="value">--</div></div>
+      <div class="metric"><div class="label">当前状态</div><div id="phase" class="value">--</div></div>
+      <div class="metric"><div class="label">最近 5 次</div><div id="recent" class="value">--</div></div>
+      <div class="metric"><div class="label">包络幅度</div><div id="amp" class="value">--</div></div>
+      <div class="metric"><div class="label">采样率</div><div id="sampleRate" class="value">-- Hz</div></div>
+    </section>
+
+    <canvas id="chart" width="900" height="260"></canvas>
+
+    <div class="log" id="log">
+      测试方式：手机固定在腹部，不要用手扶。先自然呼吸 20 秒，再试慢吸慢呼。曲线峰谷清楚时，计数会更准。
+    </div>
+  </main>
+
+  <script>
+    const btnStart = document.getElementById("btnStart");
+    const btnCalibrate = document.getElementById("btnCalibrate");
+    const btnReset = document.getElementById("btnReset");
+    const btnStop = document.getElementById("btnStop");
+    const statusEl = document.getElementById("status");
+    const breathCountEl = document.getElementById("breathCount");
+    const lastDurationEl = document.getElementById("lastDuration");
+    const avgRateEl = document.getElementById("avgRate");
+    const qualityEl = document.getElementById("quality");
+    const phaseEl = document.getElementById("phase");
+    const recentEl = document.getElementById("recent");
+    const ampEl = document.getElementById("amp");
+    const sampleRateEl = document.getElementById("sampleRate");
+    const logEl = document.getElementById("log");
+    const canvas = document.getElementById("chart");
+    const ctx = canvas.getContext("2d");
+
+    let running = false;
+    let baseline = null;
+    let raw = [];
+    let env = [];
+    let breaths = [];
+    let count = 0;
+    let smooth = 0;
+    let slow = 0;
+    let state = "waiting";
+    let readyForNext = true;
+    let lastPeakAt = 0;
+    let startedAt = 0;
+    let lastSampleAt = 0;
+    let sampleCounter = 0;
+    let sampleRateTimer = 0;
+    let rafId = 0;
+    let calibratingUntil = 0;
+    let calibrationSamples = [];
+    let sensor = null;
+    let sensorMode = "";
+
+    function setStatus(text, level = "ok") {
+      statusEl.textContent = "状态：" + text;
+      statusEl.className = "status " + (level === "bad" ? "bad" : level === "warn" ? "warn" : "");
+    }
+
+    async function start() {
+      try {
+        if ("DeviceMotionEvent" in window && typeof DeviceMotionEvent.requestPermission === "function") {
+          const permission = await DeviceMotionEvent.requestPermission();
+          if (permission !== "granted") {
+            setStatus("运动传感器权限未允许", "bad");
+            return;
+          }
+        } else if ("DeviceOrientationEvent" in window && typeof DeviceOrientationEvent.requestPermission === "function") {
+          const permission = await DeviceOrientationEvent.requestPermission();
+          if (permission !== "granted") {
+            setStatus("姿态传感器权限未允许", "bad");
+            return;
+          }
+        }
+      } catch (err) {
+        setStatus("授权失败：" + err.message, "bad");
+        return;
+      }
+
+      reset();
+      running = true;
+      startedAt = performance.now() / 1000;
+      const ok = await attachSensor();
+      if (!ok) {
+        running = false;
+        setStatus("此浏览器没有可用的运动/姿态传感器 API，请换 Chrome/Safari/Edge 手机浏览器", "bad");
+        return;
+      }
+      btnStart.disabled = true;
+      btnCalibrate.disabled = false;
+      btnReset.disabled = false;
+      btnStop.disabled = false;
+      setStatus("采集中，传感器：" + sensorMode, "warn");
+      rafId = requestAnimationFrame(draw);
+    }
+
+    function stop() {
+      running = false;
+      detachSensor();
+      cancelAnimationFrame(rafId);
+      btnStart.disabled = false;
+      btnCalibrate.disabled = true;
+      btnReset.disabled = true;
+      btnStop.disabled = true;
+      setStatus("已停止");
+    }
+
+    async function attachSensor() {
+      detachSensor();
+      if ("DeviceMotionEvent" in window) {
+        window.addEventListener("devicemotion", onMotion, { passive: true });
+        sensorMode = "DeviceMotion";
+        return true;
+      }
+      if ("DeviceOrientationEvent" in window) {
+        window.addEventListener("deviceorientation", onOrientation, { passive: true });
+        sensorMode = "DeviceOrientation";
+        return true;
+      }
+      if ("GravitySensor" in window) {
+        try {
+          sensor = new GravitySensor({ frequency: 30 });
+          sensor.addEventListener("reading", () => processSample(sensor.x, sensor.y, sensor.z));
+          sensor.start();
+          sensorMode = "GravitySensor";
+          return true;
+        } catch (_) {}
+      }
+      if ("Accelerometer" in window) {
+        try {
+          sensor = new Accelerometer({ frequency: 30 });
+          sensor.addEventListener("reading", () => processSample(sensor.x, sensor.y, sensor.z));
+          sensor.start();
+          sensorMode = "Accelerometer";
+          return true;
+        } catch (_) {}
+      }
+      return false;
+    }
+
+    function detachSensor() {
+      window.removeEventListener("devicemotion", onMotion);
+      window.removeEventListener("deviceorientation", onOrientation);
+      try {
+        if (sensor) sensor.stop();
+      } catch (_) {}
+      sensor = null;
+      sensorMode = "";
+    }
+
+    function reset() {
+      raw = [];
+      env = [];
+      breaths = [];
+      count = 0;
+      smooth = 0;
+      slow = 0;
+      state = "waiting";
+      readyForNext = true;
+      lastPeakAt = 0;
+      baseline = null;
+      lastSampleAt = 0;
+      sampleCounter = 0;
+      sampleRateTimer = performance.now() / 1000;
+      calibrationSamples = [];
+      calibratingUntil = 0;
+      updateMetrics(0, 0, 0);
+      draw();
+    }
+
+    function startCalibration() {
+      calibrationSamples = [];
+      calibratingUntil = performance.now() / 1000 + 5;
+      setStatus("校准中，保持手机不动并自然呼吸", "warn");
+    }
+
+    function onMotion(event) {
+      if (!running) return;
+      const acc = event.accelerationIncludingGravity;
+      if (!acc) return;
+      const x = Number(acc.x) || 0;
+      const y = Number(acc.y) || 0;
+      const z = Number(acc.z) || 0;
+      processSample(x, y, z);
+    }
+
+    function onOrientation(event) {
+      if (!running) return;
+      const beta = Number(event.beta) || 0;
+      const gamma = Number(event.gamma) || 0;
+      const alpha = Number(event.alpha) || 0;
+      processSample(beta / 9, gamma / 9, alpha / 18);
+    }
+
+    function processSample(x, y, z) {
+      const t = performance.now() / 1000;
+      if (!baseline) baseline = { x, y, z };
+      const dx = x - baseline.x;
+      const dy = y - baseline.y;
+      const dz = z - baseline.z;
+      const projection = dx * baseline.x + dy * baseline.y + dz * baseline.z;
+      const value = projection / Math.max(1, Math.hypot(baseline.x, baseline.y, baseline.z));
+
+      if (t < calibratingUntil) {
+        calibrationSamples.push({ x, y, z });
+        if (calibrationSamples.length > 8) {
+          baseline = averageVector(calibrationSamples);
+        }
+      } else if (calibrationSamples.length) {
+        baseline = averageVector(calibrationSamples);
+        calibrationSamples = [];
+        setStatus("校准完成，开始识别呼吸");
+      }
+
+      smooth = smooth * 0.88 + value * 0.12;
+      slow = slow * 0.995 + smooth * 0.005;
+      const signal = smooth - slow;
+
+      raw.push({ t, v: value });
+      env.push({ t, v: signal });
+      while (env.length && t - env[0].t > 45) env.shift();
+      while (raw.length && t - raw[0].t > 45) raw.shift();
+
+      sampleCounter += 1;
+      if (t - sampleRateTimer >= 1) {
+        sampleRateEl.textContent = sampleCounter + " Hz";
+        sampleCounter = 0;
+        sampleRateTimer = t;
+      }
+
+      detectBreath(t);
+    }
+
+    function detectBreath(now) {
+      if (env.length < 20) return;
+      let min = Number.POSITIVE_INFINITY;
+      let max = Number.NEGATIVE_INFINITY;
+      let sum = 0;
+      let n = 0;
+      for (let i = env.length - 1; i >= 0; i--) {
+        if (now - env[i].t > 18) break;
+        const v = env[i].v;
+        min = Math.min(min, v);
+        max = Math.max(max, v);
+        sum += v;
+        n += 1;
+      }
+      if (n < 16) return;
+
+      const mean = sum / n;
+      const amp = Math.max(0, max - min);
+      const latest = env[env.length - 1].v;
+      const a = env[env.length - 4];
+      const b = env[env.length - 3];
+      const c = env[env.length - 2];
+      if (!a || !b || !c) return;
+
+      const peakGate = mean + Math.max(0.018, amp * 0.18);
+      const valleyGate = mean - Math.max(0.012, amp * 0.12);
+      const isPeak = b.v > a.v && b.v >= c.v && b.v > peakGate;
+      const sinceLast = b.t - lastPeakAt;
+
+      if (isPeak && readyForNext && sinceLast > 2.0) {
+        if (lastPeakAt > 0) breaths.push(b.t - lastPeakAt);
+        count += 1;
+        lastPeakAt = b.t;
+        readyForNext = false;
+        state = "吸气峰值";
+      } else if (!readyForNext && latest < valleyGate) {
+        readyForNext = true;
+        state = "呼气回落";
+      } else if (latest > mean) {
+        state = "上升";
+      } else {
+        state = "下降";
+      }
+
+      updateMetrics(now, amp, latest);
+    }
+
+    function updateMetrics(now, amp, latest) {
+      breathCountEl.textContent = String(count);
+      const last = breaths[breaths.length - 1];
+      lastDurationEl.textContent = last ? last.toFixed(2) + " 秒" : "-- 秒";
+      const elapsed = startedAt ? Math.max(1, now - startedAt) : 0;
+      avgRateEl.textContent = count > 1 ? ((count / elapsed) * 60).toFixed(1) + " 次/分" : "-- 次/分";
+      phaseEl.textContent = state === "waiting" ? "--" : state;
+      ampEl.textContent = amp ? amp.toFixed(4) : "--";
+      recentEl.textContent = breaths.length ? breaths.slice(-5).map(v => v.toFixed(1)).join(" / ") : "--";
+
+      let quality = "弱";
+      let level = "warn";
+      if (amp > 0.12) {
+        quality = "好";
+        level = "ok";
+      } else if (amp > 0.055) {
+        quality = "可用";
+      }
+      qualityEl.textContent = quality;
+      if (running && now - startedAt > 4) {
+        setStatus(quality === "弱" ? "信号偏弱，调整手机位置或换腹部测试" : "正在识别呼吸", level);
+      }
+    }
+
+    function averageVector(samples) {
+      const total = samples.reduce((acc, v) => {
+        acc.x += v.x;
+        acc.y += v.y;
+        acc.z += v.z;
+        return acc;
+      }, { x: 0, y: 0, z: 0 });
+      const n = Math.max(1, samples.length);
+      return { x: total.x / n, y: total.y / n, z: total.z / n };
+    }
+
+    function draw() {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#101916";
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = "#263d37";
+      ctx.lineWidth = 1;
+      for (let i = 1; i < 4; i++) {
+        const y = (h / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+      if (env.length > 1) {
+        const t0 = env[0].t;
+        const t1 = env[env.length - 1].t;
+        const span = Math.max(1, t1 - t0);
+        let maxAbs = 0.05;
+        for (const p of env) maxAbs = Math.max(maxAbs, Math.abs(p.v));
+        ctx.beginPath();
+        ctx.strokeStyle = "#20d6b5";
+        ctx.lineWidth = 2;
+        env.forEach((p, i) => {
+          const x = ((p.t - t0) / span) * w;
+          const y = h / 2 - (p.v / maxAbs) * (h * 0.42);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+      ctx.fillStyle = "#f4efe3";
+      ctx.font = "13px sans-serif";
+      ctx.fillText("IMU 呼吸波形", 12, 22);
+      if (running) rafId = requestAnimationFrame(draw);
+    }
+
+    btnStart.addEventListener("click", start);
+    btnCalibrate.addEventListener("click", startCalibration);
+    btnReset.addEventListener("click", reset);
+    btnStop.addEventListener("click", stop);
+    draw();
+  </script>
+</body>
+</html>
