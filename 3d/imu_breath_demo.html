@@ -56,7 +56,7 @@
     }
     .controls {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(6, minmax(0, 1fr));
       gap: 8px;
       margin: 14px 0;
     }
@@ -162,6 +162,8 @@
       <button id="btnCalibrate" disabled>校准 5 秒</button>
       <button id="btnReset" disabled>清零</button>
       <button id="btnStop" disabled>停止</button>
+      <button id="btnSound">提示音：开</button>
+      <button id="btnWake">保持亮屏：关</button>
     </div>
 
     <div id="status" class="status warn">状态：未开始</div>
@@ -189,6 +191,8 @@
     const btnCalibrate = document.getElementById("btnCalibrate");
     const btnReset = document.getElementById("btnReset");
     const btnStop = document.getElementById("btnStop");
+    const btnSound = document.getElementById("btnSound");
+    const btnWake = document.getElementById("btnWake");
     const statusEl = document.getElementById("status");
     const breathCountEl = document.getElementById("breathCount");
     const lastDurationEl = document.getElementById("lastDuration");
@@ -222,6 +226,10 @@
     let calibrationSamples = [];
     let sensor = null;
     let sensorMode = "";
+    let soundEnabled = true;
+    let audioCtx = null;
+    let wakeEnabled = false;
+    let wakeLock = null;
 
     function setStatus(text, level = "ok") {
       statusEl.textContent = "状态：" + text;
@@ -262,6 +270,7 @@
       btnReset.disabled = false;
       btnStop.disabled = false;
       setStatus("采集中，传感器：" + sensorMode, "warn");
+      await requestWakeLock();
       rafId = requestAnimationFrame(draw);
     }
 
@@ -273,7 +282,50 @@
       btnCalibrate.disabled = true;
       btnReset.disabled = true;
       btnStop.disabled = true;
+      releaseWakeLock();
       setStatus("已停止");
+    }
+
+    function ensureAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === "suspended") audioCtx.resume();
+    }
+
+    function playBeep() {
+      if (!soundEnabled) return;
+      try {
+        ensureAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(920, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.06, audioCtx.currentTime + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.10);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.11);
+      } catch (_) {}
+    }
+
+    async function requestWakeLock() {
+      if (!wakeEnabled || !("wakeLock" in navigator)) return;
+      try {
+        wakeLock = await navigator.wakeLock.request("screen");
+        wakeLock.addEventListener("release", () => {
+          wakeLock = null;
+        });
+      } catch (_) {}
+    }
+
+    async function releaseWakeLock() {
+      try {
+        if (wakeLock) await wakeLock.release();
+      } catch (_) {}
+      wakeLock = null;
     }
 
     async function attachSensor() {
@@ -434,6 +486,7 @@
       if (isPeak && readyForNext && sinceLast > 2.0) {
         if (lastPeakAt > 0) breaths.push(b.t - lastPeakAt);
         count += 1;
+        playBeep();
         lastPeakAt = b.t;
         readyForNext = false;
         state = "吸气峰值";
@@ -526,6 +579,25 @@
     btnCalibrate.addEventListener("click", startCalibration);
     btnReset.addEventListener("click", reset);
     btnStop.addEventListener("click", stop);
+    btnSound.addEventListener("click", () => {
+      soundEnabled = !soundEnabled;
+      btnSound.textContent = soundEnabled ? "提示音：开" : "提示音：关";
+      if (soundEnabled) {
+        ensureAudio();
+        playBeep();
+      }
+    });
+    btnWake.addEventListener("click", async () => {
+      wakeEnabled = !wakeEnabled;
+      btnWake.textContent = wakeEnabled ? "保持亮屏：开" : "保持亮屏：关";
+      if (wakeEnabled && running) await requestWakeLock();
+      if (!wakeEnabled) await releaseWakeLock();
+    });
+    document.addEventListener("visibilitychange", async () => {
+      if (document.visibilityState === "visible" && wakeEnabled && running) {
+        await requestWakeLock();
+      }
+    });
     draw();
   </script>
 </body>
