@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网络安全刷题系统</title>
+<style>
+:root {
+  --bg: #f5f7fa;
+  --card: #ffffff;
+  --text: #2d3748;
+  --text-secondary: #718096;
+  --primary: #3182ce;
+  --primary-light: #ebf8ff;
+  --success: #38a169;
+  --success-light: #f0fff4;
+  --danger: #e53e3e;
+  --danger-light: #fff5f5;
+  --warning: #dd6b20;
+  --border: #e2e8f0;
+  --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+}
+.dark {
+  --bg: #1a202c;
+  --card: #2d3748;
+  --text: #e2e8f0;
+  --text-secondary: #a0aec0;
+  --primary: #63b3ed;
+  --primary-light: #2c5282;
+  --success: #68d391;
+  --success-light: #276749;
+  --danger: #fc8181;
+  --danger-light: #742a2a;
+  --warning: #f6ad55;
+  --border: #4a5568;
+  --shadow: 0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -1px rgba(0,0,0,0.2);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
+}
+.container { max-width: 900px; margin: 0 auto; padding: 20px; }
+header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 20px;
+}
+header h1 { font-size: 1.5rem; }
+header .subtitle { font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer;
+  font-size: 0.9rem; transition: all 0.2s; background: var(--primary); color: white;
+}
+.btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-secondary { background: var(--border); color: var(--text); }
+.btn-success { background: var(--success); }
+.btn-danger { background: var(--danger); }
+.btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+.btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.panel {
+  background: var(--card); border-radius: 12px; padding: 20px;
+  box-shadow: var(--shadow); margin-bottom: 16px; transition: background 0.3s;
+}
+.tabs {
+  display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.tab {
+  padding: 8px 16px; border-radius: 8px; cursor: pointer;
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--text-secondary); transition: all 0.2s;
+}
+.tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+.tab:hover:not(.active) { background: var(--border); color: var(--text); }
+
+.stats-bar {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px; margin-bottom: 16px;
+}
+.stat-box {
+  background: var(--bg); padding: 12px; border-radius: 8px; text-align: center;
+}
+.stat-box .num { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
+.stat-box .label { font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px; }
+
+.question-card { margin-bottom: 20px; }
+.question-type-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+  font-size: 0.75rem; margin-bottom: 8px; font-weight: 600;
+}
+.type-single { background: var(--primary-light); color: var(--primary); }
+.type-multiple { background: #faf5ff; color: #805ad5; }
+.type-judge { background: var(--success-light); color: var(--success); }
+.dark .type-multiple { background: #44337a; color: #d6bcfa; }
+
+.question-content { font-size: 1.1rem; line-height: 1.7; margin-bottom: 16px; }
+.question-index { color: var(--primary); font-weight: bold; margin-right: 6px; }
+
+.options { display: flex; flex-direction: column; gap: 10px; }
+.option {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 16px; border-radius: 8px; border: 2px solid var(--border);
+  cursor: pointer; transition: all 0.2s; background: var(--card);
+}
+.option:hover { border-color: var(--primary); background: var(--primary-light); }
+.option.selected { border-color: var(--primary); background: var(--primary-light); }
+.option.correct { border-color: var(--success); background: var(--success-light); }
+.option.wrong { border-color: var(--danger); background: var(--danger-light); }
+.option.disabled { cursor: default; pointer-events: none; }
+.option-key {
+  min-width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg); border: 1px solid var(--border);
+  font-size: 0.85rem; font-weight: bold; color: var(--text-secondary);
+  transition: all 0.2s;
+}
+.option.selected .option-key { background: var(--primary); color: white; border-color: var(--primary); }
+.option.correct .option-key { background: var(--success); color: white; border-color: var(--success); }
+.option.wrong .option-key { background: var(--danger); color: white; border-color: var(--danger); }
+.option-text { font-size: 0.95rem; line-height: 1.5; padding-top: 2px; }
+
+.result-box {
+  margin-top: 16px; padding: 16px; border-radius: 8px;
+  display: none;
+}
+.result-box.show { display: block; }
+.result-correct { background: var(--success-light); border-left: 4px solid var(--success); }
+.result-wrong { background: var(--danger-light); border-left: 4px solid var(--danger); }
+.result-title { font-weight: bold; margin-bottom: 8px; }
+.result-answer { color: var(--text-secondary); font-size: 0.9rem; }
+
+.nav-buttons {
+  display: flex; justify-content: space-between; align-items: center; margin-top: 20px;
+}
+.progress-bar {
+  height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; margin-bottom: 16px;
+}
+.progress-fill {
+  height: 100%; background: var(--primary); border-radius: 3px; transition: width 0.3s;
+}
+
+.question-list {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+  gap: 6px; margin-top: 12px;
+}
+.q-num {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; cursor: pointer; border: 2px solid var(--border);
+  background: var(--card); transition: all 0.2s;
+}
+.q-num:hover { border-color: var(--primary); }
+.q-num.current { border-color: var(--primary); background: var(--primary); color: white; }
+.q-num.correct { border-color: var(--success); background: var(--success-light); color: var(--success); }
+.q-num.wrong { border-color: var(--danger); background: var(--danger-light); color: var(--danger); }
+
+.settings-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.settings-row label { font-size: 0.9rem; color: var(--text-secondary); }
+select, input[type="checkbox"] {
+  padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--card); color: var(--text); font-size: 0.9rem;
+}
+
+.mode-toggle {
+  display: inline-flex; background: var(--bg); border-radius: 8px; padding: 3px;
+  border: 1px solid var(--border);
+}
+.mode-toggle button {
+  padding: 6px 14px; border: none; background: transparent; cursor: pointer;
+  border-radius: 6px; font-size: 0.85rem; color: var(--text-secondary); transition: all 0.2s;
+}
+.mode-toggle button.active { background: var(--primary); color: white; }
+
+.fav-btn {
+  background: transparent; border: none; cursor: pointer; font-size: 1.2rem; color: var(--text-secondary);
+  transition: color 0.2s; padding: 4px;
+}
+.fav-btn.active { color: #ecc94b; }
+
+.summary-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+.summary-table th, .summary-table td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+.summary-table th { color: var(--text-secondary); font-weight: 600; }
+
+@media (max-width: 768px) {
+  .container { padding: 10px; padding-bottom: 80px; }
+  header { padding: 12px 0; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+  header h1 { font-size: 1.15rem; }
+  header .subtitle { font-size: 0.78rem; }
+  .btn { padding: 10px 14px; font-size: 0.88rem; min-height: 44px; }
+  .btn-sm { padding: 10px 14px; font-size: 0.85rem; min-height: 40px; }
+  .panel { padding: 14px; border-radius: 10px; margin-bottom: 10px; }
+  .question-content { font-size: 0.98rem; line-height: 1.6; }
+  .option { padding: 14px 12px; min-height: 48px; }
+  .option-key { min-width: 32px; height: 32px; font-size: 0.9rem; }
+  .option-text { font-size: 0.92rem; }
+  .nav-buttons { flex-direction: column; gap: 10px; }
+  .nav-buttons .btn-group { width: 100%; justify-content: center; }
+  .nav-buttons .btn-group .btn { flex: 1; justify-content: center; }
+  .stats-bar { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat-box { padding: 10px 6px; }
+  .stat-box .num { font-size: 1.25rem; }
+  .stat-box .label { font-size: 0.72rem; }
+  .settings-row { gap: 8px; }
+  .settings-row label { font-size: 0.82rem; }
+  .mode-toggle button { padding: 8px 12px; font-size: 0.82rem; min-height: 40px; }
+  .q-num { width: 34px; height: 34px; font-size: 0.75rem; }
+  .question-list { gap: 4px; }
+  .summary-table th, .summary-table td { padding: 8px 4px; font-size: 0.8rem; }
+  .menu-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+  .menu-grid .panel { padding: 12px; }
+  .menu-grid h3 { font-size: 0.95rem; }
+  .menu-grid p { font-size: 0.8rem; }
+  .fav-btn { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+  /* Bottom mobile nav */
+  .mobile-nav {
+    display: flex; position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--card); border-top: 1px solid var(--border);
+    padding: 6px 0; padding-bottom: max(6px, env(safe-area-inset-bottom));
+    z-index: 100; box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+  }
+  .mobile-nav button {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    gap: 2px; padding: 6px 0; border: none; background: transparent;
+    color: var(--text-secondary); font-size: 0.68rem; cursor: pointer;
+    transition: color 0.2s;
+  }
+  .mobile-nav button .nav-icon { font-size: 1.2rem; }
+  .mobile-nav button.active { color: var(--primary); }
+  .desktop-only { display: none !important; }
+  /* Swipe hint */
+  .swipe-hint {
+    display: block; text-align: center; font-size: 0.75rem;
+    color: var(--text-secondary); padding: 4px 0 0; opacity: 0.7;
+  }
+  /* Export panel mobile */
+  .export-grid { grid-template-columns: 1fr 1fr !important; }
+}
+@media (min-width: 769px) {
+  .mobile-nav { display: none; }
+  .swipe-hint { display: none; }
+}
+.export-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.export-card {
+  padding: 16px; border-radius: 10px; border: 2px solid var(--border);
+  cursor: pointer; transition: all 0.2s; text-align: center; background: var(--bg);
+}
+.export-card:hover { border-color: var(--primary); background: var(--primary-light); }
+.export-card .export-icon { font-size: 2rem; margin-bottom: 8px; }
+.export-card .export-title { font-weight: bold; font-size: 0.95rem; margin-bottom: 4px; }
+.export-card .export-desc { font-size: 0.78rem; color: var(--text-secondary); }
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  z-index: 200; align-items: center; justify-content: center; padding: 20px;
+}
+.modal-overlay.show { display: flex; }
+.modal-box {
+  background: var(--card); border-radius: 12px; padding: 24px;
+  max-width: 500px; width: 100%; max-height: 80vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.modal-box h3 { margin-bottom: 16px; }
+.modal-box textarea {
+  width: 100%; min-height: 120px; border-radius: 8px; border: 1px solid var(--border);
+  padding: 10px; font-size: 0.85rem; background: var(--bg); color: var(--text);
+  resize: vertical;
+}
+.modal-box .btn-group { margin-top: 12px; justify-content: flex-end; }
+
+@media (max-width: 400px) {
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .menu-grid { grid-template-columns: 1fr !important; }
+  .export-grid { grid-template-columns: 1fr !important; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <div>
+    <h1>网络安全刷题系统</h1>
+    <div class="subtitle">tpyrced 题目集 · 共 <span id="totalCount">0</span> 题</div>
+  </div>
+  <div class="btn-group">
+    <button class="btn btn-secondary btn-sm" onclick="toggleDark()" id="dark-btn">🌙 夜间</button>
+    <button class="btn btn-secondary btn-sm desktop-only" onclick="showPanel('menu')">🏠 首页</button>
+  </div>
+</header>
+<!-- 主菜单 -->
+<div id="panel-menu" class="panel">
+  <div class="stats-bar">
+    <div class="stat-box"><div class="num" id="stat-total">0</div><div class="label">总题数</div></div>
+    <div class="stat-box"><div class="num" id="stat-single">0</div><div class="label">单选题</div></div>
+    <div class="stat-box"><div class="num" id="stat-multi">0</div><div class="label">多选题</div></div>
+    <div class="stat-box"><div class="num" id="stat-judge">0</div><div class="label">判断题</div></div>
+    <div class="stat-box"><div class="num" id="stat-wrong">0</div><div class="label">错题本</div></div>
+  </div>
+  <div class="menu-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+    <div class="panel" style="cursor:pointer;" onclick="startQuiz('all','order')">
+      <h3 style="margin-bottom:8px;">📚 顺序练习</h3>
+      <p style="color:var(--text-secondary);font-size:0.9rem;">按顺序练习全部题目</p>
+    </div>
+    <div class="panel" style="cursor:pointer;" onclick="startQuiz('all','random')">
+      <h3 style="margin-bottom:8px;">🔀 随机练习</h3>
+      <p style="color:var(--text-secondary);font-size:0.9rem;">随机打乱题目顺序</p>
+    </div>
+    <div class="panel" style="cursor:pointer;" onclick="startQuiz('single','order')">
+      <h3 style="margin-bottom:8px;">☑️ 单选题</h3>
+      <p style="color:var(--text-secondary);font-size:0.9rem;">仅练习单选题</p>
+    </div>
+    <div class="panel" style="cursor:pointer;" onclick="startQuiz('multiple','order')">
+      <h3 style="margin-bottom:8px;">☑️☑️ 多选题</h3>
+      <p style="color:var(--text-secondary);font-size:0.9rem;">仅练习多选题</p>
+    </div>
+    <div class="panel" style="cursor:pointer;" onclick="startQuiz('judge','order')">
+      <h3 style="margin-bottom:8px;">✓✗ 判断题</h3>
+      <p style="color:var(--text-secondary);font-size:0.9rem;">仅练习判断题</p>
+    </div>
+    <div class="panel" style="cursor:pointer;" onclick="startQuiz('wrong','order')">
+      <h3 style="margin-bottom:8px;">❌ 错题本</h3>
+      <p style="color:var(--text-secondary);font-size:0.9rem;">练习做错的题目</p>
+    </div>
+    <div class="panel" style="cursor:pointer;" onclick="startQuiz('fav','order')">
+      <h3 style="margin-bottom:8px;">⭐ 收藏题</h3>
+      <p style="color:var(--text-secondary);font-size:0.9rem;">练习收藏的题目</p>
+    </div>
+    <div class="panel" style="cursor:pointer;" onclick="showPanel('stats')">
+      <h3 style="margin-bottom:8px;">📊 学习统计</h3>
+      <p style="color:var(--text-secondary);font-size:0.9rem;">查看答题数据统计</p>
+    </div>
+    <div class="panel" style="cursor:pointer;" onclick="showPanel('export')">
+      <h3 style="margin-bottom:8px;">💾 数据导出</h3>
+      <p style="color:var(--text-secondary);font-size:0.9rem;">导出题目与答题记录</p>
+    </div>
+  </div>
+</div>
+
+<!-- 答题面板 -->
+<div id="panel-quiz" class="panel" style="display:none;">
+  <div class="settings-row">
+    <div class="mode-toggle">
+      <button id="mode-order" class="active" onclick="setMode('order')">顺序</button>
+      <button id="mode-random" onclick="setMode('random')">随机</button>
+    </div>
+    <label><input type="checkbox" id="auto-next" checked> 答对自动下一题</label>
+    <button class="fav-btn" id="fav-btn" onclick="toggleFav()">☆</button>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <div style="display:flex;justify-content:space-between;font-size:0.85rem;color:var(--text-secondary);margin-bottom:12px;">
+    <span id="progress-text">1 / 120</span>
+    <span id="score-text">正确: 0 | 错误: 0</span>
+  </div>
+
+  <div class="question-card">
+    <div class="question-type-badge" id="q-type">单选题</div>
+    <div class="question-content">
+      <span class="question-index" id="q-index">1.</span>
+      <span id="q-content">题目内容...</span>
+    </div>
+    <div class="options" id="q-options"></div>
+    <div class="result-box" id="q-result">
+      <div class="result-title" id="result-title"></div>
+      <div class="result-answer" id="result-answer"></div>
+    </div>
+  </div>
+
+  <div class="nav-buttons">
+    <div class="btn-group">
+      <button class="btn btn-secondary btn-sm" onclick="prevQuestion()">← 上一题</button>
+      <button class="btn btn-secondary btn-sm" onclick="nextQuestion()">下一题 →</button>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-success btn-sm" onclick="submitAnswer()" id="btn-submit">提交答案</button>
+      <button class="btn btn-secondary btn-sm" onclick="showAnswer()" id="btn-show">看答案</button>
+    </div>
+  </div>
+
+  <div style="margin-top:20px;">
+    <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px;">题目导航（点击跳转）</div>
+    <div class="question-list" id="question-list"></div>
+  </div>
+  <div class="swipe-hint">← 左右滑动切换题目 →</div>
+</div>
+
+<!-- 导出面板 -->
+<div id="panel-export" class="panel" style="display:none;">
+  <h2 style="margin-bottom:16px;">💾 数据导出 / 导入</h2>
+  <h3 style="margin-bottom:12px;">导出题目</h3>
+  <div class="export-grid">
+    <div class="export-card" onclick="exportJSON()">
+      <div class="export-icon">📋</div>
+      <div class="export-title">JSON 格式</div>
+      <div class="export-desc">导出全部题目数据</div>
+    </div>
+    <div class="export-card" onclick="exportCSV()">
+      <div class="export-icon">📊</div>
+      <div class="export-title">CSV 格式</div>
+      <div class="export-desc">可用 Excel 打开</div>
+    </div>
+    <div class="export-card" onclick="exportWrongJSON()">
+      <div class="export-icon">❌</div>
+      <div class="export-title">错题导出</div>
+      <div class="export-desc">仅导出错题数据</div>
+    </div>
+  </div>
+  <h3 style="margin:20px 0 12px;">答题记录</h3>
+  <div class="export-grid">
+    <div class="export-card" onclick="exportRecord()">
+      <div class="export-icon">📤</div>
+      <div class="export-title">导出记录</div>
+      <div class="export-desc">导出答题记录JSON</div>
+    </div>
+    <div class="export-card" onclick="showImportModal()">
+      <div class="export-icon">📥</div>
+      <div class="export-title">导入记录</div>
+      <div class="export-desc">从JSON恢复记录</div>
+    </div>
+    <div class="export-card" onclick="confirmClear()">
+      <div class="export-icon">🗑️</div>
+      <div class="export-title">清除记录</div>
+      <div class="export-desc">清空所有答题数据</div>
+    </div>
+  </div>
+</div>
+
+<!-- 导入弹窗 -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal-box">
+    <h3>📥 导入答题记录</h3>
+    <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:12px;">粘贴之前导出的 JSON 数据，或选择文件导入</p>
+    <textarea id="import-text" placeholder="在此粘贴 JSON 数据..."></textarea>
+    <div class="btn-group">
+      <button class="btn btn-secondary btn-sm" onclick="closeImportModal()">取消</button>
+      <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+        📁 选择文件
+        <input type="file" accept=".json" style="display:none" onchange="handleImportFile(event)">
+      </label>
+      <button class="btn btn-sm" onclick="doImport()">导入</button>
+    </div>
+  </div>
+</div>
+
+<!-- 确认清除弹窗 -->
+<div class="modal-overlay" id="clear-modal">
+  <div class="modal-box">
+    <h3>⚠️ 确认清除</h3>
+    <p style="margin:12px 0;font-size:0.9rem;">此操作将清空所有答题记录、错题本和收藏，且不可恢复。确定要继续吗？</p>
+    <div class="btn-group" style="justify-content:flex-end;">
+      <button class="btn btn-secondary btn-sm" onclick="closeClearModal()">取消</button>
+      <button class="btn btn-danger btn-sm" onclick="doClear()">确认清除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 移动端底部导航 -->
+<nav class="mobile-nav">
+  <button onclick="showPanel('menu')" id="mnav-home"><span class="nav-icon">🏠</span>首页</button>
+  <button onclick="startQuiz('all','order')" id="mnav-quiz"><span class="nav-icon">📝</span>练习</button>
+  <button onclick="startQuiz('wrong','order')" id="mnav-wrong"><span class="nav-icon">❌</span>错题</button>
+  <button onclick="showPanel('stats')" id="mnav-stats"><span class="nav-icon">📊</span>统计</button>
+  <button onclick="showPanel('export')" id="mnav-export"><span class="nav-icon">💾</span>导出</button>
+</nav>
+
+<!-- 统计面板 -->
+<div id="panel-stats" class="panel" style="display:none;">
+  <h2 style="margin-bottom:16px;">📊 学习统计</h2>
+  <div class="stats-bar">
+    <div class="stat-box"><div class="num" id="st-total">0</div><div class="label">已答题</div></div>
+    <div class="stat-box"><div class="num" id="st-correct">0</div><div class="label">正确</div></div>
+    <div class="stat-box"><div class="num" id="st-wrong">0</div><div class="label">错误</div></div>
+    <div class="stat-box"><div class="num" id="st-rate">0%</div><div class="label">正确率</div></div>
+  </div>
+  <h3 style="margin:16px 0 8px;">题型分布</h3>
+  <table class="summary-table">
+    <thead><tr><th>题型</th><th>总题数</th><th>已做</th><th>正确</th><th>错误</th><th>正确率</th></tr></thead>
+    <tbody id="stats-body"></tbody>
+  </table>
+  <h3 style="margin:16px 0 8px;">最近错题</h3>
+  <div id="recent-wrong"></div>
+</div>
+<script>
+const ALL_QUESTIONS = 
+[{"id":"s0","type":"single","content":"当企业发生黑客入侵、系统崩溃或其它影响业务正常运行的安全事件时，急需第一时间进行处理，使企业的网络信息系统在最短时间内恢复正常工作，以下不属于常见应急响应事件的是（）。","answer":"D","options":{"A":"网页挂马","B":"主页篡改","C":"病毒木马","D":"访问缓慢"}},{"id":"s1","type":"single","content":"蠕虫事件是指蓄意制造、传播蠕虫，或是因受到蠕虫影响而导致的信息安全事件。蠕虫病毒是指除计算机病毒以外，利用信息系统缺陷，通过（）自动复制并传播的有害程序。","answer":"C","options":{"A":"双绞线","B":"光纤","C":"网络","D":"U盘"}},{"id":"s2","type":"single","content":"入侵防御系统(IPS)是继入侵检测系统(IDS)后发展期出来的一项新的安全技术，它与IDS 有着许多不同点，请指出下列哪一项描述不符合 IPS 的特点?（）","answer":"D","options":{"A":"串接到网络线路中","B":"对异常的进出流量可以直接进行阻断","C":"有可能造成单点故障","D":"不会影响网络性能"}},{"id":"s3","type":"single","content":"某网站管理员小王在流量监测中发现近期网站的入站ICMP流量上升了250％，尽管网站没有发现任何的性能下降或其他问题。但为了安全起见，他仍然向主管领导提出了应对策略，作为主管负责人，请选择有效的针对此问题的应对措施：()","answer":"A","options":{"A":"在防火墙上设置策略，阻止所有的ICMP流量进入","B":"删除服务器上的ping.exe程序","C":"增加带宽以应对可能的拒绝服务攻击","D":"增加网站服务器以应对即将来临的拒绝服务攻击"}},{"id":"s4","type":"single","content":"以下属于XSS攻击特征的是（）。","answer":"D","options":{"A":"url部分存在script字符","B":"url部分存在cookie字符","C":"post内容部分存在script字符","D":"以上都是"}},{"id":"s5","type":"single","content":"为了保证系统日志可靠有效，以下哪一项不是日志必需具备的特征。()","answer":"D","options":{"A":"统一而精确地的时间","B":"全面覆盖系统资产","C":"包括访问源、访问目标和访问活动等重要信息","D":"可以让系统的所有用户方便的读取"}},{"id":"s6","type":"single","content":"( )日志审计工具能够分析操作系统的事件日志、注册表、文件系统、Active Directory、llS等。它可以像使⽤SQL语句⼀样查询分析数据，甚⾄可以把分析结果以各种图表的形式展现出来。","answer":"B","options":{"A":"ApacheLogsViewer","B":"LogParser","C":"GoAccess","D":"eventvwr"}},{"id":"s7","type":"single","content":"下列（）种方法可以切割Tomcat日志文件。","answer":"D","options":{"A":"通过系统自带的切割工具：logrotate来进行切割","B":"使用logj4进行切割日志","C":"使用用cronolog分割tomcat的catalina.out文件","D":"以上都可以"}},{"id":"s8","type":"single","content":"以下不属于WEB日志分析常用方法的是（）。","answer":"D","options":{"A":"特征字符分析","B":"访问频率分析","C":"Websh检测","D":"文件类型分析"}},{"id":"s9","type":"single","content":"在Windows下如何打开\"系统特权事件\"（）。","answer":"C","options":{"A":"本地组策略->Windows设置->安全选项->审核策略->本地策略","B":"本地组策略->策略设置->安全选项->审核策略->本地策略","C":"本地组策略->Windows设置->安全设置->本地策略->审核策略","D":"本地组策略->Windows设置->安全设置->本地策略->日志策略"}},{"id":"s10","type":"single","content":"对于ACL，以下说法正确的是（    ）","answer":"A","options":{"A":"语句的排序是自动的","B":"所有语句都有要处理","C":"如果没有被匹配，分组被处理","D":"可以删除命名 ACL 中的特定语句"}},{"id":"s11","type":"single","content":"一个访问控制策略由所要控制的对象、（    ）、用户权限或其他访问安全要求这几部分组成。","answer":"D","options":{"A":"网络授权","B":"数据信息","C":"系统应用","D":"访问控制规则"}},{"id":"s12","type":"single","content":"自主访问控制中主体对它所属的对象和运行的程序拥有（    ）权。","answer":"A","options":{"A":"完全控制","B":"部分控制","C":"无控制","D":"反控制"}},{"id":"s13","type":"single","content":"（    ）是访问控制的决策单元和执行单元的集合体。","answer":"B","options":{"A":"主体","B":"参考监视器","C":"审计库","D":"客体"}},{"id":"s14","type":"single","content":"下列选项中不属于访问控制涉及技术的是（    ）。","answer":"B","options":{"A":"入网访问控制","B":"软件访问控制","C":"权限控制","D":"目录级安全控制"}},{"id":"s15","type":"single","content":"安全隔离网闸的组成不包括以下哪项？( )","answer":"C","options":{"A":"内网处理单元","B":"外网处理单元","C":"协议转换单元","D":"隔离与交换控制单元"}},{"id":"s16","type":"single","content":"为了防止攻击者发送大量的请求数据来导致服务器拒绝服务，可以在防火墙上启用( )功能。","answer":"D","options":{"A":"精确访问控制","B":"规则防护","C":"CSRF攻击防护","D":"CC攻击防护"}},{"id":"s17","type":"single","content":"以下对防火墙的部署描述正确的是( )。","answer":"A","options":{"A":"防火墙部署在网络的出口","B":"防火墙部署在服务器的前面","C":"防火墙根据安全需要通常部署在不同的网络安全边界处","D":"防火墙部署在路由器的前面"}},{"id":"s18","type":"single","content":"对于防火墙的不足，以下描述错误的是( )。","answer":"C","options":{"A":"无法有效防护内网威胁","B":"防火墙效用受限于安全规则","C":"无法进行带宽管理","D":"不能完全防止感染病毒的软件或文件传输"}},{"id":"s19","type":"single","content":"网络边界防护主要措施包括以下哪项( )。","answer":"C","options":{"A":"禁止缺省口令登录","B":"关闭或限定网络服务","C":"边封闭性，即网络接入点是有限的、明确的，与外部系统不存在隐藏的联接","D":"可信性，即通过边界接入的网络设备是可信任的，考虑结合基于IEEE802.1b与数字证书来实现接入认证"}},{"id":"s20","type":"single","content":"运维员用lynis进行对系统扫描，其日志默认保存在（）。","answer":"A","options":{"A":"/var/log/lynis-report.dat","B":"/var/log/lynis/report.doc","C":"/usr/bin/lynis","D":"/var/log/lynis.log"}},{"id":"s21","type":"single","content":"以下（）命令只允许root用户修改/etc/rc.d/rc.local文件。","answer":"D","options":{"A":"chown -R root:root /*","B":"chmod 644 /etc/rc.d/rc.local","C":"chmod 600 /etc/rc.d/rc.local","D":"chmod 750 /etc/rc.d/rc.local"}},{"id":"s22","type":"single","content":"在Linux操作系统中，可以用（）命令来检查是否存在有恶意驱动。","answer":"B","options":{"A":"lsof -p *","B":"lsmod","C":"service –status-all","D":"find /* -type f -mtime +7 | xargs ls -la"}},{"id":"s23","type":"single","content":"排查root账户的历史命令是（）。","answer":"A","options":{"A":"histtroy","B":"bash_history","C":"cat /etc/shadow","D":"whereis -u -B / -f"}},{"id":"s24","type":"single","content":"某贸易公司的 OA 系统由于存在未修复的系统漏洞，被攻击者上传了木马病毒并删除了系统中的数据，由于系统备份是每周六进行一次，事件发生时间为周三，因此导致该公司三个工作日的数据丢失并使得 OA 系统在随后两天内无法访问，影响到了与公司有业务往来部分公司业务。在事故处理报告中，根据 GB/Z20968-2007《信息安全事件分级分类指南》，该事件的准确分类和定级应该是（）。","answer":"D","options":{"A":"有害程序事件 特别重大事件（I 级）","B":"信息破坏事件 重大事件（II 级）","C":"有害程序事件 较大事件（III 级）","D":"信息破坏事件 一般事件(IV 级)"}},{"id":"s25","type":"single","content":"黑客为保持对目标主机的长久控制，在服务器上打开一个新的端口供其使用，那么运维员设置网络后门的作用（）。","answer":"D","options":{"A":"保持对目标主机长期控制","B":"防止管理员密码丢失","C":"为定期维护主机","D":"为防止主机被非法入侵"}},{"id":"s26","type":"single","content":"同⼀个⽹段的主机需要相互通信时，不需要依靠⽹关，同时也不需要依靠路由表。当采⽤的是⼆层转发，只需要主机的（）表与对⽅的IP以及MAC地址的绑定。","answer":"C","options":{"A":"MAC","B":"DHCP","C":"ARP","D":"ICMP"}},{"id":"s27","type":"single","content":"Linux的邮件日志通常存放在以下哪个目录下？（）","answer":"B","options":{"A":"/var/log/secure","B":"/var/log/maillog","C":"/var/log/cron","D":"/var/log/boot.log"}},{"id":"s28","type":"single","content":"LogParser日志审计工具描述为用户帐户的改变，当操作系统发生用户创建的动作后，其对应的事件ID是（）。","answer":"A","options":{"A":"4720","B":"4721","C":"4726","D":"4725"}},{"id":"s29","type":"single","content":"以下Splunk查看日志的方式正确的是（）","answer":"A","options":{"A":"查看access.log文件","B":"查看log.txt文件","C":"查看log.ini文件","D":"查看log.cfg文件"}},{"id":"s30","type":"single","content":"以下（）是自动化SQL注入工具。","answer":"D","options":{"A":"nmap","B":"nessus","C":"msf","D":"Sqlmap"}},{"id":"s31","type":"single","content":"下列（）不属于日志文件能够达成的能力。","answer":"C","options":{"A":"分析攻击者IP","B":"分析攻击范围","C":"分析攻击数据包","D":"分析被利用脆弱点"}},{"id":"s32","type":"single","content":"下列不属于上网行为管理所解决的问题是( )。","answer":"D","options":{"A":"员工通过网页不受控的对外发布、传播违规信息","B":"员工上传或发布公司机密文件到Internet","C":"员工下载恶意文件至本地主机","D":"员工接收和查看邮件内容"}},{"id":"s33","type":"single","content":"运维人员尝试使用运维安全审计设备去管理一台Windows的服务器时，但是却一直失败。以下不属于发生的原因是( )。","answer":"C","options":{"A":"运维安全审计设备使用默认的RDP协议去管理服务器，但是服务器RDP协议的默认端口发生了修改","B":"服务器开启了防火墙功能，但是并未放行运维安全审计设备的IP地址","C":"运维安全审计设备尝试使用SSH去管理服务器，但是服务器没有设置一个专门用于SSH登陆的账户","D":"服务器的地址三层路由不可达，或者受到访问控制策略的限制"}},{"id":"s34","type":"single","content":"在常见的EAP类型中，以下选项中哪种仅使用用户名及密码进行认证？（    ）","answer":"A","options":{"A":"EAP-MD5","B":"EAP-TLS","C":"EAP-TTLS","D":"EAP-PEAP"}},{"id":"s35","type":"single","content":"远程桌面协议（RDP）的默认TCP通信端口是（    ）。","answer":"B","options":{"A":"3388","B":"3389","C":"3398","D":"3399"}},{"id":"s36","type":"single","content":"网络设备上配置了发送日志的功能，但是综合日志管理设备上无法接收到该日志，最有可能的原因是( )。","answer":"B","options":{"A":"网络设备日志发送功能故障","B":"途径的网络设备或者安全设备上配置的访问控制策略没有放行指定的五元组。","C":"受到流量控制策略的影响，导致日志报文无法被及时调度发送。","D":"网络设备上指定了多个日志服务器地址。"}},{"id":"s37","type":"single","content":"下列不是IEEE802.1X架构的组成部分的是（    ）","answer":"D","options":{"A":"客户端","B":"认证者","C":"认证服务器","D":"代理服务器"}},{"id":"s38","type":"single","content":"未经授权部署在WLAN网络中，且干扰网络正常运行的AP被称为（    ）。","answer":"B","options":{"A":"未经授权使用网络服务","B":"非法AP","C":"拒绝服务攻击","D":"数据安全"}},{"id":"s39","type":"single","content":"在配置防火墙访问控制策略时，如果涉及到多个主机地址例如(192.168.1.1、192.168.1.10、192.168.1.20)，可以通过( )的方式精确选择这些地址。","answer":"A","options":{"A":"配置地址薄","B":"指定子网掩码","C":"配置多条策略","D":"指定主机地址的所属区域"}},{"id":"s40","type":"single","content":"防火墙访问控制策略就是对( )进行检验，符合安全策略的( )才可以通过防火墙。","answer":"A","options":{"A":"数据流","B":"仅数据包头","C":"请求返回结果","D":"请求内容"}},{"id":"s41","type":"single","content":"对于访问列表来说，以下说法正确的是（    ）","answer":"C","options":{"A":"一个接口只能被关联一条ACL","B":"每个访问列表的结尾是隐含允许访问所有信息","C":"每个访问列表的结尾是隐含拒绝所有信息","D":"所有语句都有要处理"}},{"id":"s42","type":"single","content":"（    ）是访问约束条件集，是访问控制策略的具体实现与表现形式。","answer":"B","options":{"A":"逻辑控制规则","B":"访问控制规则","C":"网络授权","D":"访问操作"}},{"id":"s43","type":"single","content":"（    ）记录着主体访问客体的权限及其访问方式的信息，提供访问控制决策判断的依据。","answer":"A","options":{"A":"访问控制数据库","B":"参考监视器","C":"审计库","D":"主体"}},{"id":"s44","type":"single","content":"（    ）要求网络应当允许控制用户对目录、文件、设备的访问。","answer":"D","options":{"A":"入网级访问控制","B":"权限控制","C":"服务器安全控制","D":"目录级安全控制"}},{"id":"s45","type":"single","content":"（    ）是网络安全防范和保护的主要策略，其主要任务是保证网络资源不被非法使用和访问。","answer":"A","options":{"A":"访问控制","B":"防火墙","C":"防病毒软件","D":"数字签名"}},{"id":"s46","type":"single","content":"防止企业内部人员对网络进行攻击的最有效手段是（）。","answer":"D","options":{"A":"防火墙","B":"漏洞评估","C":"加密","D":"入侵检测"}},{"id":"s47","type":"single","content":"为降低安全风险，需要禁用不必要的管理协议从业务口登录，限制Telnet从业务平面接入的方法是（）。","answer":"A","options":{"A":"deny packet-type telnet","B":"deny packet-type ssh","C":"deny packet-type http","D":"deny packet-type snmp"}},{"id":"s48","type":"single","content":"下列属于网络设备安全加固级别Level-1的策略是（）。","answer":"A","options":{"A":"防UDP泛洪攻击","B":"防ARP泛洪攻击","C":"配置IS-IS安全","D":"配置RIP安全"}},{"id":"s49","type":"single","content":"下列不属于网络设备安全加固原则的是（）。","answer":"C","options":{"A":"禁用不必要的网络服务","B":"修改不安全的配置","C":"权限累加原则","D":"严格对设备进行访问控制"}},{"id":"s50","type":"single","content":"下列哪种防御机制可降低转发面的安全危害（）？","answer":"A","options":{"A":"内嵌安全检测引擎","B":"畸形报文检测","C":"CPCAR","D":"MAC地址防漂移"}},{"id":"s51","type":"single","content":"下列不属于运维安全审计设备解决的问题是( )。","answer":"D","options":{"A":"服务器集中管理难","B":"账号权限控制难","C":"满足法律法规要求","D":"抵御操作系统平面的攻击"}},{"id":"s52","type":"single","content":"综合日志审计设备不能审计以下哪个设备的日志( )。","answer":"C","options":{"A":"网络设备","B":"主机和应用系统日志","C":"PDU/机柜","D":"中间件"}},{"id":"s53","type":"single","content":"网络安全审计设备通常可以通过配置( )方法来获取网络流量。","answer":"B","options":{"A":"静态路由","B":"端口镜像","C":"链路聚合","D":"动态路由"}},{"id":"s54","type":"single","content":"下列不属于网络安全审计产品的是( )，","answer":"D","options":{"A":"日志安全审计产品","B":"主机监控于审计产品","C":"数据库审计产品","D":"入侵检测产品"}},{"id":"s55","type":"single","content":"传统的IPS和WEB应用防火墙（WAF）相比，传统的IPS无法做到( )的功能。","answer":"B","options":{"A":"扫描探测","B":"暗链检测","C":"后门检测","D":"病毒检测"}},{"id":"s56","type":"single","content":"基于网络的入侵检测系统不适于检测以下哪种行为？( )。","answer":"D","options":{"A":"网络扫描","B":"协议攻击","C":"非法网络访问","D":"网页篡改"}},{"id":"s57","type":"single","content":"以下关于安全隔离网闸的功能描述不正确的是( )。","answer":"B","options":{"A":"安全隔离网闸的安全性体现在链路层断开","B":"安全网闸直接转发IP包","C":"网络直接交换的数据都是应用层的数据","D":"直接处理应用层数据，对应用层数据进行检查和控制"}},{"id":"s58","type":"single","content":"主流的安全隔离网闸功能模块不包含( )模块。","answer":"A","options":{"A":"应用","B":"数据库","C":"消息","D":"文件"}},{"id":"s59","type":"single","content":"为了防止网页恶意代码攻击，可以在防火墙上启用( )病毒功能。","answer":"B","options":{"A":"FTP","B":"HTTP","C":"SMTP","D":"IMAP"}},{"id":"s60","type":"single","content":"经过防火墙的数据流不包含以下哪种？( )。","answer":"D","options":{"A":"TCP流","B":"UDP流","C":"ICMP流","D":"IGMP流"}},{"id":"s61","type":"single","content":"当防火墙采用旁路模式部署时，不能对流量进行( )。","answer":"B","options":{"A":"扫描","B":"转发","C":"统计","D":"监听"}},{"id":"s62","type":"single","content":"关于防火墙的发展历程，下列描述正确的是( )。","answer":"A","options":{"A":"第一阶段：基于路由器的防火墙","B":"第二阶段：用户化的防火墙工具套","C":"第三阶段：具有安全操作系统的防火墙","D":"第四阶段：基于通用操作系统上的防火墙"}},{"id":"s63","type":"single","content":"应用代理型防火墙的缺点不包括以下哪项？( )。","answer":"D","options":{"A":"速度比包过滤慢","B":"对用户不透明，给用户的使用带来不便","C":"需要针对每种协议设置一个不同的代理服务器","D":"不能隐藏内部IP地址"}},{"id":"s64","type":"single","content":"关于信息内网网络边界安全防护，以下说法不正确的是( )。","answer":"B","options":{"A":"要按照公司总体防护方案要求进行","B":"纵向边界的网络防护可以不进行控制","C":"应加强信息内网网络横向边界的安全防护","D":"要加强上、下级单位和同级单位信息内网网络边界安全的防护"}},{"id":"s65","type":"single","content":"为了对网络边界实现网络攻击实时监控，应该部署( )设备。","answer":"C","options":{"A":"数据库审计","B":"防病毒网关","C":"入侵检测","D":"防火墙"}},{"id":"s66","type":"single","content":"网络运营者应当对其收集的用户信息严格保密，并建立健全（   ）。","answer":"B","options":{"A":"用户信息保密制度","B":"用户信息保护制度","C":"用户信息加密制度","D":"用户信息保全制度"}},{"id":"s67","type":"single","content":"两台计算机利用电话线路进行传输数据信号时，必备的设备是（   ）。","answer":"B","options":{"A":"网卡","B":"调制解调器","C":"中继器","D":"随机错"}},{"id":"s68","type":"single","content":"如果在具有层次结构的一组元素中，存在着一对一的关系，那么我们可以认为这样的数据的逻辑类型就是（   ）。","answer":"B","options":{"A":"集合","B":"线性结构","C":"树型结构","D":"图型结构"}},{"id":"s69","type":"single","content":"下列关于汇编程序的任务说法正确的是（   ）。","answer":"A","options":{"A":"将汇编语言编写的程序转换为目标程序","B":"将汇编语言编写的程序转换为可执行程序","C":"将高级语言编写的程序转换为汇编语言程序","D":"将高级语言编写的程序转换为可执行程序"}},{"id":"m0","type":"multiple","content":"现需要使用Wireshark筛选出目的地址是“192.168.1.1”的“302”响应报文，以下语法错误的是（）。","answer":"BCD","options":{"A":"http.response.code == 302 and ip.dst==192.168.1.1","B":"http.response.code == 302 and ip.dst==\"192.168.1.1\"","C":"http.request.code == 302 and ip.dst==192.168.1.1","D":"http.request.code == 302 and ip.dst==\"192.168.1.1\""}},{"id":"m1","type":"multiple","content":"发现攻击者入侵时，可以通过系统日志可以分析事件包括以下哪些？（）","answer":"ABC","options":{"A":"用户登录行为及登录IPB","B":"触发安全策略产生的信息","C":"系统是否被溢出","D":"Http验证页面暴力破解行为"}},{"id":"m2","type":"multiple","content":"SQL注入攻击的可以导致以下哪些情况发生？()","answer":"ABCD","options":{"A":"窃取他人的账户","B":"窃取和复制网站或系统的敏感数据","C":"更改系统的敏感数据","D":"删除系统的敏感数据"}},{"id":"m3","type":"multiple","content":"Mysql的查询日志分为（）和（），它们是通过查询是否超出变量long_query_time指定时间的值来判定的。","answer":"CD","options":{"A":"快查询日志","B":"联合查询日志","C":"慢查询日志","D":"一般查询日志"}},{"id":"m4","type":"multiple","content":"以下关于Windows Server Backup的描述正确的有（    ）。","answer":"ABC","options":{"A":"支持增量备份","B":"可制定备份计划","C":"可以只备份系统状态信息","D":"只能备份整个服务器数据"}},{"id":"m5","type":"multiple","content":"公司网络中存在Windows类操作系统和Linux类操作系统，管理人员使用运维安全审计设备通过( )协议和( )协议来管理这两类操作系统。","answer":"AC","options":{"A":"RDP","B":"SMB","C":"SSH","D":"FTP"}},{"id":"m6","type":"multiple","content":"以下关于防火墙常见的URL关键字匹配方式对应关系描述错误的是( )。","answer":"AB","options":{"A":"\"www.example*\"方式为后缀匹配","B":"\"*aspx\"方式为前缀匹配","C":"\"*sport*\"方式为关键字匹配","D":"“www.example.com”方式为精确匹配"}},{"id":"m7","type":"multiple","content":"漏洞除了系统本身固有的缺陷之外，还包括以下哪些？（    ）","answer":"ABD","options":{"A":"管理以及制度上的风险","B":"用户的不正当配置","C":"用户账户过多","D":"其他非技术性因素造成的系统不安全","E":"系统使用时间过久"}},{"id":"m8","type":"multiple","content":"保护站点中的（）和（）功能组合能够实现：服务端和WAF之间用于传输HTTP数据的TCP连接不会关闭，WAF再次访问服务器时，会继续使用之前已创建的连接。","answer":"BC","options":{"A":"负载均衡","B":"连接复用","C":"长连接","D":"客户端IP地址透明"}},{"id":"m9","type":"multiple","content":"WAF保护站点中可以设置后端TCP连接的模式b包括( )。","answer":"AC","options":{"A":"长连接","B":"慢连接","C":"短连接","D":"自连接"}},{"id":"m10","type":"multiple","content":"以下关于安全隔离网闸的说法错误的有( )。","answer":"ABC","options":{"A":"可通过协议代理的方法穿透网闸的安全控制","B":"能够发现数据库的漏洞","C":"在OSI的二层以上发挥作用","D":"网闸两端的网络之间不存在物理连接"}},{"id":"m11","type":"multiple","content":"在计算机网络信息安全中，防火墙的主要功能包括以下哪些？（）","answer":"ABD","options":{"A":"协同防御","B":"网络带宽控制","C":"防止内网病毒的传播","D":"过滤非安全网络访问"}},{"id":"m12","type":"multiple","content":"以下关于查看Windows启动项和启动脚本的方式错误的是：（）。","answer":"ACD","options":{"A":"win+r→cmd","B":"win+r→msconfig","C":"win+r→gpedit.msc","D":"win+r→calc"}},{"id":"m13","type":"multiple","content":"Windows防火墙将用户计算机所处的网络分为以下哪两种？（ ）","answer":"AB","options":{"A":"公用网络","B":"家庭或工作（专用）网络","C":"有线网","D":"无线网"}},{"id":"m14","type":"multiple","content":"防火墙日志文件能监控发送流量、接收流量、（）、(  )。","answer":"B","options":{"A":"内部流量监控","B":"网络流量监控","C":"物理层流量监控","D":"数据链路层流量监控"}},{"id":"m15","type":"multiple","content":"以下可以用于漏洞扫描的工具有（）。","answer":"ABC","options":{"A":"openvas","B":"nmap","C":"nessus","D":"portscan"}},{"id":"m16","type":"multiple","content":"下列关于网络流量监控描述正确的有（）。","answer":"ABD","options":{"A":"流量检测中所检测的流量通常采集自主机节点、服务器、路由器接口和路径等","B":"数据采集探针是专门用于获取网络链接流量的硬件设备","C":"流量监控能够有效实现对敏感数据的过滤","D":"网络流量监控分析的基础是协议行为解析技术"}},{"id":"m17","type":"multiple","content":"管理员在设置网络设备日志记录时，需要完成两个基本任务，分别是以下哪两个？（    ）。","answer":"CD","options":{"A":"重启网络设备","B":"将所有接口断开连接","C":"打开日志记录","D":"控制日志在线路上的显示","E":"重启设备"}},{"id":"m18","type":"multiple","content":"关于logging synchronous命令的主要目的说法错误的有（    ）","answer":"BCD","options":{"A":"将日志消息输出","B":"将日志消息保存","C":"将日志输出同步到指定邮箱","D":"将日志消息输出到管理员邮箱","E":"将日志输出同步到VTY线路"}},{"id":"m19","type":"multiple","content":"以下不属于WLAN采用的加密技术的有（    ）","answer":"ABDE","options":{"A":"3DES","B":"RSA","C":"WPA2-PSK","D":"MD5","E":"DES"}},{"id":"m20","type":"multiple","content":"WEP支持以下哪些认证方式？","answer":"AC","options":{"A":"开放式系统认证","B":"MAC地址认证","C":"共享密钥认证","D":"对称密钥认证","E":"PSK认证"}},{"id":"m21","type":"multiple","content":"通常WAF保护站点支持以下哪些？( )","answer":"ABCD","options":{"A":"域名地址","B":"IPv4地址","C":"IPv6地址","D":"自定义WEB服务端口"}},{"id":"m22","type":"multiple","content":"WAF支持的告警方式有( )。","answer":"ABD","options":{"A":"syslog","B":"mail","C":"FTP","D":"短信"}},{"id":"m23","type":"multiple","content":"一个入侵检测系统主要由以下功能模块组成：数据采集模块、入侵分析引擎模块、( )、（）和相关的辅助模块。","answer":"AC","options":{"A":"应急处理模块","B":"漏洞修补模块","C":"管理配置模块","D":"恶意样本下载模块"}},{"id":"m24","type":"multiple","content":"以下关于入侵的概念理解，错误的是（）。","answer":"BCD","options":{"A":"入侵是指违背访问目标的安全策略的行为。","B":"入侵是指违背访问目标的系统漏洞的行为。","C":"入侵是指违背访问目标的安全风险的行为。","D":"入侵是指违背访问目标的弱点应用的行为。"}},{"id":"m25","type":"multiple","content":"以下不属于IDS系统中的模块与用户的接口的是( )。","answer":"BCD","options":{"A":"管理配置模块","B":"数据采集模块","C":"应急处理模块","D":"入侵分析引擎模块"}},{"id":"m26","type":"multiple","content":"用户或网络管理人员可以通过某些系统命令得到非常详尽的网络连接情况统计结果，以下命令无法显示有关统计信息和当前TCP/IP网络连接情况的是（）。","answer":"ACD","options":{"A":"ipconfig","B":"netstat","C":"tracert","D":"ping"}},{"id":"m27","type":"multiple","content":"WEB应用防火墙常见的部署方式包括以下哪几种？","answer":"ABD","options":{"A":"透明代理模式","B":"反向代理模式","C":"交换模式","D":"路由模式"}},{"id":"m28","type":"multiple","content":"根据网络故障的性质,可将网络故障分为（     ）。","answer":"AB","options":{"A":"网络物理故障","B":"网络逻辑故障","C":"路由故障","D":"线路故障"}},{"id":"m29","type":"multiple","content":"以下网络连通性测试命令使用正确的是？","answer":"CD","options":{"A":"ping n www.163.com","B":"ping -t student@163.com","C":"ping -a 192.168.1.1","D":"ping www.163.com -t"}},{"id":"j0","type":"judge","content":"流量分析是指通过对截获的信息量的统计来分析其中有用的信息，属于主动攻击，破坏信息的保密性。","answer":"错"},{"id":"j1","type":"judge","content":"WHERE 子句用于提取那些满足指定条件的记录。","answer":"对"},{"id":"j2","type":"judge","content":"W3C格式⽇志提供详细的数据字段，其中服务器端⼝指的是s-port服务端提供服务的传输层端⼝。","answer":"对"},{"id":"j3","type":"judge","content":"日志文件为服务器、工作站、防火墙和应用软件等IT资源相关活动记录了必要的、有价值的信息。","answer":"对"},{"id":"j4","type":"judge","content":"在安全事件的应急处置中，日志分析的目的很明确，就是要对攻击行为进行分析溯源。","answer":"对"},{"id":"j5","type":"judge","content":"通过Windows Update工具，在用户关闭计算机后，计算机会自动更新及安装漏洞补丁。","answer":"错"},{"id":"j6","type":"judge","content":"网络设备中，syslog记录着系统中的任何事件，管理者可以通过查看系统记录，以便随时掌握系统状况。","answer":"对"},{"id":"j7","type":"judge","content":"在交换机上实现telnet远程管理，需开启telnet-server服务。","answer":"对"},{"id":"j8","type":"judge","content":"标准ACL 能够进行IP协议信息的匹配。","answer":"错"},{"id":"j9","type":"judge","content":"访问控制的目的是保护系统的资产，可以防止临时用户进入系统及合法用户对系统的非法使用。","answer":"错"},{"id":"j10","type":"judge","content":"数据库审计设备通过对审计的SQL语句和安全规则进行匹配，以此判断SQL语句中是否包含可疑行为。","answer":"对"},{"id":"j11","type":"judge","content":"综合日志审计设备通常能够对Mysql数据库的连接数、线程数、每秒SQL查询数进行监控。","answer":"对"},{"id":"j12","type":"judge","content":"WEB应用防火墙透明代理部署是指，设备以透明方式串接到网络中，设备通讯接口工作在二层，无需配置IP地址及端口。","answer":"对"},{"id":"j13","type":"judge","content":"WEB应用防火墙通常没有旁路部署功能，因为旁路部署是没有意义的。","answer":"错"},{"id":"j14","type":"judge","content":"入侵检测系统通常能够对登陆行为进行分析，主要针对设备的登陆日志进行分析。","answer":"错"},{"id":"j15","type":"judge","content":"在部署入侵检测系统时，使用统一的IDS结构类型即可。","answer":"错"},{"id":"j16","type":"judge","content":"入侵检测系统可以部署用于上网保护，通过采集域名请求数据及网络威胁情报，利用入侵检测系统来检测不良网址，保护上网计算机安全。","answer":"对"},{"id":"j17","type":"judge","content":"IP地址10.10.10.256是A类IP地址。","answer":"错"},{"id":"j18","type":"judge","content":"公司区域内一切电气设备的安装维修、电线拉接，都必须由持证电工施行，并符合《用电安全规定》。","answer":"对"},{"id":"j19","type":"judge","content":"职业道德是人的事业成功的重要保证。","answer":"对"}];
+
+// ===== State =====
+let currentQuestions = [];
+let currentIndex = 0;
+let currentFilter = 'all';
+let selectedOptions = new Set();
+let answered = false;
+let userAnswers = {}; // qid -> {selected, correct, times}
+let favorites = new Set(JSON.parse(localStorage.getItem('quiz_fav') || '[]'));
+
+// ===== Init =====
+function init() {
+  updateMenuStats();
+  loadStorage();
+  if (localStorage.getItem('quiz_dark') === '1') document.body.classList.add('dark');
+  updateDarkBtn();
+}
+
+function loadStorage() {
+  const saved = localStorage.getItem('quiz_answers');
+  if (saved) userAnswers = JSON.parse(saved);
+}
+function saveStorage() {
+  localStorage.setItem('quiz_answers', JSON.stringify(userAnswers));
+  localStorage.setItem('quiz_fav', JSON.stringify([...favorites]));
+}
+
+function toggleDark() {
+  document.body.classList.toggle('dark');
+  localStorage.setItem('quiz_dark', document.body.classList.contains('dark') ? '1' : '0');
+  updateDarkBtn();
+}
+
+function updateMenuStats() {
+  const s = ALL_QUESTIONS.filter(q=>q.type==='single').length;
+  const m = ALL_QUESTIONS.filter(q=>q.type==='multiple').length;
+  const j = ALL_QUESTIONS.filter(q=>q.type==='judge').length;
+  document.getElementById('totalCount').textContent = ALL_QUESTIONS.length;
+  document.getElementById('stat-total').textContent = ALL_QUESTIONS.length;
+  document.getElementById('stat-single').textContent = s;
+  document.getElementById('stat-multi').textContent = m;
+  document.getElementById('stat-judge').textContent = j;
+  const wrongIds = Object.keys(userAnswers).filter(id => !userAnswers[id].correct);
+  document.getElementById('stat-wrong').textContent = wrongIds.length;
+}
+
+function showPanel(id) {
+  ['menu','quiz','stats','export'].forEach(p => document.getElementById('panel-'+p).style.display = 'none');
+  document.getElementById('panel-'+id).style.display = 'block';
+  if (id === 'stats') renderStats();
+  // Update mobile nav active state
+  document.querySelectorAll('.mobile-nav button').forEach(b => b.classList.remove('active'));
+  const navMap = { menu:'mnav-home', quiz:'mnav-quiz', stats:'mnav-stats', export:'mnav-export' };
+  const navBtn = document.getElementById(navMap[id]);
+  if (navBtn) navBtn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function setMode(mode) {
+  document.getElementById('mode-order').classList.toggle('active', mode === 'order');
+  document.getElementById('mode-random').classList.toggle('active', mode === 'random');
+  startQuiz(currentFilter, mode);
+}
+
+function startQuiz(filter, mode) {
+  currentFilter = filter;
+  let pool = ALL_QUESTIONS;
+  if (filter === 'single') pool = ALL_QUESTIONS.filter(q => q.type === 'single');
+  else if (filter === 'multiple') pool = ALL_QUESTIONS.filter(q => q.type === 'multiple');
+  else if (filter === 'judge') pool = ALL_QUESTIONS.filter(q => q.type === 'judge');
+  else if (filter === 'wrong') {
+    const wrongIds = Object.keys(userAnswers).filter(id => !userAnswers[id].correct);
+    pool = ALL_QUESTIONS.filter(q => wrongIds.includes(q.id));
+    if (pool.length === 0) { alert('暂无错题，先去练习吧！'); return; }
+  } else if (filter === 'fav') {
+    pool = ALL_QUESTIONS.filter(q => favorites.has(q.id));
+    if (pool.length === 0) { alert('暂无收藏题目！'); return; }
+  }
+
+  currentQuestions = pool.slice();
+  if (mode === 'random') {
+    for (let i = currentQuestions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [currentQuestions[i], currentQuestions[j]] = [currentQuestions[j], currentQuestions[i]];
+    }
+  }
+  currentIndex = 0;
+  selectedOptions.clear();
+  answered = false;
+  showPanel('quiz');
+  renderQuestion();
+  renderNav();
+}
+
+function renderQuestion() {
+  const q = currentQuestions[currentIndex];
+  if (!q) return;
+  answered = false;
+  selectedOptions.clear();
+
+  const typeMap = { single: '单选题', multiple: '多选题', judge: '判断题' };
+  document.getElementById('q-type').textContent = typeMap[q.type];
+  document.getElementById('q-type').className = 'question-type-badge type-' + q.type;
+  document.getElementById('q-index').textContent = (currentIndex + 1) + '.';
+  document.getElementById('q-content').textContent = q.content;
+
+  const optsDiv = document.getElementById('q-options');
+  optsDiv.innerHTML = '';
+
+  if (q.type === 'judge') {
+    ['对', '错'].forEach(opt => {
+      const div = document.createElement('div');
+      div.className = 'option';
+      div.onclick = () => selectOption(opt);
+      div.innerHTML = `<div class="option-key">${opt}</div><div class="option-text">${opt}</div>`;
+      div.dataset.val = opt;
+      optsDiv.appendChild(div);
+    });
+  } else {
+    Object.keys(q.options).sort().forEach(key => {
+      const div = document.createElement('div');
+      div.className = 'option';
+      div.onclick = () => selectOption(key);
+      div.innerHTML = `<div class="option-key">${key}</div><div class="option-text">${q.options[key]}</div>`;
+      div.dataset.val = key;
+      optsDiv.appendChild(div);
+    });
+  }
+
+  document.getElementById('q-result').className = 'result-box';
+  document.getElementById('btn-submit').style.display = q.type === 'multiple' ? 'inline-flex' : 'inline-flex';
+  document.getElementById('btn-show').style.display = 'inline-flex';
+  updateFavBtn();
+  updateProgress();
+  updateNavHighlight();
+}
+
+function selectOption(val) {
+  if (answered) return;
+  const q = currentQuestions[currentIndex];
+  if (q.type === 'multiple') {
+    if (selectedOptions.has(val)) selectedOptions.delete(val);
+    else selectedOptions.add(val);
+    Array.from(document.querySelectorAll('.option')).forEach(el => {
+      el.classList.toggle('selected', selectedOptions.has(el.dataset.val));
+    });
+  } else {
+    selectedOptions.clear();
+    selectedOptions.add(val);
+    Array.from(document.querySelectorAll('.option')).forEach(el => {
+      el.classList.toggle('selected', el.dataset.val === val);
+    });
+    submitAnswer();
+  }
+}
+
+function submitAnswer() {
+  if (answered) return;
+  const q = currentQuestions[currentIndex];
+  if (selectedOptions.size === 0) { alert('请先选择答案'); return; }
+
+  answered = true;
+  let userAns = [...selectedOptions].sort().join('');
+  let correctAns = q.answer;
+  let isCorrect = false;
+
+  if (q.type === 'judge') {
+    isCorrect = userAns === correctAns;
+  } else {
+    isCorrect = userAns === correctAns;
+  }
+
+  // Highlight
+  Array.from(document.querySelectorAll('.option')).forEach(el => {
+    const v = el.dataset.val;
+    const isCorrectOpt = correctAns.includes(v);
+    const isSelected = selectedOptions.has(v);
+    el.classList.add('disabled');
+    if (isCorrectOpt) el.classList.add('correct');
+    else if (isSelected && !isCorrectOpt) el.classList.add('wrong');
+  });
+
+  const resultBox = document.getElementById('q-result');
+  resultBox.className = 'result-box show ' + (isCorrect ? 'result-correct' : 'result-wrong');
+  document.getElementById('result-title').textContent = isCorrect ? '✅ 回答正确！' : '❌ 回答错误';
+  document.getElementById('result-answer').textContent = '正确答案：' + correctAns;
+
+  // Save
+  if (!userAnswers[q.id]) userAnswers[q.id] = { selected: userAns, correct: isCorrect, times: 0 };
+  userAnswers[q.id].times = (userAnswers[q.id].times || 0) + 1;
+  userAnswers[q.id].selected = userAns;
+  userAnswers[q.id].correct = isCorrect;
+  saveStorage();
+  updateMenuStats();
+  updateProgress();
+  updateNavItem(currentIndex, isCorrect);
+
+  // Auto next
+  if (isCorrect && document.getElementById('auto-next').checked) {
+    setTimeout(() => nextQuestion(), 800);
+  }
+}
+
+function showAnswer() {
+  if (answered) return;
+  const q = currentQuestions[currentIndex];
+  answered = true;
+  Array.from(document.querySelectorAll('.option')).forEach(el => {
+    const v = el.dataset.val;
+    el.classList.add('disabled');
+    if (q.answer.includes(v)) el.classList.add('correct');
+  });
+  const resultBox = document.getElementById('q-result');
+  resultBox.className = 'result-box show result-correct';
+  document.getElementById('result-title').textContent = '💡 查看答案';
+  document.getElementById('result-answer').textContent = '正确答案：' + q.answer;
+}
+
+function prevQuestion() {
+  if (currentIndex > 0) { currentIndex--; renderQuestion(); renderNav(); }
+}
+function nextQuestion() {
+  if (currentIndex < currentQuestions.length - 1) { currentIndex++; renderQuestion(); renderNav(); }
+}
+
+function updateProgress() {
+  const total = currentQuestions.length;
+  const pct = ((currentIndex + 1) / total * 100).toFixed(1);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = (currentIndex + 1) + ' / ' + total;
+
+  let correct = 0, wrong = 0;
+  currentQuestions.forEach((q, i) => {
+    if (i > currentIndex) return;
+    const rec = userAnswers[q.id];
+    if (rec && rec.times > 0) {
+      if (rec.correct) correct++; else wrong++;
+    }
+  });
+  document.getElementById('score-text').textContent = `正确: ${correct} | 错误: ${wrong}`;
+}
+
+function renderNav() {
+  const list = document.getElementById('question-list');
+  list.innerHTML = '';
+  currentQuestions.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'q-num';
+    div.textContent = i + 1;
+    div.onclick = () => { currentIndex = i; renderQuestion(); updateNavHighlight(); };
+    div.id = 'qnum-' + i;
+    list.appendChild(div);
+  });
+  updateNavHighlight();
+  // restore colors for answered
+  currentQuestions.forEach((q, i) => {
+    const rec = userAnswers[q.id];
+    if (rec && rec.times > 0) updateNavItem(i, rec.correct);
+  });
+}
+
+function updateNavHighlight() {
+  document.querySelectorAll('.q-num').forEach((el, i) => {
+    el.classList.toggle('current', i === currentIndex);
+  });
+}
+
+function updateNavItem(idx, isCorrect) {
+  const el = document.getElementById('qnum-' + idx);
+  if (!el) return;
+  el.classList.remove('correct', 'wrong');
+  el.classList.add(isCorrect ? 'correct' : 'wrong');
+}
+
+function toggleFav() {
+  const q = currentQuestions[currentIndex];
+  if (favorites.has(q.id)) favorites.delete(q.id);
+  else favorites.add(q.id);
+  saveStorage();
+  updateFavBtn();
+}
+function updateFavBtn() {
+  const q = currentQuestions[currentIndex];
+  const btn = document.getElementById('fav-btn');
+  btn.classList.toggle('active', favorites.has(q.id));
+  btn.textContent = favorites.has(q.id) ? '★' : '☆';
+}
+
+function renderStats() {
+  const ids = Object.keys(userAnswers);
+  let total = 0, correct = 0, wrong = 0;
+  const byType = { single: {t:0,c:0,w:0}, multiple: {t:0,c:0,w:0}, judge: {t:0,c:0,w:0} };
+  ids.forEach(id => {
+    const rec = userAnswers[id];
+    const q = ALL_QUESTIONS.find(x => x.id === id);
+    if (!q) return;
+    total++;
+    if (rec.correct) { correct++; byType[q.type].c++; }
+    else { wrong++; byType[q.type].w++; }
+    byType[q.type].t++;
+  });
+  document.getElementById('st-total').textContent = total;
+  document.getElementById('st-correct').textContent = correct;
+  document.getElementById('st-wrong').textContent = wrong;
+  document.getElementById('st-rate').textContent = total > 0 ? Math.round(correct/total*100) + '%' : '0%';
+
+  const tbody = document.getElementById('stats-body');
+  tbody.innerHTML = '';
+  const names = { single: '单选题', multiple: '多选题', judge: '判断题' };
+  ['single','multiple','judge'].forEach(t => {
+    const d = byType[t];
+    const rate = d.t > 0 ? Math.round(d.c/d.t*100) + '%' : '-';
+    tbody.innerHTML += `<tr><td>${names[t]}</td><td>${ALL_QUESTIONS.filter(q=>q.type===t).length}</td><td>${d.t}</td><td>${d.c}</td><td>${d.w}</td><td>${rate}</td></tr>`;
+  });
+
+  const recent = ids.filter(id => !userAnswers[id].correct).slice(-10).reverse();
+  const rwDiv = document.getElementById('recent-wrong');
+  if (recent.length === 0) {
+    rwDiv.innerHTML = '<p style="color:var(--text-secondary)">暂无错题记录</p>';
+  } else {
+    rwDiv.innerHTML = recent.map(id => {
+      const q = ALL_QUESTIONS.find(x => x.id === id);
+      return `<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:0.9rem;"><span style="color:var(--danger);font-weight:bold;">✗</span> ${q ? q.content.substring(0,60)+'...' : id} <span style="color:var(--text-secondary)">(正确答案: ${q?q.answer:''})</span></div>`;
+    }).join('');
+  }
+}
+
+// ===== Export Functions =====
+function downloadFile(filename, content, mime) {
+  const blob = new Blob(['\ufeff' + content], { type: mime });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+function exportJSON() {
+  const data = ALL_QUESTIONS.map(q => {
+    const typeMap = { single: '单选题', multiple: '多选题', judge: '判断题' };
+    const item = { 题型: typeMap[q.type], 题目: q.content, 正确答案: q.answer };
+    if (q.options) {
+      Object.keys(q.options).sort().forEach(k => item['选项' + k] = q.options[k]);
+    }
+    return item;
+  });
+  downloadFile('题目数据.json', JSON.stringify(data, null, 2), 'application/json;charset=utf-8');
+}
+
+function exportCSV() {
+  const headers = ['题型', '题目', '选项A', '选项B', '选项C', '选项D', '选项E', '正确答案', '我的答案', '是否正确'];
+  const rows = ALL_QUESTIONS.map(q => {
+    const typeMap = { single: '单选题', multiple: '多选题', judge: '判断题' };
+    const rec = userAnswers[q.id];
+    const row = [
+      typeMap[q.type],
+      '"' + q.content.replace(/"/g, '""') + '"',
+      q.options ? '"' + (q.options.A || '').replace(/"/g, '""') + '"' : '',
+      q.options ? '"' + (q.options.B || '').replace(/"/g, '""') + '"' : '',
+      q.options ? '"' + (q.options.C || '').replace(/"/g, '""') + '"' : '',
+      q.options ? '"' + (q.options.D || '').replace(/"/g, '""') + '"' : '',
+      q.options ? '"' + (q.options.E || '').replace(/"/g, '""') + '"' : '',
+      q.answer,
+      rec ? rec.selected : '',
+      rec ? (rec.correct ? '正确' : '错误') : ''
+    ];
+    return row.join(',');
+  });
+  downloadFile('题目数据.csv', headers.join(',') + '\n' + rows.join('\n'), 'text/csv;charset=utf-8');
+}
+
+function exportWrongJSON() {
+  const wrongIds = Object.keys(userAnswers).filter(id => !userAnswers[id].correct);
+  const data = wrongIds.map(id => {
+    const q = ALL_QUESTIONS.find(x => x.id === id);
+    if (!q) return null;
+    const typeMap = { single: '单选题', multiple: '多选题', judge: '判断题' };
+    const rec = userAnswers[id];
+    const item = { 题型: typeMap[q.type], 题目: q.content, 正确答案: q.answer, 我的答案: rec.selected };
+    if (q.options) {
+      Object.keys(q.options).sort().forEach(k => item['选项' + k] = q.options[k]);
+    }
+    return item;
+  }).filter(Boolean);
+  if (data.length === 0) { alert('暂无错题'); return; }
+  downloadFile('错题集.json', JSON.stringify(data, null, 2), 'application/json;charset=utf-8');
+}
+
+function exportRecord() {
+  const data = {
+    version: 1,
+    exportTime: new Date().toISOString(),
+    answers: userAnswers,
+    favorites: [...favorites]
+  };
+  downloadFile('答题记录.json', JSON.stringify(data, null, 2), 'application/json;charset=utf-8');
+}
+
+// ===== Import Functions =====
+function showImportModal() {
+  document.getElementById('import-text').value = '';
+  document.getElementById('import-modal').classList.add('show');
+}
+function closeImportModal() {
+  document.getElementById('import-modal').classList.remove('show');
+}
+function handleImportFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    document.getElementById('import-text').value = ev.target.result;
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+function doImport() {
+  const text = document.getElementById('import-text').value.trim();
+  if (!text) { alert('请粘贴或选择数据'); return; }
+  try {
+    const data = JSON.parse(text);
+    if (data.answers) {
+      // Merge with existing
+      Object.assign(userAnswers, data.answers);
+      if (data.favorites) data.favorites.forEach(id => favorites.add(id));
+    } else {
+      // Assume it's a plain answers object
+      Object.assign(userAnswers, data);
+    }
+    saveStorage();
+    updateMenuStats();
+    closeImportModal();
+    alert('导入成功！');
+  } catch (e) {
+    alert('数据格式错误，请检查 JSON 格式');
+  }
+}
+
+function confirmClear() { document.getElementById('clear-modal').classList.add('show'); }
+function closeClearModal() { document.getElementById('clear-modal').classList.remove('show'); }
+function doClear() {
+  userAnswers = {};
+  favorites.clear();
+  localStorage.removeItem('quiz_answers');
+  localStorage.removeItem('quiz_fav');
+  updateMenuStats();
+  closeClearModal();
+  alert('已清除所有记录');
+}
+
+// ===== Touch Swipe Support =====
+let touchStartX = 0, touchStartY = 0;
+document.addEventListener('touchstart', e => {
+  touchStartX = e.changedTouches[0].screenX;
+  touchStartY = e.changedTouches[0].screenY;
+}, { passive: true });
+document.addEventListener('touchend', e => {
+  if (document.getElementById('panel-quiz').style.display === 'none') return;
+  const dx = e.changedTouches[0].screenX - touchStartX;
+  const dy = e.changedTouches[0].screenY - touchStartY;
+  if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.7) return;
+  if (dx > 0) prevQuestion();
+  else nextQuestion();
+}, { passive: true });
+
+// ===== Dark mode button text =====
+function updateDarkBtn() {
+  const btn = document.getElementById('dark-btn');
+  btn.textContent = document.body.classList.contains('dark') ? '☀️ 日间' : '🌙 夜间';
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (document.getElementById('panel-quiz').style.display === 'none') return;
+  if (e.key === 'ArrowLeft') prevQuestion();
+  else if (e.key === 'ArrowRight') nextQuestion();
+  else if (e.key === 'Enter' || e.key === ' ') {
+    if (!answered) submitAnswer();
+    else nextQuestion();
+  } else if (['A','B','C','D','E','1','2'].includes(e.key.toUpperCase())) {
+    if (answered) return;
+    const map = { '1':'A', '2':'B' };
+    let k = e.key.toUpperCase();
+    if (map[k]) k = map[k];
+    // For judge
+    const q = currentQuestions[currentIndex];
+    if (q.type === 'judge') {
+      if (e.key === '1' || e.key === 'y' || e.key === 'Y') selectOption('对');
+      if (e.key === '2' || e.key === 'n' || e.key === 'N') selectOption('错');
+    } else {
+      selectOption(k);
+    }
+  }
+});
+
+init();
+</script>
+</body>
+</html>
