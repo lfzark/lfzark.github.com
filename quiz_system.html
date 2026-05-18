@@ -243,6 +243,46 @@ select, input[type="checkbox"] {
   .mobile-nav { display: none; }
   .swipe-hint { display: none; }
 }
+.search-bar {
+  display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.search-bar input[type="text"] {
+  flex: 1; min-width: 180px; padding: 10px 14px; border-radius: 8px;
+  border: 2px solid var(--border); background: var(--bg); color: var(--text);
+  font-size: 0.95rem; transition: border-color 0.2s; outline: none;
+}
+.search-bar input[type="text"]:focus { border-color: var(--primary); }
+.search-bar input[type="text"]::placeholder { color: var(--text-secondary); }
+.search-filter {
+  display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+}
+.search-filter .tab { padding: 6px 12px; font-size: 0.82rem; }
+.search-results { margin-top: 12px; }
+.search-result-item {
+  padding: 14px; border-radius: 10px; border: 1px solid var(--border);
+  margin-bottom: 10px; cursor: pointer; transition: all 0.2s; background: var(--card);
+}
+.search-result-item:hover { border-color: var(--primary); box-shadow: var(--shadow); }
+.search-result-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
+}
+.search-result-content { font-size: 0.9rem; line-height: 1.5; margin-bottom: 8px; }
+.search-result-content mark {
+  background: #fef08a; color: inherit; padding: 1px 2px; border-radius: 2px;
+}
+.dark .search-result-content mark { background: #854d0e; color: #fef08a; }
+.search-result-answer {
+  font-size: 0.82rem; color: var(--success); font-weight: 600;
+  background: var(--success-light); display: inline-block; padding: 3px 10px;
+  border-radius: 4px;
+}
+.search-result-options { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; margin-top: 6px; }
+.search-result-options .correct-opt { color: var(--success); font-weight: 600; }
+.search-empty {
+  text-align: center; padding: 40px 20px; color: var(--text-secondary);
+}
+.search-empty .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+.search-count { font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 10px; }
 .export-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .export-card {
   padding: 16px; border-radius: 10px; border: 2px solid var(--border);
@@ -331,6 +371,10 @@ select, input[type="checkbox"] {
       <h3 style="margin-bottom:8px;">📊 学习统计</h3>
       <p style="color:var(--text-secondary);font-size:0.9rem;">查看答题数据统计</p>
     </div>
+    <div class="panel" style="cursor:pointer;" onclick="showPanel('search')">
+      <h3 style="margin-bottom:8px;">🔍 搜索答案</h3>
+      <p style="color:var(--text-secondary);font-size:0.9rem;">按关键字和题型快速查找</p>
+    </div>
     <div class="panel" style="cursor:pointer;" onclick="showPanel('export')">
       <h3 style="margin-bottom:8px;">💾 数据导出</h3>
       <p style="color:var(--text-secondary);font-size:0.9rem;">导出题目与答题记录</p>
@@ -383,6 +427,29 @@ select, input[type="checkbox"] {
     <div class="question-list" id="question-list"></div>
   </div>
   <div class="swipe-hint">← 左右滑动切换题目 →</div>
+</div>
+
+<!-- 搜索面板 -->
+<div id="panel-search" class="panel" style="display:none;">
+  <h2 style="margin-bottom:16px;">🔍 搜索答案</h2>
+  <div class="search-bar">
+    <input type="text" id="search-input" placeholder="输入关键字搜索题目..." oninput="doSearch()" autofocus>
+    <button class="btn btn-sm" onclick="doSearch()">搜索</button>
+  </div>
+  <div class="search-filter">
+    <span style="font-size:0.85rem;color:var(--text-secondary);">题型筛选：</span>
+    <div class="tab active" onclick="setSearchFilter('all')" id="sf-all">全部</div>
+    <div class="tab" onclick="setSearchFilter('single')" id="sf-single">单选题</div>
+    <div class="tab" onclick="setSearchFilter('multiple')" id="sf-multiple">多选题</div>
+    <div class="tab" onclick="setSearchFilter('judge')" id="sf-judge">判断题</div>
+  </div>
+  <div class="search-count" id="search-count"></div>
+  <div class="search-results" id="search-results">
+    <div class="search-empty">
+      <div class="empty-icon">🔎</div>
+      <p>输入关键字开始搜索</p>
+    </div>
+  </div>
 </div>
 
 <!-- 导出面板 -->
@@ -459,7 +526,7 @@ select, input[type="checkbox"] {
 <nav class="mobile-nav">
   <button onclick="showPanel('menu')" id="mnav-home"><span class="nav-icon">🏠</span>首页</button>
   <button onclick="startQuiz('all','order')" id="mnav-quiz"><span class="nav-icon">📝</span>练习</button>
-  <button onclick="startQuiz('wrong','order')" id="mnav-wrong"><span class="nav-icon">❌</span>错题</button>
+  <button onclick="showPanel('search')" id="mnav-search"><span class="nav-icon">🔍</span>搜索</button>
   <button onclick="showPanel('stats')" id="mnav-stats"><span class="nav-icon">📊</span>统计</button>
   <button onclick="showPanel('export')" id="mnav-export"><span class="nav-icon">💾</span>导出</button>
 </nav>
@@ -531,12 +598,13 @@ function updateMenuStats() {
 }
 
 function showPanel(id) {
-  ['menu','quiz','stats','export'].forEach(p => document.getElementById('panel-'+p).style.display = 'none');
+  ['menu','quiz','stats','export','search'].forEach(p => document.getElementById('panel-'+p).style.display = 'none');
   document.getElementById('panel-'+id).style.display = 'block';
   if (id === 'stats') renderStats();
+  if (id === 'search') { document.getElementById('search-input').focus(); }
   // Update mobile nav active state
   document.querySelectorAll('.mobile-nav button').forEach(b => b.classList.remove('active'));
-  const navMap = { menu:'mnav-home', quiz:'mnav-quiz', stats:'mnav-stats', export:'mnav-export' };
+  const navMap = { menu:'mnav-home', quiz:'mnav-quiz', stats:'mnav-stats', export:'mnav-export', search:'mnav-search' };
   const navBtn = document.getElementById(navMap[id]);
   if (navBtn) navBtn.classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -811,6 +879,116 @@ function renderStats() {
   }
 }
 
+// ===== Search Functions =====
+let searchFilter = 'all';
+
+function setSearchFilter(type) {
+  searchFilter = type;
+  ['all','single','multiple','judge'].forEach(t => {
+    document.getElementById('sf-' + t).classList.toggle('active', t === type);
+  });
+  doSearch();
+}
+
+function doSearch() {
+  const keyword = (document.getElementById('search-input').value || '').trim();
+  const resultsDiv = document.getElementById('search-results');
+  const countDiv = document.getElementById('search-count');
+
+  if (!keyword) {
+    resultsDiv.innerHTML = '<div class="search-empty"><div class="empty-icon">🔎</div><p>输入关键字开始搜索</p></div>';
+    countDiv.textContent = '';
+    return;
+  }
+
+  // Split keywords by space for multi-keyword search
+  const keywords = keyword.toLowerCase().split(/\s+/).filter(k => k);
+
+  let pool = ALL_QUESTIONS;
+  if (searchFilter !== 'all') {
+    pool = pool.filter(q => q.type === searchFilter);
+  }
+
+  // Also search in option text
+  const results = pool.filter(q => {
+    const text = q.content.toLowerCase();
+    const optText = q.options ? Object.values(q.options).join(' ').toLowerCase() : '';
+    const combined = text + ' ' + optText;
+    return keywords.every(k => combined.includes(k));
+  });
+
+  if (results.length === 0) {
+    resultsDiv.innerHTML = '<div class="search-empty"><div class="empty-icon">😶</div><p>未找到匹配的题目</p><p style="font-size:0.82rem;margin-top:6px;">试试其他关键字或切换题型筛选</p></div>';
+    countDiv.textContent = '';
+    return;
+  }
+
+  countDiv.textContent = `找到 ${results.length} 道相关题目`;
+
+  const typeMap = { single: '单选题', multiple: '多选题', judge: '判断题' };
+  resultsDiv.innerHTML = results.map(q => {
+    // Highlight keywords in content
+    let content = escapeHtml(q.content);
+    keywords.forEach(k => {
+      const re = new RegExp('(' + escapeRegex(k) + ')', 'gi');
+      content = content.replace(re, '<mark>$1</mark>');
+    });
+
+    // Build options display
+    let optionsHtml = '';
+    if (q.options) {
+      const correctKeys = q.answer.split('');
+      optionsHtml = '<div class="search-result-options">' +
+        Object.keys(q.options).sort().map(k => {
+          const isCorrect = correctKeys.includes(k);
+          return '<span class="' + (isCorrect ? 'correct-opt' : '') + '">' + k + '. ' + escapeHtml(q.options[k]) + (isCorrect ? ' ✓' : '') + '</span>';
+        }).join('&nbsp;&nbsp;|&nbsp;&nbsp;') + '</div>';
+    }
+
+    return '<div class="search-result-item" onclick="jumpToQuestion(\'' + q.id + '\')">' +
+      '<div class="search-result-header">' +
+        '<span class="question-type-badge type-' + q.type + '">' + typeMap[q.type] + '</span>' +
+        '<span class="search-result-answer">答案：' + q.answer + '</span>' +
+      '</div>' +
+      '<div class="search-result-content">' + content + '</div>' +
+      optionsHtml +
+    '</div>';
+  }).join('');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function jumpToQuestion(qid) {
+  // Find the question in ALL_QUESTIONS and start a quiz containing it
+  const q = ALL_QUESTIONS.find(x => x.id === qid);
+  if (!q) return;
+  // Start quiz with the same type filter, locate the question
+  let filter = q.type;
+  currentQuestions = ALL_QUESTIONS.filter(x => x.type === filter);
+  const idx = currentQuestions.findIndex(x => x.id === qid);
+  if (idx < 0) {
+    // Fallback: search all
+    currentQuestions = ALL_QUESTIONS.slice();
+    currentIndex = currentQuestions.findIndex(x => x.id === qid);
+  } else {
+    currentIndex = idx;
+  }
+  currentFilter = filter;
+  selectedOptions.clear();
+  answered = false;
+  showPanel('quiz');
+  renderQuestion();
+  renderNav();
+}
+
 // ===== Export Functions =====
 function downloadFile(filename, content, mime) {
   const blob = new Blob(['\ufeff' + content], { type: mime });
@@ -864,7 +1042,7 @@ function exportWrongJSON() {
     if (!q) return null;
     const typeMap = { single: '单选题', multiple: '多选题', judge: '判断题' };
     const rec = userAnswers[id];
-    const item = { 题型: typeMap[q.type], 题目: q.content, 正确答案: q.answer, 我的答案: rec.selected };
+    const item = { id: q.id, 题型: typeMap[q.type], 题目: q.content, 正确答案: q.answer, 我的答案: rec.selected };
     if (q.options) {
       Object.keys(q.options).sort().forEach(k => item['选项' + k] = q.options[k]);
     }
@@ -907,18 +1085,59 @@ function doImport() {
   if (!text) { alert('请粘贴或选择数据'); return; }
   try {
     const data = JSON.parse(text);
-    if (data.answers) {
-      // Merge with existing
+    let importedAnswers = 0, importedFavs = 0;
+
+    if (data && data.answers) {
+      // Format 1: Answer record export { version, answers, favorites }
       Object.assign(userAnswers, data.answers);
-      if (data.favorites) data.favorites.forEach(id => favorites.add(id));
-    } else {
-      // Assume it's a plain answers object
+      importedAnswers = Object.keys(data.answers).length;
+      if (data.favorites) {
+        data.favorites.forEach(id => favorites.add(id));
+        importedFavs = data.favorites.length;
+      }
+    } else if (Array.isArray(data)) {
+      // Format 2/3: Wrong questions or questions array [{id,题型,题目,正确答案,...}]
+      let hasWrong = data.some(item => item['我的答案']);
+      data.forEach(item => {
+        // Match by id first, then by content
+        let q = null;
+        if (item.id) q = ALL_QUESTIONS.find(x => x.id === item.id);
+        if (!q) {
+          const content = item['题目'] || '';
+          q = ALL_QUESTIONS.find(x => x.content === content);
+        }
+        if (!q) return;
+        if (hasWrong && item['我的答案']) {
+          // Wrong question export: restore as wrong answer record
+          userAnswers[q.id] = {
+            selected: item['我的答案'],
+            correct: false,
+            times: 1
+          };
+          importedAnswers++;
+        } else {
+          // Plain question export: just mark as known (no answer record)
+          // Skip - no answer data to restore
+        }
+      });
+    } else if (typeof data === 'object') {
+      // Plain answers object
       Object.assign(userAnswers, data);
+      importedAnswers = Object.keys(data).length;
     }
+
     saveStorage();
     updateMenuStats();
     closeImportModal();
-    alert('导入成功！');
+
+    if (importedAnswers > 0) {
+      const wrongCount = Object.keys(userAnswers).filter(id => !userAnswers[id].correct).length;
+      alert(`导入成功！共导入 ${importedAnswers} 条答题记录，其中错题 ${wrongCount} 道`);
+    } else if (Array.isArray(data) && !data.some(item => item['我的答案'])) {
+      alert('该文件仅包含题目数据，无答题记录可恢复。\n如需恢复错题，请导入"答题记录"文件。');
+    } else {
+      alert('未找到可导入的答题记录');
+    }
   } catch (e) {
     alert('数据格式错误，请检查 JSON 格式');
   }
