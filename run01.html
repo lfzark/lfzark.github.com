@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>原地跑检测（加速度 + 陀螺仪）</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      color: #e8e8e8;
+      min-height: 100vh;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      font-size: 1.45rem;
+      margin-bottom: 4px;
+      color: #00e5ff;
+      text-align: center;
+    }
+    .subtitle {
+      font-size: 0.8rem;
+      color: #90a4ae;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+    .card {
+      background: rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 18px;
+      width: 100%;
+      max-width: 420px;
+      margin-bottom: 14px;
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .status {
+      text-align: center;
+      font-size: 1.35rem;
+      font-weight: 600;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+      transition: all 0.3s;
+    }
+    .status.idle { background: #37474f; color: #b0bec5; }
+    .status.walking { background: #1b5e20; color: #a5d6a7; }
+    .status.running { background: #b71c1c; color: #ffcdd2; animation: pulse 0.7s infinite; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .metric {
+      background: rgba(0,0,0,0.28);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+    }
+    .metric .value {
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: #00e5ff;
+      line-height: 1.2;
+    }
+    .metric .label {
+      font-size: 0.72rem;
+      color: #90a4ae;
+      margin-top: 3px;
+    }
+    .full-width { grid-column: 1 / -1; }
+    canvas {
+      width: 100%;
+      height: 70px;
+      background: rgba(0,0,0,0.35);
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+    .sensor-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.68rem;
+      color: #78909c;
+      margin-top: 8px;
+      font-family: monospace;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      max-width: 420px;
+      margin-top: 6px;
+    }
+    button {
+      flex: 1;
+      padding: 13px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    #startBtn {
+      background: linear-gradient(135deg, #00c853, #69f0ae);
+      color: #000;
+    }
+    #startBtn.stop {
+      background: linear-gradient(135deg, #ff5252, #ff8a80);
+      color: #fff;
+    }
+    #resetBtn {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+    }
+    .tips {
+      font-size: 0.78rem;
+      color: #78909c;
+      margin-top: 18px;
+      max-width: 420px;
+      line-height: 1.55;
+      text-align: center;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(0,229,255,0.15);
+      color: #00e5ff;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h1>原地跑检测 <span class="badge">加速度 + 陀螺仪</span></h1>
+  <p class="subtitle">双传感器融合 · 更高准确率 · 抗误触发</p>
+
+  <div class="card">
+    <div id="status" class="status idle">等待开始</div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="value" id="steps">0</div>
+        <div class="label">步数</div>
+      </div>
+      <div class="metric">
+        <div class="value" id="cadence">0</div>
+        <div class="label">步频 (步/分)</div>
+      </div>
+      <div class="metric">
+        <div class="value" id="accelInt">0.0</div>
+        <div class="label">加速度强度</div>
+      </div>
+      <div class="metric">
+        <div class="value" id="gyroInt">0.0</div>
+        <div class="label">陀螺仪强度</div>
+      </div>
+      <div class="metric full-width">
+        <div class="value" id="score">0.0</div>
+        <div class="label">融合运动分数</div>
+      </div>
+    </div>
+
+    <canvas id="wave" width="400" height="70"></canvas>
+    <div class="sensor-row">
+      <span id="rawAccel">Acc: --</span>
+      <span id="rawGyro">Gyro: --</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="startBtn">开始检测</button>
+    <button id="resetBtn">重置</button>
+  </div>
+
+  <p class="tips">
+    <strong>使用提示</strong><br>
+    1. 点击「开始检测」并允许「运动与方向」权限<br>
+    2. 手机放入口袋或拿在手里，开始原地跑/踏步<br>
+    3. 陀螺仪可帮助过滤单纯晃动手机的误触发<br>
+    4. 动作幅度稍大、节奏稳定时效果最佳
+  </p>
+
+  <script>
+    // ==================== 可调参数 ====================
+    const ACCEL_THRESHOLD = 1.6;          // 加速度峰值阈值
+    const GYRO_THRESHOLD = 1.2;           // 陀螺仪角速度阈值 (rad/s)
+    const FUSION_THRESHOLD = 2.0;         // 融合分数触发步的阈值
+    const MIN_STEP_INTERVAL = 240;        // 最小步间隔 (ms)
+    const CADENCE_WINDOW = 8000;          // 步频计算窗口 (ms)
+    const RUNNING_CADENCE = 135;          // 判定跑步的步频
+    const RUNNING_SCORE = 4.0;            // 判定跑步的融合分数
+
+    // ==================== 状态 ====================
+    let isDetecting = false;
+    let steps = 0;
+    let lastStepTime = 0;
+    let stepTimes = [];
+    let accelHistory = [];
+    let gyroHistory = [];
+    const HISTORY_LEN = 50;
+
+    // 滤波
+    let lastAccelMag = 9.8;
+    let peakLock = false;
+
+    // DOM
+    const $ = id => document.getElementById(id);
+    const statusEl = $('status');
+    const stepsEl = $('steps');
+    const cadenceEl = $('cadence');
+    const accelIntEl = $('accelInt');
+    const gyroIntEl = $('gyroInt');
+    const scoreEl = $('score');
+    const rawAccelEl = $('rawAccel');
+    const rawGyroEl = $('rawGyro');
+    const startBtn = $('startBtn');
+    const resetBtn = $('resetBtn');
+    const canvas = $('wave');
+    const ctx = canvas.getContext('2d');
+
+    // ==================== 启动 / 停止 ====================
+    startBtn.addEventListener('click', async () => {
+      if (isDetecting) {
+        stopDetection();
+        return;
+      }
+
+      // iOS 权限请求
+      if (typeof DeviceMotionEvent !== 'undefined' &&
+          typeof DeviceMotionEvent.requestPermission === 'function') {
+        try {
+          const state = await DeviceMotionEvent.requestPermission();
+          if (state !== 'granted') {
+            alert('请允许「运动与方向」权限');
+            return;
+          }
+        } catch (err) {
+          alert('权限请求失败：' + err.message);
+          return;
+        }
+      }
+
+      startDetection();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      steps = 0;
+      stepTimes = [];
+      lastStepTime = 0;
+      updateDisplay(0, 0, 0, 0, 0);
+      statusEl.textContent = isDetecting ? '检测中...' : '等待开始';
+      statusEl.className = 'status idle';
+    });
+
+    function startDetection() {
+      isDetecting = true;
+      startBtn.textContent = '停止检测';
+      startBtn.classList.add('stop');
+      statusEl.textContent = '检测中...';
+      statusEl.className = 'status idle';
+      window.addEventListener('devicemotion', onMotion);
+    }
+
+    function stopDetection() {
+      isDetecting = false;
+      startBtn.textContent = '开始检测';
+      startBtn.classList.remove('stop');
+      window.removeEventListener('devicemotion', onMotion);
+      statusEl.textContent = '已停止';
+      statusEl.className = 'status idle';
+    }
+
+    // ==================== 核心：加速度 + 陀螺仪融合 ====================
+    function onMotion(e) {
+      // ---------- 加速度 ----------
+      const acc = e.accelerationIncludingGravity;
+      if (!acc || acc.x == null) return;
+
+      const accelMag = Math.sqrt(acc.x**2 + acc.y**2 + acc.z**2);
+      // 高通近似（去掉重力）
+      const accelDelta = Math.abs(accelMag - lastAccelMag);
+      lastAccelMag = accelMag * 0.75 + lastAccelMag * 0.25;
+
+      // ---------- 陀螺仪 ----------
+      let gyroMag = 0;
+      if (e.rotationRate) {
+        const { alpha = 0, beta = 0, gamma = 0 } = e.rotationRate;
+        // 角速度模长 (rad/s)
+        gyroMag = Math.sqrt(alpha**2 + beta**2 + gamma**2);
+      }
+
+      // ---------- 融合分数 ----------
+      // 加速度贡献 + 陀螺仪贡献（加权）
+      const fusionScore = accelDelta * 1.0 + gyroMag * 1.4;
+
+      // 记录历史（画波形用）
+      accelHistory.push(accelDelta);
+      gyroHistory.push(gyroMag);
+      if (accelHistory.length > HISTORY_LEN) {
+        accelHistory.shift();
+        gyroHistory.shift();
+      }
+
+      // ---------- 步检测（双条件 + 融合） ----------
+      const now = Date.now();
+      const timeOk = (now - lastStepTime) > MIN_STEP_INTERVAL;
+
+      const accelOk = accelDelta > ACCEL_THRESHOLD;
+      const gyroOk  = gyroMag > GYRO_THRESHOLD;
+      const fusionOk = fusionScore > FUSION_THRESHOLD;
+
+      // 必须同时满足：时间间隔 + 融合分数，并且加速度或陀螺仪至少一个明显
+      if (timeOk && fusionOk && (accelOk || gyroOk) && !peakLock) {
+        peakLock = true;
+        steps++;
+        lastStepTime = now;
+        stepTimes.push(now);
+        // 清理过期步
+        stepTimes = stepTimes.filter(t => now - t < CADENCE_WINDOW);
+      }
+
+      // 峰值结束后解锁
+      if (fusionScore < FUSION_THRESHOLD * 0.55) {
+        peakLock = false;
+      }
+
+      // ---------- 步频 ----------
+      const cadence = stepTimes.length >= 2
+        ? Math.round((stepTimes.length - 1) * (60000 / CADENCE_WINDOW))
+        : 0;
+
+      // ---------- 近期平均强度 ----------
+      const recentAccel = accelHistory.slice(-15);
+      const recentGyro  = gyroHistory.slice(-15);
+      const avgAccel = recentAccel.length ? average(recentAccel) : 0;
+      const avgGyro  = recentGyro.length  ? average(recentGyro)  : 0;
+      const avgScore = avgAccel * 1.0 + avgGyro * 1.4;
+
+      // ---------- 状态判断 ----------
+      let text = '静止 / 轻微活动';
+      let cls = 'idle';
+      if (cadence >= RUNNING_CADENCE || avgScore >= RUNNING_SCORE) {
+        text = '原地跑中 🏃';
+        cls = 'running';
+      } else if (cadence >= 75 || avgScore >= 2.2) {
+        text = '原地踏步 / 快走';
+        cls = 'walking';
+      }
+
+      statusEl.textContent = text;
+      statusEl.className = 'status ' + cls;
+
+      // 更新界面
+      updateDisplay(steps, cadence, avgAccel.toFixed(1), avgGyro.toFixed(1), avgScore.toFixed(1));
+      rawAccelEl.textContent = `Acc: ${accelMag.toFixed(2)} (Δ${accelDelta.toFixed(2)})`;
+      rawGyroEl.textContent  = `Gyro: ${gyroMag.toFixed(2)} rad/s`;
+      drawWave(accelHistory, gyroHistory);
+    }
+
+    function average(arr) {
+      return arr.reduce((a, b) => a + b, 0) / arr.length;
+    }
+
+    function updateDisplay(s, c, a, g, sc) {
+      stepsEl.textContent = s;
+      cadenceEl.textContent = c;
+      accelIntEl.textContent = a;
+      gyroIntEl.textContent = g;
+      scoreEl.textContent = sc;
+    }
+
+    // ==================== 双波形绘制 ====================
+    function drawWave(accelArr, gyroArr) {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      if (accelArr.length < 2) return;
+
+      const stepX = w / (HISTORY_LEN - 1);
+
+      // 加速度波形（青色）
+      ctx.beginPath();
+      ctx.strokeStyle = '#00e5ff';
+      ctx.lineWidth = 2;
+      accelArr.forEach((v, i) => {
+        const x = i * stepX;
+        const y = h - Math.min(v * 10, h - 2);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // 陀螺仪波形（橙色）
+      ctx.beginPath();
+      ctx.strokeStyle = '#ffab40';
+      ctx.lineWidth = 1.5;
+      gyroArr.forEach((v, i) => {
+        const x = i * stepX;
+        const y = h - Math.min(v * 12, h - 2);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // 融合阈值参考线
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(255,80,80,0.45)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      const thY = h - FUSION_THRESHOLD * 8;
+      ctx.moveTo(0, thY);
+      ctx.lineTo(w, thY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // 清理
+    window.addEventListener('beforeunload', () => {
+      if (isDetecting) stopDetection();
+    });
+  </script>
+</body>
+</html>
