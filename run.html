@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>原地跑传感器检测</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: #e8e8e8;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      color: #00d4ff;
+      text-align: center;
+    }
+    .subtitle {
+      font-size: 0.85rem;
+      color: #a0a0a0;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .card {
+      background: rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .status {
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 600;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      transition: all 0.3s;
+    }
+    .status.idle { background: #333; color: #aaa; }
+    .status.walking { background: #1b5e20; color: #81c784; }
+    .status.running { background: #b71c1c; color: #ef9a9a; animation: pulse 0.8s infinite; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .metric {
+      background: rgba(0,0,0,0.25);
+      border-radius: 12px;
+      padding: 14px 10px;
+      text-align: center;
+    }
+    .metric .value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #00d4ff;
+      line-height: 1.2;
+    }
+    .metric .label {
+      font-size: 0.75rem;
+      color: #999;
+      margin-top: 4px;
+    }
+    .full-width { grid-column: 1 / -1; }
+    canvas {
+      width: 100%;
+      height: 80px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      max-width: 400px;
+      margin-top: 8px;
+    }
+    button {
+      flex: 1;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    #startBtn {
+      background: linear-gradient(135deg, #00c853, #00e676);
+      color: #000;
+    }
+    #startBtn:disabled {
+      background: #444;
+      color: #888;
+      cursor: not-allowed;
+    }
+    #resetBtn {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+    .tips {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 20px;
+      max-width: 400px;
+      line-height: 1.5;
+      text-align: center;
+    }
+    .sensor-data {
+      font-size: 0.7rem;
+      color: #666;
+      margin-top: 8px;
+      text-align: center;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>原地跑检测</h1>
+  <p class="subtitle">使用手机加速度传感器实时识别</p>
+
+  <div class="card">
+    <div id="status" class="status idle">等待开始</div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="value" id="steps">0</div>
+        <div class="label">步数</div>
+      </div>
+      <div class="metric">
+        <div class="value" id="cadence">0</div>
+        <div class="label">步频 (步/分)</div>
+      </div>
+      <div class="metric full-width">
+        <div class="value" id="intensity">0.0</div>
+        <div class="label">运动强度</div>
+      </div>
+    </div>
+
+    <canvas id="wave" width="400" height="80"></canvas>
+    <div class="sensor-data" id="rawData">加速度: --</div>
+  </div>
+
+  <div class="controls">
+    <button id="startBtn">开始检测</button>
+    <button id="resetBtn">重置</button>
+  </div>
+
+  <p class="tips">
+    使用提示：<br>
+    1. 点击「开始检测」并允许传感器权限<br>
+    2. 把手机放入口袋或拿在手里原地跑/踏步<br>
+    3. 建议竖屏使用，动作幅度稍大效果更好
+  </p>
+
+  <script>
+    // ========== 配置参数 ==========
+    const STEP_THRESHOLD = 1.8;        // 加速度峰值阈值（可调）
+    const MIN_STEP_INTERVAL = 250;     // 两步最小间隔(ms)
+    const CADENCE_WINDOW = 10000;      // 计算步频的时间窗口(ms)
+    const RUNNING_CADENCE = 140;       // 判定为跑步的步频阈值
+    const RUNNING_INTENSITY = 3.5;     // 判定为跑步的强度阈值
+
+    // ========== 状态变量 ==========
+    let isRunning = false;
+    let steps = 0;
+    let lastStepTime = 0;
+    let stepTimes = [];                // 记录最近步的时间戳
+    let accelHistory = [];             // 用于波形绘制
+    const HISTORY_LENGTH = 60;
+
+    // 平滑用
+    let lastMagnitude = 9.8;
+    let peakDetected = false;
+
+    // DOM
+    const statusEl = document.getElementById('status');
+    const stepsEl = document.getElementById('steps');
+    const cadenceEl = document.getElementById('cadence');
+    const intensityEl = document.getElementById('intensity');
+    const rawDataEl = document.getElementById('rawData');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const canvas = document.getElementById('wave');
+    const ctx = canvas.getContext('2d');
+
+    // ========== 权限与启动 ==========
+    startBtn.addEventListener('click', async () => {
+      if (isRunning) {
+        stopDetection();
+        return;
+      }
+
+      // iOS 需要用户手势请求权限
+      if (typeof DeviceMotionEvent !== 'undefined' &&
+          typeof DeviceMotionEvent.requestPermission === 'function') {
+        try {
+          const permission = await DeviceMotionEvent.requestPermission();
+          if (permission !== 'granted') {
+            alert('需要授权运动与方向传感器权限才能使用');
+            return;
+          }
+        } catch (e) {
+          alert('请求权限失败: ' + e.message);
+          return;
+        }
+      }
+
+      startDetection();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      steps = 0;
+      stepTimes = [];
+      lastStepTime = 0;
+      updateUI(0, 0, 0);
+      statusEl.textContent = isRunning ? '检测中...' : '等待开始';
+      statusEl.className = 'status idle';
+    });
+
+    function startDetection() {
+      isRunning = true;
+      startBtn.textContent = '停止检测';
+      startBtn.style.background = 'linear-gradient(135deg, #ff5252, #ff1744)';
+      statusEl.textContent = '检测中...';
+      statusEl.className = 'status idle';
+
+      window.addEventListener('devicemotion', handleMotion);
+    }
+
+    function stopDetection() {
+      isRunning = false;
+      startBtn.textContent = '开始检测';
+      startBtn.style.background = 'linear-gradient(135deg, #00c853, #00e676)';
+      window.removeEventListener('devicemotion', handleMotion);
+      statusEl.textContent = '已停止';
+      statusEl.className = 'status idle';
+    }
+
+    // ========== 核心检测逻辑 ==========
+    function handleMotion(event) {
+      const acc = event.accelerationIncludingGravity;
+      if (!acc || acc.x === null) return;
+
+      // 计算加速度模长
+      const magnitude = Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
+
+      // 简单高通滤波（去掉重力影响的近似）
+      const filtered = Math.abs(magnitude - lastMagnitude);
+      lastMagnitude = magnitude * 0.8 + lastMagnitude * 0.2; // 平滑
+
+      // 记录历史用于波形
+      accelHistory.push(filtered);
+      if (accelHistory.length > HISTORY_LENGTH) accelHistory.shift();
+
+      // 峰值检测
+      const now = Date.now();
+      if (filtered > STEP_THRESHOLD && !peakDetected && (now - lastStepTime) > MIN_STEP_INTERVAL) {
+        peakDetected = true;
+        steps++;
+        lastStepTime = now;
+        stepTimes.push(now);
+
+        // 只保留最近窗口内的步
+        stepTimes = stepTimes.filter(t => now - t < CADENCE_WINDOW);
+      }
+
+      // 峰值结束后重置
+      if (filtered < STEP_THRESHOLD * 0.6) {
+        peakDetected = false;
+      }
+
+      // 计算步频
+      const cadence = stepTimes.length > 1
+        ? Math.round((stepTimes.length - 1) / (CADENCE_WINDOW / 60000))
+        : 0;
+
+      // 运动强度（近期平均过滤后加速度）
+      const recent = accelHistory.slice(-20);
+      const intensity = recent.length
+        ? (recent.reduce((a, b) => a + b, 0) / recent.length).toFixed(1)
+        : 0;
+
+      // 状态判断
+      let statusText = '静止 / 轻微活动';
+      let statusClass = 'idle';
+      if (cadence >= RUNNING_CADENCE || intensity >= RUNNING_INTENSITY) {
+        statusText = '原地跑中 🏃';
+        statusClass = 'running';
+      } else if (cadence >= 80 || intensity >= 1.5) {
+        statusText = '原地踏步 / 快走';
+        statusClass = 'walking';
+      }
+
+      statusEl.textContent = statusText;
+      statusEl.className = 'status ' + statusClass;
+
+      updateUI(steps, cadence, intensity);
+      rawDataEl.textContent = `加速度模长: ${magnitude.toFixed(2)} | 过滤值: ${filtered.toFixed(2)}`;
+      drawWave();
+    }
+
+    function updateUI(s, c, i) {
+      stepsEl.textContent = s;
+      cadenceEl.textContent = c;
+      intensityEl.textContent = i;
+    }
+
+    // ========== 波形绘制 ==========
+    function drawWave() {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      if (accelHistory.length < 2) return;
+
+      ctx.beginPath();
+      ctx.strokeStyle = '#00d4ff';
+      ctx.lineWidth = 2;
+
+      const stepX = w / (HISTORY_LENGTH - 1);
+      accelHistory.forEach((val, i) => {
+        const x = i * stepX;
+        const y = h - Math.min(val * 8, h - 4); // 缩放显示
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // 阈值线
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(255,80,80,0.5)';
+      ctx.lineWidth = 1;
+      const thY = h - STEP_THRESHOLD * 8;
+      ctx.moveTo(0, thY);
+      ctx.lineTo(w, thY);
+      ctx.stroke();
+    }
+
+    // 页面卸载时清理
+    window.addEventListener('beforeunload', () => {
+      if (isRunning) stopDetection();
+    });
+  </script>
+</body>
+</html>
