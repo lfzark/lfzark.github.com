@@ -1,0 +1,515 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f3460">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>原地跑传感器检测</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { touch-action: manipulation; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: #e8e8e8;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      color: #00d4ff;
+      text-align: center;
+    }
+    .subtitle {
+      font-size: 0.85rem;
+      color: #a0a0a0;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .card {
+      background: rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .status {
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 600;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      transition: all 0.3s;
+    }
+    .status.idle { background: #333; color: #aaa; }
+    .status.walking { background: #1b5e20; color: #81c784; }
+    .status.running { background: #b71c1c; color: #ef9a9a; animation: pulse 0.8s infinite; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .metric {
+      background: rgba(0,0,0,0.25);
+      border-radius: 12px;
+      padding: 14px 10px;
+      text-align: center;
+    }
+    .metric .value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #00d4ff;
+      line-height: 1.2;
+    }
+    .metric .label {
+      font-size: 0.75rem;
+      color: #999;
+      margin-top: 4px;
+    }
+    .full-width { grid-column: 1 / -1; }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 80px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      max-width: 400px;
+      margin-top: 8px;
+    }
+    button {
+      flex: 1;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:active { transform: scale(0.97); }
+    #startBtn {
+      background: linear-gradient(135deg, #00c853, #00e676);
+      color: #000;
+    }
+    #startBtn:disabled {
+      background: #444;
+      color: #888;
+      cursor: not-allowed;
+    }
+    #resetBtn {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+    .tips {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 20px;
+      max-width: 400px;
+      line-height: 1.5;
+      text-align: center;
+    }
+    .sensor-data {
+      font-size: 0.7rem;
+      color: #666;
+      margin-top: 8px;
+      text-align: center;
+      font-family: monospace;
+    }
+    /* 声音反馈状态提示 */
+    .sound-feedback {
+      font-size: 0.75rem;
+      color: #4fc3f7;
+      margin-top: 6px;
+      text-align: center;
+      min-height: 1.2em;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .status.running { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <h1>🏃 原地跑检测</h1>
+  <p class="subtitle">使用手机加速度传感器实时识别</p>
+
+  <div class="card">
+    <div id="status" class="status idle" role="status" aria-live="polite">等待开始</div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="value" id="steps">0</div>
+        <div class="label">步数</div>
+      </div>
+      <div class="metric">
+        <div class="value" id="cadence">0</div>
+        <div class="label">步频 (步/分)</div>
+      </div>
+      <div class="metric full-width">
+        <div class="value" id="intensity">0.0</div>
+        <div class="label">运动强度</div>
+      </div>
+    </div>
+
+    <canvas id="wave" width="400" height="80"></canvas>
+    <div class="sensor-data" id="rawData">加速度: --</div>
+    <div class="sound-feedback" id="soundStatus">🔊 每10步发声反馈</div>
+  </div>
+
+  <div class="controls">
+    <button id="startBtn">开始检测</button>
+    <button id="resetBtn">重置</button>
+  </div>
+
+  <p class="tips">
+    使用提示：<br>
+    1. 点击「开始检测」并允许传感器权限<br>
+    2. 把手机放入口袋或拿在手里原地跑/踏步<br>
+    3. 建议竖屏使用，动作幅度稍大效果更好
+  </p>
+
+  <script>
+    // ========== 配置参数 ==========
+    const STEP_THRESHOLD = 1.8;        // 加速度峰值阈值（可调）
+    const MIN_STEP_INTERVAL = 250;     // 两步最小间隔(ms)
+    const CADENCE_WINDOW = 10000;      // 计算步频的时间窗口(ms)
+    const RUNNING_CADENCE = 140;       // 判定为跑步的步频阈值
+    const RUNNING_INTENSITY = 3.5;     // 判定为跑步的强度阈值
+    const SOUND_INTERVAL = 10;         // 每多少步发声一次
+    const HISTORY_LENGTH = 60;         // 波形缓冲长度
+    const SMOOTHING = 0.2;             // 低通平滑系数
+
+    // ========== 状态变量 ==========
+    let isRunning = false;
+    let steps = 0;
+    let lastStepTime = 0;
+    let stepTimes = [];                // 记录最近步的时间戳
+    let lastMagnitude = 9.8;           // 平滑后的基准加速度
+    let peakDetected = false;
+    let lastSoundStep = 0;             // 上次发声时的步数
+    let lastRawMag = 0;                // 最近一次模长（供 rAF 读取）
+    let lastRawFiltered = 0;           // 最近一次过滤值
+
+    // 环形缓冲（避免 shift() 的 O(n) 开销）
+    const accelHistory = new Array(HISTORY_LENGTH).fill(0);
+    let accelHead = 0;
+    let accelCount = 0;
+
+    // 音频 / 唤醒锁 / 绘制节流
+    let audioCtx = null;
+    let wakeLock = null;
+    let rafPending = false;
+
+    // DOM
+    const statusEl = document.getElementById('status');
+    const stepsEl = document.getElementById('steps');
+    const cadenceEl = document.getElementById('cadence');
+    const intensityEl = document.getElementById('intensity');
+    const rawDataEl = document.getElementById('rawData');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const canvas = document.getElementById('wave');
+    const ctx = canvas.getContext('2d');
+    const soundStatusEl = document.getElementById('soundStatus');
+
+    // ========== 环形缓冲区 ==========
+    function pushAccel(v) {
+      accelHistory[accelHead] = v;
+      accelHead = (accelHead + 1) % HISTORY_LENGTH;
+      if (accelCount < HISTORY_LENGTH) accelCount++;
+    }
+    function historyValues() {
+      const out = [];
+      const start = accelCount < HISTORY_LENGTH ? 0 : accelHead;
+      for (let i = 0; i < accelCount; i++) {
+        out.push(accelHistory[(start + i) % HISTORY_LENGTH]);
+      }
+      return out;
+    }
+    function resetAccel() {
+      accelHistory.fill(0);
+      accelHead = 0;
+      accelCount = 0;
+    }
+
+    // ========== 音频（单例 AudioContext） ==========
+    function ensureAudio() {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      if (!audioCtx) audioCtx = new Ctx();
+      if (audioCtx.state === 'suspended') audioCtx.resume().catch(function () {});
+      return audioCtx;
+    }
+
+    function playBeep() {
+      const ctx = ensureAudio();
+      if (ctx) {
+        try {
+          const oscillator = ctx.createOscillator();
+          const gainNode = ctx.createGain();
+          oscillator.connect(gainNode);
+          gainNode.connect(ctx.destination);
+          oscillator.frequency.value = 880;
+          oscillator.type = 'sine';
+          gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+          oscillator.start(ctx.currentTime);
+          oscillator.stop(ctx.currentTime + 0.15);
+        } catch (e) {}
+      }
+      if (navigator.vibrate) navigator.vibrate(30);
+
+      soundStatusEl.textContent = '🔊 第 ' + steps + ' 步 嘀！';
+      soundStatusEl.style.color = '#ffd54f';
+      clearTimeout(soundStatusEl._t);
+      soundStatusEl._t = setTimeout(function () {
+        soundStatusEl.style.color = '#4fc3f7';
+        soundStatusEl.textContent = '🔊 每10步发声反馈';
+      }, 800);
+    }
+
+    // ========== 屏幕唤醒锁 ==========
+    function acquireWakeLock() {
+      if ('wakeLock' in navigator) {
+        navigator.wakeLock.request('screen').then(function (lock) {
+          wakeLock = lock;
+        }).catch(function () {});
+      }
+    }
+    function releaseWakeLock() {
+      if (wakeLock) {
+        try { wakeLock.release(); } catch (e) {}
+        wakeLock = null;
+      }
+    }
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden && isRunning) acquireWakeLock();
+    });
+
+    // ========== Canvas 高分屏适配 ==========
+    function setupCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      const w = canvas.clientWidth || 400;
+      const h = canvas.clientHeight || 80;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    // ========== 权限与启动 ==========
+    startBtn.addEventListener('click', async () => {
+      if (isRunning) {
+        stopDetection();
+        return;
+      }
+
+      // iOS 需要用户手势请求权限
+      if (typeof DeviceMotionEvent !== 'undefined' &&
+          typeof DeviceMotionEvent.requestPermission === 'function') {
+        try {
+          const permission = await DeviceMotionEvent.requestPermission();
+          if (permission !== 'granted') {
+            alert('需要授权运动与方向传感器权限才能使用');
+            return;
+          }
+        } catch (e) {
+          alert('请求权限失败: ' + e.message);
+          return;
+        }
+      }
+
+      ensureAudio();
+      startDetection();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      steps = 0;
+      stepTimes = [];
+      lastStepTime = 0;
+      lastSoundStep = 0;
+      resetAccel();
+      updateUI(0, 0, 0);
+      statusEl.textContent = isRunning ? '检测中...' : '等待开始';
+      statusEl.className = 'status idle';
+      soundStatusEl.textContent = '🔊 每10步发声反馈';
+      soundStatusEl.style.color = '#4fc3f7';
+      drawWave();
+    });
+
+    function startDetection() {
+      isRunning = true;
+      acquireWakeLock();
+      startBtn.textContent = '停止检测';
+      startBtn.style.background = 'linear-gradient(135deg, #ff5252, #ff1744)';
+      statusEl.textContent = '检测中...';
+      statusEl.className = 'status idle';
+
+      window.addEventListener('devicemotion', handleMotion);
+    }
+
+    function stopDetection() {
+      isRunning = false;
+      releaseWakeLock();
+      startBtn.textContent = '开始检测';
+      startBtn.style.background = 'linear-gradient(135deg, #00c853, #00e676)';
+      window.removeEventListener('devicemotion', handleMotion);
+      statusEl.textContent = '已停止';
+      statusEl.className = 'status idle';
+    }
+
+    // ========== 核心检测逻辑 ==========
+    function handleMotion(event) {
+      // Firefox 等不支持 accelerationIncludingGravity 时回退到 acceleration
+      let acc = event.accelerationIncludingGravity || event.acceleration;
+      if (!acc) return;
+      const ax = acc.x, ay = acc.y, az = acc.z;
+      if (ax === null || ay === null || az === null) return;
+
+      // 计算加速度模长
+      const magnitude = Math.sqrt(ax * ax + ay * ay + az * az);
+
+      // 低通平滑基准 + 高通取偏差，滤除重力与噪声
+      lastMagnitude += (magnitude - lastMagnitude) * SMOOTHING;
+      const filtered = Math.abs(magnitude - lastMagnitude);
+
+      lastRawMag = magnitude;
+      lastRawFiltered = filtered;
+
+      pushAccel(filtered);
+
+      // 峰值检测
+      const now = performance.now();
+      if (filtered > STEP_THRESHOLD && !peakDetected && (now - lastStepTime) > MIN_STEP_INTERVAL) {
+        peakDetected = true;
+        steps++;
+        lastStepTime = now;
+        stepTimes.push(now);
+        if (stepTimes.length > 60) stepTimes.shift();
+
+        // 每10步发声 + 震动反馈
+        if (steps % SOUND_INTERVAL === 0 && steps !== lastSoundStep) {
+          lastSoundStep = steps;
+          playBeep();
+        }
+      }
+
+      // 峰值结束后重置
+      if (filtered < STEP_THRESHOLD * 0.6) {
+        peakDetected = false;
+      }
+
+      // UI 与波形合并到 rAF，避免高频 DOM 写入
+      if (!rafPending) {
+        rafPending = true;
+        requestAnimationFrame(() => {
+          rafPending = false;
+
+          // 计算步频
+          const cadence = stepTimes.length > 1
+            ? Math.round((stepTimes.length - 1) / (CADENCE_WINDOW / 60000))
+            : 0;
+
+          // 运动强度（近期平均过滤后加速度）
+          const vals = historyValues();
+          const recent = vals.slice(-20);
+          const intensity = recent.length
+            ? (recent.reduce((a, b) => a + b, 0) / recent.length).toFixed(1)
+            : 0;
+
+          // 状态判断
+          let statusText = '静止 / 轻微活动';
+          let statusClass = 'idle';
+          if (cadence >= RUNNING_CADENCE || intensity >= RUNNING_INTENSITY) {
+            statusText = '原地跑中 🏃';
+            statusClass = 'running';
+          } else if (cadence >= 80 || intensity >= 1.5) {
+            statusText = '原地踏步 / 快走';
+            statusClass = 'walking';
+          }
+
+          statusEl.textContent = statusText;
+          statusEl.className = 'status ' + statusClass;
+
+          updateUI(steps, cadence, intensity);
+          rawDataEl.textContent = `加速度模长: ${lastRawMag.toFixed(2)} | 过滤值: ${lastRawFiltered.toFixed(2)}`;
+          drawWave();
+        });
+      }
+    }
+
+    function updateUI(s, c, i) {
+      stepsEl.textContent = s;
+      cadenceEl.textContent = c;
+      intensityEl.textContent = i;
+    }
+
+    // ========== 波形绘制 ==========
+    function drawWave() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+
+      const vals = historyValues();
+      if (vals.length < 2) return;
+
+      ctx.beginPath();
+      ctx.strokeStyle = '#00d4ff';
+      ctx.lineWidth = 2;
+
+      const stepX = w / (HISTORY_LENGTH - 1);
+      vals.forEach((val, i) => {
+        const x = i * stepX;
+        const y = h - Math.min(val * 8, h - 4);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // 阈值线
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(255,80,80,0.5)';
+      ctx.lineWidth = 1;
+      const thY = h - STEP_THRESHOLD * 8;
+      ctx.moveTo(0, thY);
+      ctx.lineTo(w, thY);
+      ctx.stroke();
+    }
+
+    // 初始化画布 & 尺寸变化时重设
+    setupCanvas();
+    window.addEventListener('resize', setupCanvas);
+    window.addEventListener('orientationchange', setupCanvas);
+
+    // 页面卸载时清理
+    window.addEventListener('beforeunload', () => {
+      if (isRunning) stopDetection();
+    });
+  </script>
+</body>
+</html>
