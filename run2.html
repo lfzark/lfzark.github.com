@@ -3,788 +3,416 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>智能原地跑 · 步数检测</title>
+  <title>原地跑传感器检测</title>
   <style>
-    /* ---------- 全局重置 & 主题 ---------- */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
-      background: #0b0e14;
-      color: #e6edf5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: #e8e8e8;
       min-height: 100vh;
+      padding: 20px;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
-      padding: 16px;
-      margin: 0;
     }
-    .app-container {
-      max-width: 480px;
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      color: #00d4ff;
+      text-align: center;
+    }
+    .subtitle {
+      font-size: 0.85rem;
+      color: #a0a0a0;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .card {
+      background: rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 20px;
       width: 100%;
-      background: #141a24;
-      border-radius: 32px;
-      padding: 24px 20px 28px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.7);
-      backdrop-filter: blur(4px);
-      border: 1px solid rgba(255,255,255,0.04);
-    }
-
-    /* ---------- 标题 & 目标 ---------- */
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      max-width: 400px;
       margin-bottom: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
     }
-    .header h1 {
-      font-size: 20px;
+    .status {
+      text-align: center;
+      font-size: 1.4rem;
       font-weight: 600;
-      letter-spacing: 0.5px;
-      background: linear-gradient(135deg, #82b1ff, #b388ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      transition: all 0.3s;
     }
-    .goal-area {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: #1e2632;
-      padding: 6px 12px 6px 16px;
-      border-radius: 40px;
-      border: 1px solid #2a3342;
+    .status.idle { background: #333; color: #aaa; }
+    .status.walking { background: #1b5e20; color: #81c784; }
+    .status.running { background: #b71c1c; color: #ef9a9a; animation: pulse 0.8s infinite; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
     }
-    .goal-area label {
-      font-size: 13px;
-      color: #9aa9bb;
-    }
-    .goal-area input {
-      width: 60px;
-      background: transparent;
-      border: none;
-      color: #e6edf5;
-      font-size: 16px;
-      font-weight: 500;
-      text-align: center;
-      outline: none;
-      padding: 4px 0;
-    }
-    .goal-area input::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-    }
-    .goal-area button {
-      background: #4a6cf7;
-      border: none;
-      color: white;
-      padding: 4px 12px;
-      border-radius: 30px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .goal-area button:active {
-      transform: scale(0.94);
-    }
-
-    /* ---------- 主数据面板 ---------- */
-    .stats-grid {
+    .metrics {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: 12px;
-      margin: 16px 0 14px;
     }
-    .stat-card {
-      background: #1a222e;
-      border-radius: 20px;
-      padding: 12px 6px;
+    .metric {
+      background: rgba(0,0,0,0.25);
+      border-radius: 12px;
+      padding: 14px 10px;
       text-align: center;
-      border: 1px solid #26303e;
     }
-    .stat-card .label {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: #7a8a9e;
-    }
-    .stat-card .value {
-      font-size: 28px;
+    .metric .value {
+      font-size: 1.8rem;
       font-weight: 700;
-      margin-top: 4px;
+      color: #00d4ff;
       line-height: 1.2;
     }
-    .stat-card .value.step-value {
-      color: #82b1ff;
+    .metric .label {
+      font-size: 0.75rem;
+      color: #999;
+      margin-top: 4px;
     }
-    .stat-card .value.cadence-value {
-      color: #69db7c;
-    }
-    .stat-card .value.time-value {
-      color: #ffd93d;
-    }
-
-    /* ---------- 强度指示 & 进度条 ---------- */
-    .intensity-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 14px;
-      color: #b0c0d0;
-      margin: 6px 0 12px;
-    }
-    .intensity-row .intensity-bar {
-      flex: 1;
-      height: 6px;
-      background: #26303e;
-      border-radius: 10px;
-      margin: 0 12px;
-      overflow: hidden;
-    }
-    .intensity-row .intensity-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #69db7c, #ffd93d, #ff6b6b);
-      border-radius: 10px;
-      transition: width 0.2s;
-    }
-    .goal-progress {
-      background: #1a222e;
-      border-radius: 30px;
-      height: 8px;
-      margin: 6px 0 14px;
-      overflow: hidden;
-      border: 1px solid #26303e;
-    }
-    .goal-progress .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #4a6cf7, #b388ff);
-      border-radius: 30px;
-      transition: width 0.3s;
-    }
-
-    /* ---------- Canvas 波形 ---------- */
-    .canvas-wrapper {
-      background: #0d121c;
-      border-radius: 20px;
-      padding: 8px;
-      border: 1px solid #1f2937;
-      margin: 10px 0 14px;
-    }
-    canvas#waveCanvas {
-      display: block;
+    .full-width { grid-column: 1 / -1; }
+    canvas {
       width: 100%;
-      height: 100px;
-      border-radius: 12px;
-      background: #0d121c;
-    }
-
-    /* ---------- 控制按钮 ---------- */
-    .controls {
-      display: flex;
-      gap: 14px;
+      height: 80px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
       margin-top: 12px;
     }
-    .controls button {
+    .controls {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      max-width: 400px;
+      margin-top: 8px;
+    }
+    button {
       flex: 1;
-      padding: 14px 0;
-      border: none;
-      border-radius: 40px;
-      font-size: 17px;
+      padding: 14px;
+      font-size: 1rem;
       font-weight: 600;
+      border: none;
+      border-radius: 12px;
       cursor: pointer;
-      transition: all 0.15s;
-      background: #1f2937;
-      color: #b0c0d0;
+      transition: all 0.2s;
     }
-    .controls button:active {
-      transform: scale(0.96);
+    #startBtn {
+      background: linear-gradient(135deg, #00c853, #00e676);
+      color: #000;
     }
-    .controls .btn-start {
-      background: #4a6cf7;
-      color: white;
-      box-shadow: 0 4px 20px rgba(74,108,247,0.3);
+    #startBtn:disabled {
+      background: #444;
+      color: #888;
+      cursor: not-allowed;
     }
-    .controls .btn-start.active {
-      background: #ff6b6b;
-      box-shadow: 0 4px 20px rgba(255,107,107,0.3);
+    #resetBtn {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
     }
-    .controls .btn-reset {
-      background: #2a3342;
-      color: #cfdbe8;
-    }
-
-    /* ---------- 运动摘要 (停止后显示) ---------- */
-    .summary {
-      margin-top: 16px;
-      background: #1a222e;
-      border-radius: 20px;
-      padding: 16px 18px;
-      display: none;
-      border: 1px solid #2f3b4b;
-    }
-    .summary.show {
-      display: block;
-    }
-    .summary h3 {
-      font-size: 15px;
-      color: #9aa9bb;
-      margin-bottom: 10px;
-      letter-spacing: 0.5px;
-    }
-    .summary-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px;
-    }
-    .summary-item {
+    .tips {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 20px;
+      max-width: 400px;
+      line-height: 1.5;
       text-align: center;
     }
-    .summary-item .s-label {
-      font-size: 11px;
-      color: #7a8a9e;
+    .sensor-data {
+      font-size: 0.7rem;
+      color: #666;
+      margin-top: 8px;
+      text-align: center;
+      font-family: monospace;
     }
-    .summary-item .s-value {
-      font-size: 18px;
-      font-weight: 600;
-      color: #e6edf5;
-    }
-
-    /* ---------- 响应式 ---------- */
-    @media (max-width: 420px) {
-      .stats-grid { gap: 8px; }
-      .stat-card .value { font-size: 22px; }
-      .goal-area input { width: 50px; }
+    /* 声音反馈状态提示 */
+    .sound-feedback {
+      font-size: 0.75rem;
+      color: #4fc3f7;
+      margin-top: 6px;
+      text-align: center;
+      min-height: 1.2em;
     }
   </style>
 </head>
 <body>
-<div class="app-container" role="main">
+  <h1>🏃 原地跑检测</h1>
+  <p class="subtitle">使用手机加速度传感器实时识别</p>
 
-  <!-- 头部 + 目标设定 -->
-  <div class="header">
-    <h1>🏃 智能跑</h1>
-    <div class="goal-area">
-      <label>目标</label>
-      <input type="number" id="goalInput" value="1000" min="10" step="10">
-      <button id="setGoalBtn">设定</button>
+  <div class="card">
+    <div id="status" class="status idle">等待开始</div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="value" id="steps">0</div>
+        <div class="label">步数</div>
+      </div>
+      <div class="metric">
+        <div class="value" id="cadence">0</div>
+        <div class="label">步频 (步/分)</div>
+      </div>
+      <div class="metric full-width">
+        <div class="value" id="intensity">0.0</div>
+        <div class="label">运动强度</div>
+      </div>
     </div>
+
+    <canvas id="wave" width="400" height="80"></canvas>
+    <div class="sensor-data" id="rawData">加速度: --</div>
+    <div class="sound-feedback" id="soundStatus">🔊 每10步发声反馈</div>
   </div>
 
-  <!-- 三大数据 -->
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="label">步数</div>
-      <div class="value step-value" id="stepDisplay" aria-live="polite">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">步频 (spm)</div>
-      <div class="value cadence-value" id="cadenceDisplay" aria-live="polite">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">运动时间</div>
-      <div class="value time-value" id="timeDisplay">00:00</div>
-    </div>
-  </div>
-
-  <!-- 强度条 -->
-  <div class="intensity-row">
-    <span>强度</span>
-    <div class="intensity-bar">
-      <div class="intensity-fill" id="intensityFill"></div>
-    </div>
-    <span id="intensityLabel">低</span>
-  </div>
-
-  <!-- 目标进度条 -->
-  <div class="goal-progress">
-    <div class="progress-fill" id="progressFill"></div>
-  </div>
-
-  <!-- 波形 -->
-  <div class="canvas-wrapper">
-    <canvas id="waveCanvas" width="800" height="200"></canvas>
-  </div>
-
-  <!-- 控制按钮 -->
   <div class="controls">
-    <button class="btn-start" id="startBtn">▶ 开始</button>
-    <button class="btn-reset" id="resetBtn">↺ 重置</button>
+    <button id="startBtn">开始检测</button>
+    <button id="resetBtn">重置</button>
   </div>
 
-  <!-- 运动摘要 -->
-  <div class="summary" id="summaryPanel">
-    <h3>📊 运动摘要</h3>
-    <div class="summary-grid">
-      <div class="summary-item">
-        <div class="s-label">总步数</div>
-        <div class="s-value" id="sumSteps">0</div>
-      </div>
-      <div class="summary-item">
-        <div class="s-label">平均步频</div>
-        <div class="s-value" id="sumAvgCadence">0</div>
-      </div>
-      <div class="summary-item">
-        <div class="s-label">最高步频</div>
-        <div class="s-value" id="sumMaxCadence">0</div>
-      </div>
-    </div>
-  </div>
-</div>
+  <p class="tips">
+    使用提示：<br>
+    1. 点击「开始检测」并允许传感器权限<br>
+    2. 把手机放入口袋或拿在手里原地跑/踏步<br>
+    3. 建议竖屏使用，动作幅度稍大效果更好
+  </p>
 
-<script>
-  (function() {
-    'use strict';
+  <script>
+    // ========== 配置参数 ==========
+    const STEP_THRESHOLD = 1.8;        // 加速度峰值阈值（可调）
+    const MIN_STEP_INTERVAL = 250;     // 两步最小间隔(ms)
+    const CADENCE_WINDOW = 10000;      // 计算步频的时间窗口(ms)
+    const RUNNING_CADENCE = 140;       // 判定为跑步的步频阈值
+    const RUNNING_INTENSITY = 3.5;     // 判定为跑步的强度阈值
+    const SOUND_INTERVAL = 10;         // 每多少步发声一次
 
-    // ---------- DOM 引用 ----------
-    const stepDisplay = document.getElementById('stepDisplay');
-    const cadenceDisplay = document.getElementById('cadenceDisplay');
-    const timeDisplay = document.getElementById('timeDisplay');
-    const intensityFill = document.getElementById('intensityFill');
-    const intensityLabel = document.getElementById('intensityLabel');
-    const progressFill = document.getElementById('progressFill');
-    const canvas = document.getElementById('waveCanvas');
-    const ctx = canvas.getContext('2d');
+    // ========== 状态变量 ==========
+    let isRunning = false;
+    let steps = 0;
+    let lastStepTime = 0;
+    let stepTimes = [];                // 记录最近步的时间戳
+    let accelHistory = [];             // 用于波形绘制
+    const HISTORY_LENGTH = 60;
+
+    // 平滑用
+    let lastMagnitude = 9.8;
+    let peakDetected = false;
+
+    // 声音反馈 - 记录上次发声时的步数
+    let lastSoundStep = 0;
+
+    // DOM
+    const statusEl = document.getElementById('status');
+    const stepsEl = document.getElementById('steps');
+    const cadenceEl = document.getElementById('cadence');
+    const intensityEl = document.getElementById('intensity');
+    const rawDataEl = document.getElementById('rawData');
     const startBtn = document.getElementById('startBtn');
     const resetBtn = document.getElementById('resetBtn');
-    const goalInput = document.getElementById('goalInput');
-    const setGoalBtn = document.getElementById('setGoalBtn');
-    const summaryPanel = document.getElementById('summaryPanel');
-    const sumSteps = document.getElementById('sumSteps');
-    const sumAvgCadence = document.getElementById('sumAvgCadence');
-    const sumMaxCadence = document.getElementById('sumMaxCadence');
+    const canvas = document.getElementById('wave');
+    const ctx = canvas.getContext('2d');
+    const soundStatusEl = document.getElementById('soundStatus');
 
-    // ---------- 状态变量 ----------
-    let isRunning = false;
-    let isDetecting = false;        // 是否正在采集数据
-    let stepCount = 0;
-    let totalSteps = 0;            // 用于摘要
-    let cadence = 0;              // 当前步频 (步/分钟)
-    let maxCadence = 0;
-    let cadenceHistory = [];      // 存储最近10个步频值用于平均
-    let startTime = 0;            // 运动开始时间戳 (毫秒)
-    let elapsedSeconds = 0;
-    let timerInterval = null;
+    // ========== 声音反馈函数 ==========
+    function playBeep() {
+      try {
+        // 使用 Web Audio API 播放短促的 "嘀" 声
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
 
-    // 传感器数据
-    let accelHistory = new Array(200); // 环形缓冲区，存储 filtered 值
-    let accelHead = 0;
-    let accelCount = 0;
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
 
-    // 计步参数
-    const MIN_STEP_INTERVAL = 180; // 毫秒
-    let lastStepTime = 0;
-    let threshold = 1.8;          // 默认，会被校准覆盖
-    let isCalibrated = false;
-    let calibrateData = [];       // 存储校准期间的幅值
-    let calibrationDuration = 3000; // 3秒
-    let calibrateStart = 0;
+        oscillator.frequency.value = 880; // A5 音高
+        oscillator.type = 'sine';
 
-    // 低通滤波参数
-    let filtered = 0;
-    const ALPHA = 0.2;
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
 
-    // 语音播报
-    let lastSpeechStep = 0;
-    const SPEECH_INTERVAL = 100;   // 每100步播报一次
-    let speechEnabled = true;
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.15);
 
-    // 目标
-    let goalSteps = 1000;
-
-    // 动画帧
-    let animationId = null;
-    let lastDrawTime = 0;
-
-    // ---------- 辅助函数 ----------
-    function formatTime(sec) {
-      const m = Math.floor(sec / 60);
-      const s = Math.floor(sec % 60);
-      return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-    }
-
-    // 语音播报
-    function speakText(text) {
-      if (!window.speechSynthesis) return;
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'zh-CN';
-      utterance.rate = 0.9;
-      utterance.pitch = 1;
-      speechSynthesis.speak(utterance);
-    }
-
-    // 更新UI
-    function updateUI() {
-      stepDisplay.textContent = stepCount;
-      cadenceDisplay.textContent = Math.round(cadence);
-      timeDisplay.textContent = formatTime(elapsedSeconds);
-
-      // 进度条
-      const pct = Math.min(100, (stepCount / goalSteps) * 100);
-      progressFill.style.width = pct + '%';
-
-      // 强度 (根据最近加速度幅值估算)
-      let avg = 0;
-      let cnt = 0;
-      for (let i = 0; i < accelCount; i++) {
-        const idx = (accelHead - 1 - i + 200) % 200;
-        avg += accelHistory[idx] || 0;
-        cnt++;
+        // 显示反馈状态
+        soundStatusEl.textContent = '🔊 第 ' + steps + ' 步 嘀！';
+        soundStatusEl.style.color = '#ffd54f';
+        setTimeout(() => {
+          soundStatusEl.style.color = '#4fc3f7';
+          soundStatusEl.textContent = '🔊 每10步发声反馈';
+        }, 800);
+      } catch (e) {
+        // 某些浏览器可能不支持 AudioContext，静默忽略
+        console.log('声音播放失败:', e);
       }
-      if (cnt > 0) avg /= cnt;
-      // 映射到 0-100，假设强度范围 0~8
-      const intensity = Math.min(100, (avg / 8) * 100);
-      intensityFill.style.width = intensity + '%';
-      if (intensity < 30) intensityLabel.textContent = '低';
-      else if (intensity < 60) intensityLabel.textContent = '中';
-      else intensityLabel.textContent = '高';
+    }
 
-      // 检测是否达到目标
-      if (stepCount >= goalSteps && stepCount > 0) {
-        if (!window._goalReached) {
-          window._goalReached = true;
-          speakText('🎉 目标达成！太棒了！');
-          // 可添加视觉反馈
+    // ========== 权限与启动 ==========
+    startBtn.addEventListener('click', async () => {
+      if (isRunning) {
+        stopDetection();
+        return;
+      }
+
+      // iOS 需要用户手势请求权限
+      if (typeof DeviceMotionEvent !== 'undefined' &&
+          typeof DeviceMotionEvent.requestPermission === 'function') {
+        try {
+          const permission = await DeviceMotionEvent.requestPermission();
+          if (permission !== 'granted') {
+            alert('需要授权运动与方向传感器权限才能使用');
+            return;
+          }
+        } catch (e) {
+          alert('请求权限失败: ' + e.message);
+          return;
         }
-      } else {
-        window._goalReached = false;
       }
+
+      startDetection();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      steps = 0;
+      stepTimes = [];
+      lastStepTime = 0;
+      lastSoundStep = 0;  // 重置声音记录
+      updateUI(0, 0, 0);
+      statusEl.textContent = isRunning ? '检测中...' : '等待开始';
+      statusEl.className = 'status idle';
+      soundStatusEl.textContent = '🔊 每10步发声反馈';
+      soundStatusEl.style.color = '#4fc3f7';
+    });
+
+    function startDetection() {
+      isRunning = true;
+      startBtn.textContent = '停止检测';
+      startBtn.style.background = 'linear-gradient(135deg, #ff5252, #ff1744)';
+      statusEl.textContent = '检测中...';
+      statusEl.className = 'status idle';
+
+      window.addEventListener('devicemotion', handleMotion);
     }
 
-    // ---------- 波形绘制 (使用 requestAnimationFrame) ----------
+    function stopDetection() {
+      isRunning = false;
+      startBtn.textContent = '开始检测';
+      startBtn.style.background = 'linear-gradient(135deg, #00c853, #00e676)';
+      window.removeEventListener('devicemotion', handleMotion);
+      statusEl.textContent = '已停止';
+      statusEl.className = 'status idle';
+    }
+
+    // ========== 核心检测逻辑 ==========
+    function handleMotion(event) {
+      const acc = event.accelerationIncludingGravity;
+      if (!acc || acc.x === null) return;
+
+      // 计算加速度模长
+      const magnitude = Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
+
+      // 简单高通滤波（去掉重力影响的近似）
+      const filtered = Math.abs(magnitude - lastMagnitude);
+      lastMagnitude = magnitude * 0.8 + lastMagnitude * 0.2; // 平滑
+
+      // 记录历史用于波形
+      accelHistory.push(filtered);
+      if (accelHistory.length > HISTORY_LENGTH) accelHistory.shift();
+
+      // 峰值检测
+      const now = Date.now();
+      if (filtered > STEP_THRESHOLD && !peakDetected && (now - lastStepTime) > MIN_STEP_INTERVAL) {
+        peakDetected = true;
+        steps++;
+        lastStepTime = now;
+        stepTimes.push(now);
+
+        // 只保留最近窗口内的步
+        stepTimes = stepTimes.filter(t => now - t < CADENCE_WINDOW);
+
+        // ===== 每10步声音反馈 =====
+        if (steps % SOUND_INTERVAL === 0 && steps !== lastSoundStep) {
+          lastSoundStep = steps;
+          playBeep();
+        }
+      }
+
+      // 峰值结束后重置
+      if (filtered < STEP_THRESHOLD * 0.6) {
+        peakDetected = false;
+      }
+
+      // 计算步频
+      const cadence = stepTimes.length > 1
+        ? Math.round((stepTimes.length - 1) / (CADENCE_WINDOW / 60000))
+        : 0;
+
+      // 运动强度（近期平均过滤后加速度）
+      const recent = accelHistory.slice(-20);
+      const intensity = recent.length
+        ? (recent.reduce((a, b) => a + b, 0) / recent.length).toFixed(1)
+        : 0;
+
+      // 状态判断
+      let statusText = '静止 / 轻微活动';
+      let statusClass = 'idle';
+      if (cadence >= RUNNING_CADENCE || intensity >= RUNNING_INTENSITY) {
+        statusText = '原地跑中 🏃';
+        statusClass = 'running';
+      } else if (cadence >= 80 || intensity >= 1.5) {
+        statusText = '原地踏步 / 快走';
+        statusClass = 'walking';
+      }
+
+      statusEl.textContent = statusText;
+      statusEl.className = 'status ' + statusClass;
+
+      updateUI(steps, cadence, intensity);
+      rawDataEl.textContent = `加速度模长: ${magnitude.toFixed(2)} | 过滤值: ${filtered.toFixed(2)}`;
+      drawWave();
+    }
+
+    function updateUI(s, c, i) {
+      stepsEl.textContent = s;
+      cadenceEl.textContent = c;
+      intensityEl.textContent = i;
+    }
+
+    // ========== 波形绘制 ==========
     function drawWave() {
       const w = canvas.width;
       const h = canvas.height;
       ctx.clearRect(0, 0, w, h);
 
-      // 画网格
-      ctx.strokeStyle = '#1f2937';
-      ctx.lineWidth = 1;
-      for (let y = 0; y < 4; y++) {
-        const yPos = (y + 1) * h / 4;
-        ctx.beginPath();
-        ctx.moveTo(0, yPos);
-        ctx.lineTo(w, yPos);
-        ctx.stroke();
-      }
+      if (accelHistory.length < 2) return;
 
-      // 绘制波形
-      if (accelCount < 2) return;
-      const len = Math.min(accelCount, 200);
       ctx.beginPath();
-      ctx.strokeStyle = '#4a6cf7';
-      ctx.lineWidth = 2.5;
-      for (let i = 0; i < len; i++) {
-        const idx = (accelHead - len + i + 200) % 200;
-        const val = accelHistory[idx] || 0;
-        const x = (i / len) * w;
-        const y = h/2 - (val / 10) * (h/2); // 假设幅值范围0~10
+      ctx.strokeStyle = '#00d4ff';
+      ctx.lineWidth = 2;
+
+      const stepX = w / (HISTORY_LENGTH - 1);
+      accelHistory.forEach((val, i) => {
+        const x = i * stepX;
+        const y = h - Math.min(val * 8, h - 4);
         if (i === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
-      }
+      });
       ctx.stroke();
 
-      // 绘制阈值线
-      ctx.strokeStyle = '#ff6b6b';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([6, 6]);
-      const thresholdY = h/2 - (threshold / 10) * (h/2);
+      // 阈值线
       ctx.beginPath();
-      ctx.moveTo(0, thresholdY);
-      ctx.lineTo(w, thresholdY);
+      ctx.strokeStyle = 'rgba(255,80,80,0.5)';
+      ctx.lineWidth = 1;
+      const thY = h - STEP_THRESHOLD * 8;
+      ctx.moveTo(0, thY);
+      ctx.lineTo(w, thY);
       ctx.stroke();
-      ctx.setLineDash([]);
     }
 
-    function scheduleDraw() {
-      if (!isRunning) return;
-      if (animationId) cancelAnimationFrame(animationId);
-      animationId = requestAnimationFrame(() => {
-        drawWave();
-        animationId = null;
-      });
-    }
-
-    // ---------- 传感器数据处理 ----------
-    function handleMotion(event) {
-      if (!isRunning) return;
-      const acc = event.accelerationIncludingGravity;
-      if (!acc || acc.x === null) return;
-
-      // 计算幅值 (m/s^2)
-      const ax = acc.x || 0;
-      const ay = acc.y || 0;
-      const az = acc.z || 0;
-      const magnitude = Math.sqrt(ax*ax + ay*ay + az*az);
-
-      // 低通滤波 (去除重力影响)
-      filtered = ALPHA * magnitude + (1 - ALPHA) * (filtered || magnitude);
-
-      // 存储到环形缓冲区
-      accelHistory[accelHead] = filtered;
-      accelHead = (accelHead + 1) % 200;
-      if (accelCount < 200) accelCount++;
-
-      // ---- 自动校准 ----
-      if (!isCalibrated) {
-        const now = performance.now();
-        if (calibrateStart === 0) calibrateStart = now;
-        calibrateData.push(filtered);
-        if (now - calibrateStart >= calibrationDuration) {
-          // 计算均值和标准差
-          const sum = calibrateData.reduce((a,b) => a+b, 0);
-          const mean = sum / calibrateData.length;
-          const variance = calibrateData.reduce((a,b) => a + (b-mean)*(b-mean), 0) / calibrateData.length;
-          const std = Math.sqrt(variance);
-          // 阈值设为 mean + 2*std，但不小于1.5
-          let newTh = mean + 2 * std;
-          if (newTh < 1.5) newTh = 1.5;
-          if (newTh > 4.0) newTh = 4.0; // 上限
-          threshold = newTh;
-          isCalibrated = true;
-          calibrateData = [];
-          console.log(`校准完成，阈值=${threshold.toFixed(2)}`);
-          // 播报提示
-          speakText('校准完成，开始运动');
-        }
-        return; // 校准期间不进行计步
-      }
-
-      // ---- 计步检测 ----
-      const nowTime = performance.now();
-      // 简单峰值检测：当前值 > 阈值 且 当前值比前一个值大（上升沿）
-      // 为了准确，我们保留上一个值，检测穿越
-      // 但由于环形缓冲区，我们可以检测当前值是否大于阈值且前一个值小于阈值
-      // 但更稳健：检测局部极大值，即当前值大于前后值且大于阈值
-      // 这里我们采用简化：如果当前值 > 阈值，且距上次步数时间超过最小间隔，则视为一步
-      // 但为了防止噪声，检查前一个值是否也大于阈值？我们使用更严格的：要求当前值大于阈值，且前一个值小于当前值（上升）
-      // 这里我们存储前一个值
-      if (!handleMotion._prevFiltered) handleMotion._prevFiltered = 0;
-      const prev = handleMotion._prevFiltered;
-      const current = filtered;
-
-      if (current > threshold && current > prev && (nowTime - lastStepTime) > MIN_STEP_INTERVAL) {
-        // 计步
-        stepCount++;
-        totalSteps++;
-        lastStepTime = nowTime;
-
-        // 步频计算 (基于最近10步的时间差)
-        if (!handleMotion._stepTimes) handleMotion._stepTimes = [];
-        handleMotion._stepTimes.push(nowTime);
-        if (handleMotion._stepTimes.length > 20) handleMotion._stepTimes.shift();
-        if (handleMotion._stepTimes.length >= 2) {
-          const diff = handleMotion._stepTimes[handleMotion._stepTimes.length-1] - handleMotion._stepTimes[0];
-          const cnt = handleMotion._stepTimes.length - 1;
-          if (diff > 0) {
-            const spm = (cnt / (diff / 1000)) * 60;
-            cadence = Math.min(300, spm); // 限制最大
-          }
-        }
-
-        // 更新最大步频
-        if (cadence > maxCadence) maxCadence = cadence;
-
-        // 语音播报 (每100步)
-        if (stepCount % SPEECH_INTERVAL === 0 && stepCount > 0) {
-          speakText(`已跑 ${stepCount} 步，步频 ${Math.round(cadence)}`);
-        }
-
-        // UI更新 (但由定时器驱动)
-      }
-
-      handleMotion._prevFiltered = current;
-
-      // 请求绘制 (节流)
-      scheduleDraw();
-    }
-
-    // ---------- 计时器 ----------
-    function startTimer() {
-      if (timerInterval) clearInterval(timerInterval);
-      startTime = performance.now() - elapsedSeconds * 1000;
-      timerInterval = setInterval(() => {
-        const now = performance.now();
-        elapsedSeconds = (now - startTime) / 1000;
-        // 更新UI（步数、步频、时间等）
-        updateUI();
-      }, 200);
-    }
-
-    function stopTimer() {
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
-    }
-
-    // ---------- 控制函数 ----------
-    function startDetection() {
-      if (isRunning) return;
-
-      // 请求权限 (iOS)
-      if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-        DeviceMotionEvent.requestPermission()
-          .then(state => {
-            if (state === 'granted') {
-              doStart();
-            } else {
-              alert('需要传感器权限才能使用');
-            }
-          })
-          .catch(err => alert('权限请求失败'));
-      } else {
-        doStart();
-      }
-    }
-
-    function doStart() {
-      isRunning = true;
-      isDetecting = true;
-      // 重置校准状态
-      isCalibrated = false;
-      calibrateData = [];
-      calibrateStart = 0;
-      handleMotion._prevFiltered = 0;
-      handleMotion._stepTimes = [];
-      lastStepTime = 0;
-      window._goalReached = false;
-
-      // 重置步数（如果用户希望继续累加，可以注释掉，但通常开始新运动）
-      // 我们让开始保持当前步数不清零，由重置清零，但开始可以继续累加
-      // 为了合理，开始新运动时重置步数？可以设计：开始先重置，但用户可能想续跑。这里设计开始清零（符合直觉）
-      // 但如果有数据，点击开始会清零。我们提示？或者保持不重置，由重置按钮负责。
-      // 稳妥：开始清零，重置也清零。但用户可能想继续，但大多数场景是开始新运动。
-      // 我们设计：开始清零，重置清零。但保留摘要。
-      // 也可以增加选项，但简化：开始自动清零。
-      stepCount = 0;
-      totalSteps = 0;
-      cadence = 0;
-      maxCadence = 0;
-      elapsedSeconds = 0;
-      // 清空历史步频
-      cadenceHistory = [];
-
-      startBtn.textContent = '⏹ 停止';
-      startBtn.classList.add('active');
-      summaryPanel.classList.remove('show');
-
-      // 启动传感器
-      window.addEventListener('devicemotion', handleMotion);
-      // 启动计时
-      startTimer();
-      // 启动绘制循环
-      scheduleDraw();
-
-      // 播报开始
-      speakText('开始运动');
-    }
-
-    function stopDetection() {
-      if (!isRunning) return;
-      isRunning = false;
-      isDetecting = false;
-      window.removeEventListener('devicemotion', handleMotion);
-      stopTimer();
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-        animationId = null;
-      }
-      startBtn.textContent = '▶ 开始';
-      startBtn.classList.remove('active');
-
-      // 显示摘要
-      if (totalSteps > 0) {
-        const avgCad = cadenceHistory.length > 0
-          ? Math.round(cadenceHistory.reduce((a,b) => a+b, 0) / cadenceHistory.length)
-          : Math.round(cadence);
-        sumSteps.textContent = totalSteps;
-        sumAvgCadence.textContent = avgCad;
-        sumMaxCadence.textContent = Math.round(maxCadence);
-        summaryPanel.classList.add('show');
-        speakText(`运动结束，共 ${totalSteps} 步，平均步频 ${avgCad}`);
-      } else {
-        summaryPanel.classList.remove('show');
-      }
-    }
-
-    function resetAll() {
+    // 页面卸载时清理
+    window.addEventListener('beforeunload', () => {
       if (isRunning) stopDetection();
-      stepCount = 0;
-      totalSteps = 0;
-      cadence = 0;
-      maxCadence = 0;
-      elapsedSeconds = 0;
-      accelCount = 0;
-      accelHead = 0;
-      handleMotion._prevFiltered = 0;
-      handleMotion._stepTimes = [];
-      isCalibrated = false;
-      calibrateData = [];
-      calibrateStart = 0;
-      window._goalReached = false;
-      cadenceHistory = [];
-      updateUI();
-      drawWave();
-      summaryPanel.classList.remove('show');
-      startBtn.textContent = '▶ 开始';
-      startBtn.classList.remove('active');
-      speakText('已重置');
-    }
-
-    // ---------- 目标设定 ----------
-    function setGoal() {
-      let val = parseInt(goalInput.value);
-      if (isNaN(val) || val < 10) val = 10;
-      goalSteps = val;
-      goalInput.value = goalSteps;
-      updateUI();
-      speakText(`目标设为 ${goalSteps} 步`);
-    }
-
-    // ---------- 初始化 ----------
-    function init() {
-      // 绑定事件
-      startBtn.addEventListener('click', () => {
-        if (isRunning) {
-          stopDetection();
-        } else {
-          startDetection();
-        }
-      });
-
-      resetBtn.addEventListener('click', resetAll);
-
-      setGoalBtn.addEventListener('click', setGoal);
-      goalInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') setGoal();
-      });
-
-      // 初始绘制
-      drawWave();
-      updateUI();
-
-      // 监听可见性变化，避免后台耗电
-      document.addEventListener('visibilitychange', () => {
-        if (document.hidden && isRunning) {
-          // 后台停止绘制，但传感器继续？可以暂停
-          // 为了性能，可以暂停传感器？但可能影响计步。
-          // 简单起见，不做处理。
-        }
-      });
-    }
-
-    // 页面完全加载后初始化
-    if (document.readyState === 'complete') {
-      init();
-    } else {
-      window.addEventListener('load', init);
-    }
-
-  })();
-</script>
+    });
+  </script>
 </body>
 </html>
