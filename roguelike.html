@@ -45,6 +45,17 @@
   #overlay small { color:#9aa3b5; font-size:14px; margin-top:22px; white-space:pre; text-align:center; line-height:2; }
   #ovStart { margin-top:26px; color:#e8b04b; font-size:15px; letter-spacing:2px; animation:pulse 1.6s ease-in-out infinite; }
   @keyframes pulse { 0%,100%{opacity:.45;} 50%{opacity:1;} }
+  #mBtns { display:none; margin-top:18px; flex-direction:column; align-items:center; gap:10px; }
+  @media (pointer:coarse) { #mBtns { display:flex; } }
+  .mbtn { min-width:220px; padding:13px 26px; font-size:16px; letter-spacing:3px; border-radius:12px;
+    border:1px solid rgba(251,191,36,.55); background:linear-gradient(180deg,rgba(251,191,36,.20),rgba(251,191,36,.08));
+    color:#fde68a; font-weight:700; cursor:pointer; font-family:inherit; }
+  .mbtn:active { background:rgba(251,191,36,.35); transform:scale(.97); }
+  .mbtn.secondary { border-color:rgba(148,163,184,.4); color:#cbd5e1; background:rgba(255,255,255,.06); font-weight:500; }
+  .mdiff { display:flex; gap:8px; margin-top:2px; }
+  .mdbtn { padding:7px 14px; font-size:13px; border-radius:9px; border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.06); color:#9aa3b5; cursor:pointer; font-family:inherit; }
+  .mdbtn:active, .mdbtn.on { border-color:#fbbf24; color:#fbbf24; background:rgba(251,191,36,.14); }
   #muteBadge { position:fixed; top:14px; right:16px; z-index:25; font-size:12px; color:#9aa3b5;
     background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:8px; padding:3px 8px; }
   #toast { position:fixed; top:18px; left:50%; transform:translateX(-50%) translateY(-70px); z-index:20;
@@ -155,6 +166,15 @@
 每 5 层有 Boss 镇守 · 小心精英与远程怪
 标题界面按 1/2/3 可切换难度</small>
   <div id="ovStart">— 按任意键开始 · 1/2/3=难度 · N=每日挑战 —</div>
+  <div id="mBtns">
+    <button class="mbtn" id="mStart">⚔️ 开始新冒险</button>
+    <button class="mbtn secondary" id="mCont">💾 继续冒险</button>
+    <div class="mdiff">
+      <button class="mdbtn" data-d="0">简单</button>
+      <button class="mdbtn on" data-d="1">普通</button>
+      <button class="mdbtn" data-d="2">困难</button>
+    </div>
+  </div>
 </div>
 <div id="muteBadge" style="display:none">🔇 M</div>
 <div id="toast"></div>
@@ -660,6 +680,7 @@ function winGame(){
     `\n回合 ${turn} · 击杀 ${stats.kills} · 精英 ${stats.elites} · Boss ${stats.bosses}${endless?' · ∞无尽':''}`+
     `\n小头目 ${stats.minis||0} · 双词缀精英 ${stats.duals||0} · 暴击 ${stats.crits||0} · 承伤 ${stats.dmgTaken||0} · 喝药 ${stats.potions||0}`;
   document.getElementById('ovStart').textContent='— 按任意键开始新冒险'+(endless?' · N=继续无尽':'')+(hasManSave()?' · C=复活手动档':'')+' · 1/2/3=难度 · N=每日挑战 —';
+  syncMBtns();
   document.getElementById('shop').style.display='none';
   document.getElementById('overlay').style.display='flex';
   log('🏆 你通关了！深渊之心已被粉碎。','#4ade80');
@@ -699,7 +720,8 @@ function die(reason){
     (isNewBest?'\n🌟 新纪录！':`\n历史最佳: 第${best.floor}层 · Lv.${best.lvl} · ${best.gold}金`)+
     `\n击杀 ${stats.kills} · 精英 ${stats.elites} · Boss ${stats.bosses}${endless?' · ∞无尽':''}`+
     `\n小头目 ${stats.minis||0} · 双词缀精英 ${stats.duals||0} · 暴击 ${stats.crits||0} · 承伤 ${stats.dmgTaken||0} · 喝药 ${stats.potions||0}`;
-  document.getElementById('ovStart').textContent='— 按任意键重来'+(hasManSave()?' · C=复活手动档(一次性)':'')+' · Z=导出档 · X=复制/切换槽 · V=导入档 · 1/2/3=难度 · N=每日挑战 —';+(hasManSave()?' · C=复活手动档':'')+' · 1/2/3=难度 · N=每日挑战 —';
+  document.getElementById('ovStart').textContent='— 按任意键重来'+(hasManSave()?' · C=复活手动档(一次性)':'')+' · Z=导出档 · X=复制/切换槽 · V=导入档 · 1/2/3=难度 · N=每日挑战 —';
+  syncMBtns();
   document.getElementById('overlay').style.display='flex';
 }
 
@@ -1476,13 +1498,13 @@ function copySlot(){
   toast(`🔄 切换到槽位 ${mslotNow+1}`); log(`🔄 已切换到槽位 ${mslotNow+1}`,'#9aa3b5');
 }
 function hasManSave(){
-  try{ return !!localStorage.getItem(MAN_KEY); }catch(e){ return false; }
+  try{ return !!(localStorage.getItem(MSEL)||localStorage.getItem(MAN_KEY)); }catch(e){ return false; }
 }
 function readPayload(key){
   try{ return JSON.parse(localStorage.getItem(key)||'null'); }catch(e){ return null; }
 }
 function loadManual(consume){
-  if(!mslotData) mslotData=readPayload(MSEL);
+  if(!mslotData) mslotData=readPayload(MSEL)||readPayload(MAN_KEY);
   if(!mslotData||!mslotData.state||!mslotData.state.player){ log('手动存档缺失或已损坏','#ff6060'); return false; }
   restoreState(mslotData);
   player.hp=player.hpMax; // 复活奖励: 满血
@@ -1601,6 +1623,27 @@ function updateIntroText(){
     ? `— 按任意键开始新冒险 · C=继续自动档 · 1/2/3=${diff} · N=每日挑战 —`
     : `— 按任意键开始 · 1/2/3=${diff} · N=每日挑战 —`;
 }
+// ===== 移动端启动按钮(遮罩内, 触屏可达) =====
+function syncMBtns(){
+  const mc=document.getElementById('mCont');
+  if(mc) mc.style.display=(hasSave()||hasManSave())?'':'none';
+  document.querySelectorAll('.mdbtn').forEach(b=>b.classList.toggle('on',+b.dataset.d===diffIdx));
+}
+document.getElementById('mStart').addEventListener('pointerdown',ev=>{ ev.preventDefault(); introAction('a'); });
+document.getElementById('mCont').addEventListener('pointerdown',ev=>{ ev.preventDefault();
+  if(gameOver&&hasManSave()){ loadManual(true); return; }
+  introAction('c'); });
+document.querySelectorAll('.mdbtn').forEach(b=>{
+  b.addEventListener('pointerdown',ev=>{ ev.preventDefault();
+    diffIdx=+b.dataset.d;
+    toast('难度: '+DIFFS[diffIdx].name+' — '+DIFFS[diffIdx].desc);
+    updateIntroText(); });
+});
+// 遮罩本体点按=开始(兜底: 任何触屏位置都能开局)
+document.getElementById('overlay').addEventListener('pointerdown',ev=>{
+  if(ev.target.closest('#mBtns')) return;
+  introAction('a');
+});
 window.addEventListener('keydown',e=>{
   if(gameOver){ // 结算界面: C 优先读手动存档(复活), 否则继续自动档
     if(e.key==='c'||e.key==='C'){
@@ -1697,6 +1740,11 @@ player={x:1,y:1,hpMax:30,hp:30,atkBase:3,def:0,lvl:1,xp:0,xpNext:10,gold:0,potio
   items:{tp:0,rv:0,fb:0,bomb:0}};
 updatePanel(); draw();
 if(muted){ const mb=document.getElementById('muteBadge'); if(mb) mb.style.display='block'; }
+syncMBtns();
+// 触屏设备兜底: 媒体查询失效时也强制显示启动按钮组
+if(('ontouchstart' in window)||navigator.maxTouchPoints>0){
+  const mb=document.getElementById('mBtns'); if(mb) mb.style.display='flex';
+}
 setInterval(()=>{ if(!gameOver){ shake=0; draw(); } },120);
 </script>
 </body>
