@@ -71,8 +71,19 @@
   .shopItem.dis { opacity:.38; cursor:not-allowed; }
   .shopItem.dis:hover { background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.12); }
   .shopTip { text-align:center; color:#7c869c; font-size:12px; margin-top:6px; }
-  #pads { display:none; margin-top:12px; user-select:none; -webkit-user-select:none; touch-action:manipulation; }
-  @media (pointer:coarse) { #pads { display:flex; gap:14px; } }
+  #stick { display:none; margin-top:10px; user-select:none; -webkit-user-select:none; }
+  @media (pointer:coarse) { #stick { display:block; } }
+  #stickZone { position:relative; width:280px; height:180px; margin:0 auto; border-radius:16px;
+    background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); touch-action:none; }
+  #stickZone .zone-lbl { position:absolute; left:12px; top:8px; font-size:11px; color:#64748b; letter-spacing:2px; }
+  #joyBase { position:absolute; left:70px; top:38px; width:74px; height:74px; border-radius:50%;
+    border:2px solid rgba(251,191,36,.35); background:rgba(251,191,36,.08); }
+  #joyKnob { position:absolute; left:95px; top:63px; width:24px; height:24px; border-radius:50%;
+    background:rgba(251,191,36,.75); box-shadow:0 0 10px rgba(251,191,36,.6); pointer-events:none; }
+  .stkbtn { position:absolute; width:38px; height:38px; border-radius:50%; border:1px solid rgba(255,255,255,.16);
+    background:rgba(255,255,255,.08); color:#e8eaf0; font-size:13px; display:flex; align-items:center;
+    justify-content:center; cursor:pointer; }
+  .stkbtn:active { background:rgba(251,191,36,.25); border-color:#fbbf24; }
   @media (max-width:760px){
     #wrap { flex-direction:column; align-items:center; gap:10px; }
     #panel { width:100%; max-width:520px; }
@@ -121,23 +132,17 @@
     </div>
   </div>
 </div>
-<div id="pads">
-  <div class="padcol">
-    <div class="prow">
-      <div class="pbtn" data-k="z">Z</div><div class="pbtn" data-k="x">X</div>
-      <div class="pbtn" data-k="c">C</div><div class="pbtn" data-k="v">V</div>
-    </div>
-    <div class="prow">
-      <div class="pbtn" data-k="q">药</div><div class="pbtn" data-k=" ">待</div>
-    </div>
-  </div>
-  <div class="padcol">
-    <div class="pbtn" data-k="ArrowUp">↑</div>
-    <div class="prow">
-      <div class="pbtn" data-k="ArrowLeft">←</div>
-      <div class="pbtn" data-k="ArrowDown">↓</div>
-      <div class="pbtn" data-k="ArrowRight">→</div>
-    </div>
+<div id="stick">
+  <div id="stickZone">
+    <div class="zone-lbl">移动摇杆</div>
+    <div id="joyBase"></div><div id="joyKnob"></div>
+    <div class="stkbtn" data-k="q" style="right:66px;top:6px;">药</div>
+    <div class="stkbtn" data-k=" " style="right:12px;top:6px;">待</div>
+    <div class="stkbtn" data-k="z" style="right:66px;top:48px;">Z</div>
+    <div class="stkbtn" data-k="x" style="right:12px;top:48px;">X</div>
+    <div class="stkbtn" data-k="c" style="right:66px;top:90px;">C</div>
+    <div class="stkbtn" data-k="v" style="right:12px;top:90px;">V</div>
+    <div class="stkbtn" data-k="o" style="right:39px;top:132px;background:rgba(251,191,36,.18);border-color:rgba(251,191,36,.5);">存</div>
   </div>
 </div>
 <div id="shop">
@@ -189,11 +194,19 @@ const THEMES=[
 const BOSS={ch:'Ω',name:'洞穴之主', col:'#e11d48', hp:110, atk:13, def:4, xp:80};
 const FINALBOSS={ch:'☠',name:'深渊之心', col:'#7c3aed', hp:280, atk:20, def:8, xp:400, isBoss:true, isFinal:true};
 const FINAL_FLOOR=20;   // 第 20 层为终局
+let endless=false;      // ∞无尽模式(通关后20层可继续深入)
 const AFFIXES=[
  {id:'swift', name:'迅捷'},
  {id:'vamp',  name:'吸血'},
  {id:'tough', name:'坚韧'},
  {id:'rage',  name:'狂暴'},
+ {id:'manaeater', name:'吸魔'},
+ {id:'thorns', name:'荆棘'},
+];
+const MINIBOSSES=[
+ {ch:'G', name:'石肤巨人', col:'#94a3b8', hp:60, atk:14, def:5, xp:35, gold:60},
+ {ch:'N', name:'深渊骑士', col:'#64748b', hp:55, atk:16, def:3, xp:40, gold:55},
+ {ch:'L', name:'腐沼巫妖', col:'#22c55e', hp:45, atk:12, def:2, xp:45, gold:70, range:5, bkind:'caster'},
 ];
 const ACHS=[
  {id:'first',  name:'初次见血', desc:'击杀第一只怪物'},
@@ -208,6 +221,10 @@ const ACHS=[
  {id:'boss3',  name:'三度弑主', desc:'单局击败 3 个 Boss'},
  {id:'shop1',  name:'讨价还价', desc:'在商人处完成一次交易'},
  {id:'champion',name:'深渊征服者',desc:'击败深渊之心，通关地牢'},
+ {id:'miniboss',name:'猎首者',   desc:'击败 1 个小头目'},
+ {id:'miniboss5',name:'头目猎人', desc:'单局击败 5 个小头目'},
+ {id:'depth25', name:'深渊漫步', desc:'抵达第 25 层(含无尽)'},
+ {id:'dualelite',name:'双重威胁', desc:'击杀 3 只双词缀精英'},
 ];
 
 // ===== seeded rng (每日挑战) =====
@@ -233,9 +250,28 @@ let targeting=null;     // 火球瞄准状态 {targets:[], idx}
 // 手动存档（O 键保存, C 键死亡后读回）: 与自动档双轨并存
 const MAN_KEY='anku_save_manual';
 let manCd=0;            // 手动存档冷却（回合）, 防连打
+const MAN_COST=10;      // 手动存档花费(金币)
+const MSEL='anku_mslot0'; // 当前手动档槽位 key
+let mslotNow=0, mslotData=null, copied=false; // 槽位指针/缓存/导出标记
 const SAVE_KEY='anku_save';
 let achUnlocked=new Set();
 try{ achUnlocked=new Set(JSON.parse(localStorage.getItem('anku_ach')||'[]')); }catch(e){}
+
+// ===== BGM (本地文件, 异步加载, 首次交互后播放) =====
+const BGM_URL='file:///home/ark1ee/下载/interstellar.mp3';
+const BGM_VOL=.32;
+let bgmEl=null;
+function ensureBGM(){
+  if(bgmEl) return;
+  try{
+    bgmEl=new Audio(BGM_URL);
+    bgmEl.loop=true; bgmEl.volume=muted?0:BGM_VOL; bgmEl.preload='auto';
+    bgmEl.addEventListener('error',()=>{ log('🎵 BGM 加载失败（不影响游戏）','#64748b'); });
+    bgmEl.play().then(()=>log('🎵 BGM: Interstellar','#9aa3b5')).catch(()=>{});
+  }catch(e){}
+}
+document.addEventListener('pointerdown',()=>{ ensureBGM(); if(bgmEl&&bgmEl.paused) bgmEl.play().catch(()=>{}); });
+document.addEventListener('keydown',()=>{ ensureBGM(); if(bgmEl&&bgmEl.paused) bgmEl.play().catch(()=>{}); });
 
 // ===== audio (8-bit synth) =====
 let actx=null;
@@ -275,6 +311,7 @@ function toggleMute(){
   muted=!muted;
   try{ localStorage.setItem('anku_mute',muted?'1':'0'); }catch(e){}
   const mb=document.getElementById('muteBadge'); if(mb) mb.style.display=muted?'block':'none';
+  if(bgmEl) bgmEl.volume=muted?0:BGM_VOL;
   toast(muted?'🔇 已静音':'🔊 声音开启');
   log(muted?'🔇 音效已关闭（M 键再开）':'🔊 音效已开启','#9aa3b5');
 }
@@ -300,6 +337,10 @@ function checkAch(){
     else if(a.id==='boss3') ok=stats.bosses>=3;
     else if(a.id==='shop1') ok=stats.shopBuys>=1;
     else if(a.id==='champion') ok=stats.won;
+    else if(a.id==='miniboss') ok=(stats.minis||0)>=1;
+    else if(a.id==='miniboss5') ok=(stats.minis||0)>=5;
+    else if(a.id==='depth25') ok=stats.maxFloor>=25;
+    else if(a.id==='dualelite') ok=(stats.duals||0)>=3;
     if(ok){
       achUnlocked.add(a.id);
       try{ localStorage.setItem('anku_ach',JSON.stringify([...achUnlocked])); }catch(e){}
@@ -338,7 +379,7 @@ function genFloor(){
   mobs=[]; items=[]; traps=[]; chests=[]; boss=null; shop=null;
   const d=floor;
   const isFinal=(d>=FINAL_FLOOR);
-  const isBossFloor=(d%5===0)&&!isFinal;
+  const isBossFloor=(d%5===0)&&(!isFinal||(endless&&Math.random()<.25));
   const df=DIFFS[diffIdx]||DIFFS[1];
   const nM=Math.round((ri(5,8)+d)*(diffIdx===2?1.15:1));
   for(let i=0;i<nM;i++){
@@ -355,8 +396,9 @@ function genFloor(){
       gold:ri(2,8)+d}, base);
     m.hp=m.hpMax;
     m.atk=Math.max(1,Math.round(base.atk*df.atkMul));
-    // 精英词缀 (第3层起)
-    if(d>=3 && Math.random()<Math.min(.5,(.12+Math.min(.18,d*.015))*df.eliteMul)){
+    // 精英词缀 (第3层起; 第11层起双词缀精英概率上升)
+    const eRate=Math.min(.5,(.12+Math.min(.18,d*.015))*df.eliteMul)+(d>=11?.18:0);
+    if(d>=3 && Math.random()<eRate){
       const af=AFFIXES[R(AFFIXES.length)];
       m.affix=af.id; m.affixName=af.name;
       m.name=af.name+m.name;
@@ -365,8 +407,39 @@ function genFloor(){
       if(af.id==='tough'){ m.hpMax=Math.floor(m.hpMax*1.6)+4; m.hp=m.hpMax; m.def=(m.def||0)+2; }
       if(af.id==='rage')  m.atk+=3;
       m.elite=true;
+      // 双词缀: 第8层起 35% 概率追加一个不同词缀
+      if(d>=8 && Math.random()<.35){
+        const af2=AFFIXES[R(AFFIXES.length)];
+        if(af2.id!==af.id){
+          m.affix2=af2.id; m.affixName=m.affixName+'·'+af2.name;
+          m.name=af2.name+m.name;
+          if(af2.id==='swift') m.swift=true;
+          if(af2.id==='vamp')  m.vamp=true;
+          if(af2.id==='tough'){ m.hpMax=Math.floor(m.hpMax*1.4)+3; m.hp=m.hpMax; m.def=(m.def||0)+1; }
+          if(af2.id==='rage')  m.atk+=2;
+          if(af2.id==='manaeater') m.manaeater=true;
+          if(af2.id==='thorns') m.thorns=true;
+          stats.duals=(stats.duals||0)+1;
+          log(`⚠ ${m.name} 觉醒了双重力量！`,'#c084fc');
+        }
+      }
     }
     mobs.push(m);
+  }
+  // 小头目: 第11层起 非Boss层 25% 出现
+  if(d>=11 && !isBossFloor && !isFinal && Math.random()<.25){
+    const mb=MINIBOSSES[R(MINIBOSSES.length)];
+    const p=randFree();
+    if(p){
+      const emul=1+Math.max(0,d-20)*.06;
+      mobs.push({x:p.x,y:p.y,ch:mb.ch,name:mb.name,col:mb.col,
+        hp:0,hpMax:Math.max(20,Math.round(mb.hp*(.9+d*.05)*emul*df.hpMul)),
+        atk:Math.max(4,Math.round(mb.atk*(1+(d-8)*.045)*df.atkMul)),
+        def:mb.def,xp:Math.round(mb.xp*(1+d*.09)),gold:mb.gold+d,
+        range:mb.range||0,bkind:mb.bkind||null,isMini:true,elite:false});
+      const mm=mobs[mobs.length-1]; mm.hp=mm.hpMax;
+      log('⚠ 感知到强大的气息…… 这一层潜伏着小头目','#f59e0b');
+    }
   }
   // Boss 楼层 / 终局层
   if(isFinal){
@@ -488,11 +561,21 @@ function log(msg,color){
 }
 // ===== combat =====
 const hit=(a,d)=>Math.max(1, (a===player?player.atkBase:a.atk) + ri(-1,2) - (d.def||0));
+// 新词缀触发器: 玩家近战攻击命中带词缀怪时
+function affixOnPlayerHit(m,dmg){
+  if(m.thorns){ const r=Math.max(1,Math.floor(dmg*.3)); player.hp-=r;
+    stats.dmgTaken=(stats.dmgTaken||0)+r;
+    addFloater(player.x,player.y,'-'+r+' 荆棘','#4ade80');
+    if(player.hp<=0){ player.hp=0; die('被荆棘反噬'); return; } }
+  if(m.manaeater){ m.hp=Math.min(m.hpMax,m.hp+Math.ceil(dmg*.25));
+    addFloater(m.x,m.y,'+'+Math.ceil(dmg*.25)+'吸','#c084fc'); }
+}
 function playerAttack(m){
   let dmg=hit(player,m);
   const crit=Math.random()<.12;
   if(crit){ dmg=Math.floor(dmg*1.8); stats.crits=(stats.crits||0)+1; }
   m.hp-=dmg;
+  affixOnPlayerHit(m,dmg); if(gameOver) return;
   fx.push({x:m.x,y:m.y,t:0,c:crit?'#fbbf24':'#ff5050'});
   addFloater(m.x,m.y, (crit?'暴击 ':'-')+dmg, crit?'#fbbf24':'#fca5a5', crit);
   doShake(crit?5:2);
@@ -518,6 +601,7 @@ function playerAttack(m){
     mobs.splice(mobs.indexOf(m),1);
     stats.kills++;
     if(m.elite) stats.elites++;
+    if(m.isMini) stats.minis=(stats.minis||0)+1;
     if(m.isBoss){ stats.bosses++; log(`👑 ${m.name} 被击败！`,'#fbbf24'); sfx('lvl'); doShake(12);
       if(m.isFinal) stats.won=true; }
     else sfx('kill');
@@ -573,9 +657,9 @@ function winGame(){
     '你击碎了深渊之心，地牢的诅咒就此终结。\n'+
     `${dailyMode?'🏆 每日挑战 · ':''}通关楼层 ${floor} · 等级 ${player.lvl} · 金币 ${player.gold}`+
     (isNewBest?'\n🌟 新纪录！':(best&&best.won?`\n历史最佳: 已通关 · Lv.${best.lvl} · ${best.gold}金`:''))+
-    `\n回合 ${turn} · 击杀 ${stats.kills} · 精英 ${stats.elites} · Boss ${stats.bosses}`+
-    `\n暴击 ${stats.crits||0} · 承受伤害 ${stats.dmgTaken||0} · 喝药 ${stats.potions||0}`;
-  document.getElementById('ovStart').textContent='— 按任意键开始新冒险'+(hasManSave()?' · C=复活手动档':'')+' · 1/2/3=难度 · N=每日挑战 —';
+    `\n回合 ${turn} · 击杀 ${stats.kills} · 精英 ${stats.elites} · Boss ${stats.bosses}${endless?' · ∞无尽':''}`+
+    `\n小头目 ${stats.minis||0} · 双词缀精英 ${stats.duals||0} · 暴击 ${stats.crits||0} · 承伤 ${stats.dmgTaken||0} · 喝药 ${stats.potions||0}`;
+  document.getElementById('ovStart').textContent='— 按任意键开始新冒险'+(endless?' · N=继续无尽':'')+(hasManSave()?' · C=复活手动档':'')+' · 1/2/3=难度 · N=每日挑战 —';
   document.getElementById('shop').style.display='none';
   document.getElementById('overlay').style.display='flex';
   log('🏆 你通关了！深渊之心已被粉碎。','#4ade80');
@@ -597,7 +681,7 @@ function mobAttack(m){
   if(player.hp<=0){ player.hp=0; die(`${m.name} 杀死了你`); }
 }
 function die(reason){
-  gameOver=true;
+  gameOver=true; joyVec=[0,0];
   sfx('die');
   try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
   document.getElementById('shop').style.display='none'; shopOpen=false;
@@ -605,7 +689,7 @@ function die(reason){
   let best=null;
   try{ best=JSON.parse(localStorage.getItem('anku_best')||'null'); }catch(e){}
   const rec={floor,lvl:player.lvl,gold:player.gold};
-  const isNewBest=!best||rec.floor>best.floor;
+  const isNewBest=!endless&&(!best||rec.floor>best.floor);
   if(isNewBest){ try{ localStorage.setItem('anku_best',JSON.stringify(rec)); }catch(e){} }
   const t=document.getElementById('ovTitle');
   t.textContent='你死了…';
@@ -613,9 +697,9 @@ function die(reason){
   document.getElementById('ovText').textContent=
     `${reason}\n${dailyMode?'🏆 每日挑战 · ':''}到达楼层 ${floor} · 等级 ${player.lvl} · 金币 ${player.gold}`+
     (isNewBest?'\n🌟 新纪录！':`\n历史最佳: 第${best.floor}层 · Lv.${best.lvl} · ${best.gold}金`)+
-    `\n击杀 ${stats.kills} · 精英 ${stats.elites} · Boss ${stats.bosses}`+
-    `\n暴击 ${stats.crits||0} · 承受伤害 ${stats.dmgTaken||0} · 喝药 ${stats.potions||0}`;
-  document.getElementById('ovStart').textContent='— 按任意键重来'+(hasManSave()?' · C=复活手动档':'')+' · 1/2/3=难度 · N=每日挑战 —';
+    `\n击杀 ${stats.kills} · 精英 ${stats.elites} · Boss ${stats.bosses}${endless?' · ∞无尽':''}`+
+    `\n小头目 ${stats.minis||0} · 双词缀精英 ${stats.duals||0} · 暴击 ${stats.crits||0} · 承伤 ${stats.dmgTaken||0} · 喝药 ${stats.potions||0}`;
+  document.getElementById('ovStart').textContent='— 按任意键重来'+(hasManSave()?' · C=复活手动档(一次性)':'')+' · Z=导出档 · X=复制/切换槽 · V=导入档 · 1/2/3=难度 · N=每日挑战 —';+(hasManSave()?' · C=复活手动档':'')+' · 1/2/3=难度 · N=每日挑战 —';
   document.getElementById('overlay').style.display='flex';
 }
 
@@ -764,6 +848,7 @@ function endTurn(){
     addFloater(player.x,player.y,'-2 毒','#a3e635');
     if(player.hp<=0){ player.hp=0; die('你死于毒雾'); updatePanel(); draw(); return; }
   }
+  if(manCd>0) manCd--;
   mobTurn();
   reveal(); updatePanel(); draw();
   saveGame();
@@ -840,6 +925,8 @@ function castFireball(tgt){
     mobs.splice(mobs.indexOf(tgt),1);
     stats.kills++;
     if(tgt.elite) stats.elites++;
+    if(tgt.isMini) stats.minis=(stats.minis||0)+1;
+    if(tgt.isMini) stats.minis=(stats.minis||0)+1;
     if(tgt.isBoss){ stats.bosses++; log(`👑 ${tgt.name} 被烧成了灰烬！`,'#fbbf24'); }
     player.xp+=tgt.xp;
     if(tgt.gold) player.gold+=tgt.gold;
@@ -873,7 +960,7 @@ function useBomb(){
   doShake(10); sfx('boom');
   for(const m of [...around]) if(m.hp<=0){
     mobs.splice(mobs.indexOf(m),1);
-    stats.kills++; if(m.elite)stats.elites++; if(m.isBoss)stats.bosses++;
+    stats.kills++; if(m.elite)stats.elites++; if(m.isMini)stats.minis=(stats.minis||0)+1; if(m.isBoss)stats.bosses++;
     player.xp+=m.xp;
     if(m.gold)player.gold+=m.gold;
     log(`${m.name} 被炸飞了！ (+${m.xp} 经验)`,'#60c060');
@@ -882,9 +969,11 @@ function useBomb(){
   endTurn();
 }
 function descend(){
-  if(floor>=FINAL_FLOOR){
-    log('深渊之下再无去路…… 击败深渊之心才能离开。','#a78bfa');
-    return;
+  if(floor>=FINAL_FLOOR&&!endless){
+    if(stats.won){
+      endless=true;
+      log('∞ 无尽深渊开启——更深处的黑暗在等待。','#c084fc'); toast('∞ 无尽模式');
+    } else { log('深渊之下再无去路…… 击败深渊之心才能离开。','#a78bfa'); return; }
   }
   targeting=null;
   floor++;
@@ -1316,19 +1405,21 @@ function newGame(daily){
   player={x:1,y:1,hpMax:30,hp:30,atkBase:3,def:0,lvl:1,xp:0,xpNext:10,gold:0,potions:1,
     items:{tp:0,rv:0,fb:0,bomb:0}};
   stats={kills:0,elites:0,bosses:0,dragon:false,maxFloor:1,shopBuys:0,won:false,
-    crits:0,dmgTaken:0,potions:0};
+    crits:0,dmgTaken:0,potions:0,minis:0,duals:0};
   turn=0; floor=1; gameOver=false; poison=0; floaters=[]; fx=[]; shake=0;
-  targeting=null; manCd=0;
+  targeting=null; manCd=0; endless=false; mslotNow=0; mslotData=null; copied=false;
   shopOpen=false; document.getElementById('shop').style.display='none';
   const t=document.getElementById('ovTitle'); t.textContent='暗 窟'; t.style.background='';
   document.getElementById('ovStart').textContent =
-    (hasSave()&&hasManSave()) ? '— 按任意键开始新冒险 · C=继续自动档 · 死亡后C=复活手动档 · 1/2/3=难度 · N=每日挑战 —'
-    : hasSave() ? '— 按任意键开始新冒险 · C=继续上次 · 1/2/3=难度 · N=每日挑战 —'
+    (hasSave()&&hasManSave()) ? '— 按任意键开始新冒险 · C=继续(优先手动档) · 1/2/3=难度 · N=每日挑战 —'
+    : hasSave() ? '— 按任意键开始新冒险 · C=继续自动档 · 1/2/3=难度 · N=每日挑战 —'
+    : hasManSave() ? '— 按任意键开始 · C=继续手动档 · 1/2/3=难度 · N=每日挑战 —'
     : '— 按任意键开始 · 1/2/3=难度 · N=每日挑战 —';
   document.getElementById('log').innerHTML='';
   log(dailyMode?'🏆 每日挑战开始！今天的地牢属于你':'你醒来了，身处幽暗的地下第一层…','#fbbf24');
   genFloor(); reveal(); updatePanel(); draw();
   if(shop) log('🛒 这一层有商人（走到 🛒 图案上即可交易）','#fbbf24');
+  if(endless) log('∞ 无尽深渊 · 怪物持续变强','#c084fc');
   saveGame();
   document.getElementById('overlay').style.display='none';
 }
@@ -1342,20 +1433,47 @@ function hasSave(){
 }
 function saveGame(){
   if(gameOver) return;
-  const payload={v:3, floor, turn, poison, dailyMode, seedState, diffIdx,
+  const payload={v:3, floor, turn, poison, dailyMode, seedState, diffIdx, endless,
     themeIdx:THEMES.indexOf(theme), state:snapState()};
   try{ localStorage.setItem(SAVE_KEY, JSON.stringify(payload)); }catch(e){}
 }
 // 手动存档: O 键保存, 死亡/通关界面按 C 读回
 function manualSave(){
   if(gameOver||!player) return;
-  const payload={v:3, floor, turn, poison, dailyMode, seedState, diffIdx,
+  if(manCd>0){ toast(`⏳ 存档冷却中，还需 ${manCd} 回合`); sfx('hurt'); return; }
+  if(player.gold<MAN_COST){ log(`存档需要 ${MAN_COST} 金币（当前 ${player.gold}）`,'#ff6060'); toast(`💰 存档需要 ${MAN_COST} 金币`); return; }
+  player.gold-=MAN_COST;
+  const payload={v:3, floor, turn, poison, dailyMode, seedState, diffIdx, endless,
     themeIdx:THEMES.indexOf(theme), state:snapState()};
-  try{ localStorage.setItem(MAN_KEY, JSON.stringify(payload)); }catch(e){}
+  try{ localStorage.setItem(MSEL, JSON.stringify(payload)); }catch(e){}
+  mslotData=JSON.parse(JSON.stringify(payload)); // 深拷贝, 防活引用污染
+  mslotNow=(mslotNow+1)%3;
+  try{ localStorage.setItem('anku_mslot', String(mslotNow)); }catch(e){}
   manCd=15;
-  toast(`💾 已存档 —— 第 ${floor} 层 · Lv.${player.lvl} · 回合 ${turn}`);
-  log(`💾 手动存档成功（第 ${floor} 层 · 回合 ${turn}）。死亡后按 C 可读档复活`, '#fbbf24');
+  updatePanel();
+  toast(`💾 存入槽位 ${mslotNow+1}（-${MAN_COST} 金币）`);
+  log(`💾 手动存档 → 槽位 ${mslotNow+1}（支付 ${MAN_COST} 金币）。死亡后按 C 读档复活`, '#fbbf24');
   sfx('pick');
+}
+// 存档管理: Z=导出 X=切换槽位 C=复制 V=导入（仅结算界面生效）
+function exportSave(){
+  const t=readPayload(MSEL);
+  if(!t){ log('没有可导出的手动存档','#ff6060'); return; }
+  printSlot(t); copied=true; toast('📋 已复制到剪贴板'); log('📋 存档 JSON 已复制','#fbbf24');
+}
+function addSlot(){
+  let d=null;
+  try{ d=JSON.parse(prompt('粘贴存档 JSON:')); }catch(e){}
+  if(!d||!d.state||!d.state.player){ toast('❌ 不是有效的存档'); return; }
+  try{ localStorage.setItem(MSEL, JSON.stringify(d)); }catch(e){}
+  mslotData=d; toast('✅ 存档已导入'); log('✅ 存档导入成功（槽位已更新）','#4ade80');
+}
+function copySlot(){
+  if(!copied){ exportSave(); return; }
+  mslotNow=(mslotNow+1)%3;
+  try{ localStorage.setItem('anku_mslot', String(mslotNow)); }catch(e){}
+  mslotData=readPayload(MSEL); copied=false;
+  toast(`🔄 切换到槽位 ${mslotNow+1}`); log(`🔄 已切换到槽位 ${mslotNow+1}`,'#9aa3b5');
 }
 function hasManSave(){
   try{ return !!localStorage.getItem(MAN_KEY); }catch(e){ return false; }
@@ -1363,12 +1481,22 @@ function hasManSave(){
 function readPayload(key){
   try{ return JSON.parse(localStorage.getItem(key)||'null'); }catch(e){ return null; }
 }
-function loadManual(){
-  const d=readPayload(MAN_KEY);
-  if(!d||!d.state||!d.state.player){ log('手动存档缺失或已损坏','#ff6060'); return false; }
-  restoreState(d);
-  log(`💾 从手动存档复活 —— 第 ${floor} 层 · Lv.${player.lvl} · 回合 ${turn}`, '#fbbf24');
-  toast('💾 存档已载入');
+function loadManual(consume){
+  if(!mslotData) mslotData=readPayload(MSEL);
+  if(!mslotData||!mslotData.state||!mslotData.state.player){ log('手动存档缺失或已损坏','#ff6060'); return false; }
+  restoreState(mslotData);
+  player.hp=player.hpMax; // 复活奖励: 满血
+  if(consume){ // 死亡后复活: 一次性消耗该槽位
+    try{ localStorage.removeItem(MSEL); }catch(e){}
+    mslotData=null;
+    log(`💾 从手动存档复活 —— 第 ${floor} 层 · Lv.${player.lvl} · 回合 ${turn}`, '#fbbf24');
+    log('⚠ 该存档槽位已消耗（一次性复活）','#f59e0b');
+    toast('💾 复活成功（槽位已消耗）');
+  } else { // 标题界面继续: 保留槽位
+    log(`💾 从手动存档继续 —— 第 ${floor} 层 · Lv.${player.lvl} · 回合 ${turn}`, '#fbbf24');
+    log('💾 手动档已保留，死亡后按 C 可复活（一次性）','#9aa3b5');
+    toast('💾 存档已载入');
+  }
   return true;
 }
 function loadGame(){
@@ -1393,10 +1521,13 @@ function restoreState(d){
   if(stats.crits===undefined) stats.crits=0;
   if(stats.dmgTaken===undefined) stats.dmgTaken=0;
   if(stats.potions===undefined) stats.potions=0;
+  if(stats.minis===undefined) stats.minis=0;
+  if(stats.duals===undefined) stats.duals=0;
   floor=d.floor||1; turn=d.turn||0; poison=d.poison||0;
   dailyMode=!!d.dailyMode;
   seedState=(d.seedState===undefined)?null:d.seedState;
   diffIdx=(d.diffIdx===undefined)?1:d.diffIdx;
+  endless=!!d.endless;
   theme=THEMES[d.themeIdx]||THEMES[0];
   boss=mobs.find(m=>m.isBoss)||null;
   gameOver=false; shopOpen=false; targeting=null; fx=[]; floaters=[]; shake=0;
@@ -1405,9 +1536,39 @@ function restoreState(d){
   const badge=document.getElementById('dailyBadge');
   badge.style.display=dailyMode?'inline':'none'; badge.textContent='· 每日挑战';
   document.getElementById('shop').style.display='none';
+  joyVec=[0,0];
   document.getElementById('overlay').style.display='none';
   reveal(); updatePanel(); draw();
 }
+
+// ===== 触屏摇杆 =====
+const zone=document.getElementById('stickZone'), knob=document.getElementById('joyKnob');
+let joyActive=false, joyVec=[0,0], joyTm=0;
+function joyMove(ev){
+  const r=zone.getBoundingClientRect(), bx=r.left+107, by=r.top+75;
+  let dx=ev.clientX-bx, dy=ev.clientY-by;
+  const len=Math.hypot(dx,dy);
+  if(len>46){ dx=dx/len*46; dy=dy/len*46; }
+  knob.style.left=(95+dx)+'px'; knob.style.top=(63+dy)+'px';
+  const dz=Math.hypot(dx,dy);
+  joyVec=dz>16?[dx/dz,dy/dz]:[0,0];
+}
+function joyEnd(){ joyActive=false; joyVec=[0,0]; knob.style.left='95px'; knob.style.top='63px'; }
+function normalizeDir(v){
+  if(Math.abs(v[0])>Math.abs(v[1])) return [v[0]>0?1:-1,0];
+  return [0,v[1]>0?1:-1];
+}
+function joyTick(){
+  if(!gameOver&&!shopOpen&&!targeting&&joyVec&&(Math.abs(joyVec[0])>.05||Math.abs(joyVec[1])>.05))
+    tryMove(...normalizeDir(joyVec));
+  joyTm=setTimeout(joyTick,150);
+}
+zone.addEventListener('pointerdown',ev=>{ ev.preventDefault(); joyActive=true; joyMove(ev); });
+zone.addEventListener('pointermove',ev=>{ if(joyActive){ ev.preventDefault(); joyMove(ev); } });
+zone.addEventListener('pointerup',joyEnd);
+zone.addEventListener('pointercancel',joyEnd);
+zone.addEventListener('pointerleave',()=>{ if(joyActive) joyEnd(); });
+joyTick();
 
 // ===== input =====
 const keys={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],
@@ -1420,22 +1581,27 @@ function introAction(k){
     updateIntroText();
     return;
   }
+  if((k==='c'||k==='C')&&hasManSave()){ loadManual(false); return; }
   if((k==='c'||k==='C')&&hasSave()){ loadGame(); return; }
+  if(k==='z'||k==='Z'){ exportSave(); return; }
+  if(k==='v'||k==='V'){ addSlot(); return; }
+  if(k==='x'||k==='X'){ copySlot(); return; }
   newGame(k==='n'||k==='N');
 }
 function updateIntroText(){
   const s=document.getElementById('ovStart');
   const diff='难度('+DIFFS[diffIdx].name+')';
-  const man=hasManSave()?' · 死亡后C=复活手动档':'';
-  if(gameOver&&stats) s.textContent='— 按任意键重来'+man+' · 1/2/3=难度 · N=每日挑战 —';
-  else s.textContent=hasSave()
-    ? `— 按任意键开始新冒险 · C=继续自动档${man} · 1/2/3=${diff} · N=每日挑战 —`
+  if(gameOver&&stats) s.textContent='— 按任意键重来'+(hasManSave()?' · C=复活手动档(一次性)':'')+' · Z=导出档 · X=复制/切换槽 · V=导入档 · 1/2/3=难度 · N=每日挑战 —';
+  else s.textContent=hasManSave()&&hasSave()
+    ? `— 按任意键开始新冒险 · C=继续(优先手动档) · 1/2/3=${diff} · N=每日挑战 —`
+    : hasSave()
+    ? `— 按任意键开始新冒险 · C=继续自动档 · 1/2/3=${diff} · N=每日挑战 —`
     : `— 按任意键开始 · 1/2/3=${diff} · N=每日挑战 —`;
 }
 window.addEventListener('keydown',e=>{
   if(gameOver){ // 结算界面: C 优先读手动存档(复活), 否则继续自动档
     if(e.key==='c'||e.key==='C'){
-      if(hasManSave()){ loadManual(); return; }
+      if(hasManSave()){ loadManual(true); return; }
     }
     introAction(e.key); return;
   }
